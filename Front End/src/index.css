@@ -1,0 +1,20 @@
+/* Remove default Vite styles — AdminLTE handles everything */
+body {
+  font-family: 'Source Sans Pro', sans-serif;
+}
+
+#root {
+  /* Let AdminLTE's .wrapper control layout — reset Vite defaults */
+  width: auto;
+  max-width: none;
+  margin: 0;
+  text-align: left;
+  border: none;
+  min-height: auto;
+  display: block;
+}
+
+/* Gap utility for older Bootstrap 4 */
+.gap-2 {
+  gap: 0.5rem;
+}
