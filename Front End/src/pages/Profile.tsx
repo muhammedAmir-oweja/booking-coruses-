@@ -150,7 +150,6 @@ export default function Profile() {
                   </div>
                 </div>
 
-                {/* Change Password */}
                 <div className="card card-warning">
                   <div className="card-header">
                     <h3 className="card-title"><i className="fas fa-lock mr-2" />Change Password</h3>

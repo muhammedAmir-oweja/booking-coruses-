@@ -38,7 +38,6 @@ export default function Login() {
 
   return (
     <div style={styles.page}>
-      {/* Left panel */}
       <div style={styles.left}>
         <div style={styles.leftInner}>
           <i className="fas fa-graduation-cap" style={styles.leftIcon} />
@@ -47,7 +46,6 @@ export default function Login() {
         </div>
       </div>
 
-      {/* Right panel */}
       <div style={styles.right}>
         <div style={styles.formBox}>
           <h2 style={styles.heading}>Welcome back</h2>

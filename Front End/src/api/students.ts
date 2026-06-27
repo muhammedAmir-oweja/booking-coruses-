@@ -22,8 +22,6 @@ export function createStudent(data: FormData) {
 }
 
 export function updateStudent(id: number, data: FormData) {
-  // Laravel doesn't support multipart PUT — use POST with _method spoofing.
-  // Copy into a new FormData so the caller's object is not mutated.
   const payload = new FormData()
   data.forEach((value, key) => payload.append(key, value))
   payload.append('_method', 'PUT')

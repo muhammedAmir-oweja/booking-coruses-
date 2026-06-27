@@ -101,8 +101,6 @@ export default function StudentForm() {
     setServerError('')
 
     const fd = new FormData()
-    // Always append all fields so clearing optional fields (phone, address, etc.)
-    // sends an empty string — Laravel's ConvertEmptyStringsToNull converts it to null
     Object.entries(form).forEach(([k, v]) => fd.append(k, v))
     if (photoFile) fd.append('photo', photoFile)
 
@@ -221,7 +219,6 @@ export default function StudentForm() {
                       <div className="alert alert-danger">{serverError}</div>
                     )}
 
-                    {/* Photo */}
                     <div className="form-group text-center">
                       <div className="mb-2">
                         {photoPreview ? (
@@ -256,7 +253,6 @@ export default function StudentForm() {
                       {errors.photo && <div className="text-danger small mt-1">{errors.photo}</div>}
                     </div>
 
-                    {/* Name */}
                     <div className="form-group">
                       <label>Full Name <span className="text-danger">*</span></label>
                       <input
@@ -270,7 +266,6 @@ export default function StudentForm() {
                       {errors.name && <div className="invalid-feedback">{errors.name}</div>}
                     </div>
 
-                    {/* Email */}
                     <div className="form-group">
                       <label>Email <span className="text-danger">*</span></label>
                       <input
@@ -284,7 +279,6 @@ export default function StudentForm() {
                       {errors.email && <div className="invalid-feedback">{errors.email}</div>}
                     </div>
 
-                    {/* Phone */}
                     <div className="form-group">
                       <label>Phone</label>
                       <input
@@ -298,7 +292,6 @@ export default function StudentForm() {
                       {errors.phone && <div className="invalid-feedback">{errors.phone}</div>}
                     </div>
 
-                    {/* Date of Birth */}
                     <div className="form-group">
                       <label>Date of Birth</label>
                       <input
@@ -311,7 +304,6 @@ export default function StudentForm() {
                       {errors.date_of_birth && <div className="invalid-feedback">{errors.date_of_birth}</div>}
                     </div>
 
-                    {/* Address */}
                     <div className="form-group">
                       <label>Address</label>
                       <textarea
@@ -339,7 +331,6 @@ export default function StudentForm() {
               </div>
             </div>
 
-            {/* Documents — only show on edit */}
             {isEdit && (
               <div className="col-md-8 mt-4">
                 <div className="card card-secondary">

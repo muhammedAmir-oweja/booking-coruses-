@@ -76,7 +76,6 @@ export default function Register() {
 
   return (
     <div style={styles.page}>
-      {/* Left panel */}
       <div style={styles.left}>
         <div style={styles.leftInner}>
           <i className="fas fa-graduation-cap" style={styles.leftIcon} />
@@ -85,7 +84,6 @@ export default function Register() {
         </div>
       </div>
 
-      {/* Right panel */}
       <div style={styles.right}>
         <div style={styles.formBox}>
           <h2 style={styles.heading}>Create an account</h2>
@@ -99,7 +97,6 @@ export default function Register() {
           )}
 
           <form onSubmit={handleSubmit} noValidate>
-            {/* Full Name */}
             <div style={styles.field}>
               <label style={styles.label}>Full Name</label>
               <input
@@ -113,7 +110,6 @@ export default function Register() {
               {errors.name && <span style={styles.fieldError}>{errors.name}</span>}
             </div>
 
-            {/* Email */}
             <div style={styles.field}>
               <label style={styles.label}>Email address</label>
               <input
@@ -127,7 +123,6 @@ export default function Register() {
               {errors.email && <span style={styles.fieldError}>{errors.email}</span>}
             </div>
 
-            {/* Role */}
             <div style={styles.field}>
               <label style={styles.label}>I am a</label>
               <div style={styles.roleRow}>
@@ -151,7 +146,6 @@ export default function Register() {
               </div>
             </div>
 
-            {/* Password */}
             <div style={styles.field}>
               <label style={styles.label}>Password</label>
               <div style={styles.inputWrap}>
@@ -172,7 +166,6 @@ export default function Register() {
               {errors.password && <span style={styles.fieldError}>{errors.password}</span>}
             </div>
 
-            {/* Confirm Password */}
             <div style={styles.field}>
               <label style={styles.label}>Confirm Password</label>
               <div style={styles.inputWrap}>

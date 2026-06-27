@@ -33,7 +33,6 @@ function StatusBadge({ status }: { status: string }) {
   return <span className={`badge ${map[status] ?? 'badge-secondary'}`}>{status}</span>
 }
 
-// ── Admin Dashboard ────────────────────────────────────────────────
 function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -140,7 +139,6 @@ function AdminDashboard() {
   )
 }
 
-// ── Instructor Dashboard ───────────────────────────────────────────
 function InstructorDashboard() {
   const { user } = useAuth()
   const [enrollments, setEnrollments] = useState<Enrollment[]>([])
@@ -192,7 +190,6 @@ function InstructorDashboard() {
   )
 }
 
-// ── Student Dashboard ──────────────────────────────────────────────
 function StudentDashboard() {
   const { user } = useAuth()
   const [bookings, setBookings] = useState<Booking[]>([])
@@ -278,7 +275,6 @@ function StudentDashboard() {
   )
 }
 
-// ── Main Dashboard (role router) ───────────────────────────────────
 export default function Dashboard() {
   const { isAdmin, isInstructor, isStudent } = useAuth()
 

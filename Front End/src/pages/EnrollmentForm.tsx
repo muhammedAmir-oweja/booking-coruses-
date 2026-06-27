@@ -127,7 +127,6 @@ export default function EnrollmentForm() {
                       <div className="alert alert-danger">{serverError}</div>
                     )}
 
-                    {/* Student */}
                     <div className="form-group">
                       <label>Student <span className="text-danger">*</span></label>
                       <select
@@ -144,7 +143,6 @@ export default function EnrollmentForm() {
                       {errors.student_id && <div className="invalid-feedback">{errors.student_id}</div>}
                     </div>
 
-                    {/* Course */}
                     <div className="form-group">
                       <label>Course <span className="text-danger">*</span></label>
                       <select
@@ -161,7 +159,6 @@ export default function EnrollmentForm() {
                       {errors.course_id && <div className="invalid-feedback">{errors.course_id}</div>}
                     </div>
 
-                    {/* Enrolled At */}
                     <div className="form-group">
                       <label>Enrollment Date</label>
                       <input
@@ -173,7 +170,6 @@ export default function EnrollmentForm() {
                       />
                     </div>
 
-                    {/* Status */}
                     <div className="form-group">
                       <label>Status</label>
                       <select

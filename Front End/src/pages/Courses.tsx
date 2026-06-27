@@ -179,7 +179,6 @@ export default function Courses() {
               </table>
             </div>
 
-            {/* Pagination */}
             {data && data.last_page > 1 && (
               <div className="card-footer clearfix">
                 <ul className="pagination pagination-sm m-0 float-right">

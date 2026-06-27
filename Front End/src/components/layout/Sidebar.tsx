@@ -107,7 +107,6 @@ export default function Sidebar({ collapsed, user }: SidebarProps) {
     return false
   })
 
-  // For students, hide "Enroll Student" link (they can't enroll themselves manually)
   const filteredGroups = visibleGroups.map(g => {
     if (isStudent && g.label === 'Enrollments') {
       return { ...g, children: g.children.filter(c => c.to !== '/enrollments/new') }

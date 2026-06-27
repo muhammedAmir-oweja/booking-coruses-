@@ -28,7 +28,6 @@ const empty: FormState = {
   status: 'scheduled',
 }
 
-// Convert "2026-07-01T14:00" (datetime-local) ↔ "2026-07-01 14:00:00" (DB)
 function toInputFormat(dt: string): string {
   if (!dt) return ''
   return dt.replace(' ', 'T').slice(0, 16)
@@ -187,7 +186,6 @@ export default function TrainingSessionForm() {
                       <div className="alert alert-danger">{serverError}</div>
                     )}
 
-                    {/* Course */}
                     <div className="form-group">
                       <label>Course <span className="text-danger">*</span></label>
                       <select
@@ -204,7 +202,6 @@ export default function TrainingSessionForm() {
                       {errors.course_id && <div className="invalid-feedback">{errors.course_id}</div>}
                     </div>
 
-                    {/* Title */}
                     <div className="form-group">
                       <label>Session Title <span className="text-danger">*</span></label>
                       <input
@@ -218,7 +215,6 @@ export default function TrainingSessionForm() {
                       {errors.title && <div className="invalid-feedback">{errors.title}</div>}
                     </div>
 
-                    {/* Description */}
                     <div className="form-group">
                       <label>Description</label>
                       <textarea
@@ -231,7 +227,6 @@ export default function TrainingSessionForm() {
                       />
                     </div>
 
-                    {/* Starts At / Ends At */}
                     <div className="row">
                       <div className="col-md-6">
                         <div className="form-group">
@@ -261,7 +256,6 @@ export default function TrainingSessionForm() {
                       </div>
                     </div>
 
-                    {/* Location */}
                     <div className="form-group">
                       <label>Location</label>
                       <input
@@ -274,7 +268,6 @@ export default function TrainingSessionForm() {
                       />
                     </div>
 
-                    {/* Max Attendees / Status */}
                     <div className="row">
                       <div className="col-md-6">
                         <div className="form-group">

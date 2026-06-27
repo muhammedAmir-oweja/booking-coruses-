@@ -176,7 +176,6 @@ export default function CourseForm() {
                       </div>
                     )}
 
-                    {/* Instructor */}
                     <div className="form-group">
                       <label>Instructor <span className="text-danger">*</span></label>
                       <select
@@ -195,7 +194,6 @@ export default function CourseForm() {
                       )}
                     </div>
 
-                    {/* Title */}
                     <div className="form-group">
                       <label>Course Title <span className="text-danger">*</span></label>
                       <input
@@ -209,7 +207,6 @@ export default function CourseForm() {
                       {errors.title && <div className="invalid-feedback">{errors.title}</div>}
                     </div>
 
-                    {/* Description */}
                     <div className="form-group">
                       <label>Description</label>
                       <textarea
@@ -222,7 +219,6 @@ export default function CourseForm() {
                       />
                     </div>
 
-                    {/* Price / Capacity / Hours / Status */}
                     <div className="row">
                       <div className="col-md-3">
                         <div className="form-group">
@@ -283,7 +279,6 @@ export default function CourseForm() {
                       </div>
                     </div>
 
-                    {/* Start / End Date */}
                     <div className="row">
                       <div className="col-md-6">
                         <div className="form-group">

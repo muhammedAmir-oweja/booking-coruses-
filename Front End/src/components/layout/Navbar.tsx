@@ -44,7 +44,6 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
       </ul>
 
       <ul className="navbar-nav ml-auto">
-        {/* User Menu */}
         <li className={`nav-item dropdown ${userMenuOpen ? 'show' : ''}`}>
           <a
             className="nav-link"
