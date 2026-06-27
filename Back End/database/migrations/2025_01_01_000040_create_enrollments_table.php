@@ -16,7 +16,7 @@ return new class extends Migration
             $table->enum('status', ['pending', 'confirmed', 'cancelled'])->default('pending');
             $table->timestamps();
 
-            $table->unique(['student_id', 'course_id']); // one enrollment per student per course
+            $table->unique(['student_id', 'course_id']);
         });
     }
 

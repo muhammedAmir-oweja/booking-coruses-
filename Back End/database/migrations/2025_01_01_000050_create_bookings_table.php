@@ -16,8 +16,8 @@ return new class extends Migration
             $table->decimal('amount', 10, 2)->default(0);
             $table->enum('status', ['pending', 'confirmed', 'cancelled'])->default('pending');
             $table->enum('payment_status', ['unpaid', 'paid', 'refunded'])->default('unpaid');
-            $table->string('payment_method')->nullable();      // cash, card, transfer …
-            $table->string('transaction_id')->nullable();      // external payment ref
+            $table->string('payment_method')->nullable();
+            $table->string('transaction_id')->nullable();
             $table->timestamp('booked_at')->useCurrent();
             $table->timestamp('paid_at')->nullable();
             $table->timestamps();

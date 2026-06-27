@@ -34,13 +34,11 @@ class Course extends Model
         ];
     }
 
-    // Number of enrolled students (from pivot)
     public function getEnrolledCountAttribute(): int
     {
         return $this->students()->count();
     }
 
-    // Relations
     public function instructor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'instructor_id');

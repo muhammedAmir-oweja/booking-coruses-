@@ -11,18 +11,13 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    /**
-     * GET /api/dashboard/stats
-     */
     public function stats(): JsonResponse
     {
-        // ── Totals ──────────────────────────────────────────────────
         $totalCourses  = Course::count();
         $totalStudents = Student::count();
         $totalBookings = Booking::count();
         $totalRevenue  = Booking::where('payment_status', 'paid')->sum('amount');
 
-        // ── Recent bookings (latest 10) ──────────────────────────────
         $recentBookings = Booking::with(['student', 'course'])
             ->latest('booked_at')
             ->limit(10)
@@ -46,7 +41,6 @@ class DashboardController extends Controller
                 ] : null,
             ]);
 
-        // ── Top courses by enrollment count ──────────────────────────
         $topCourses = Course::withCount('enrollments')
             ->with('instructor')
             ->orderByDesc('enrollments_count')
@@ -65,7 +59,6 @@ class DashboardController extends Controller
                 ] : null,
             ]);
 
-        // ── Monthly revenue (last 6 months) ──────────────────────────
         $monthlyRevenue = Booking::where('payment_status', 'paid')
             ->where('booked_at', '>=', now()->subMonths(6)->startOfMonth())
             ->select(
@@ -80,7 +73,6 @@ class DashboardController extends Controller
                 'revenue' => (float) $r->revenue,
             ]);
 
-        // ── Monthly bookings count (last 6 months) ───────────────────
         $monthlyBookings = Booking::where('booked_at', '>=', now()->subMonths(6)->startOfMonth())
             ->select(
                 DB::raw("DATE_FORMAT(booked_at, '%Y-%m') as month"),

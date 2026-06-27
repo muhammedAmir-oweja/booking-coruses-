@@ -35,7 +35,6 @@ class TrainingSession extends Model
         return (int) $this->starts_at->diffInMinutes($this->ends_at);
     }
 
-    // Relations
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);

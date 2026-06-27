@@ -11,9 +11,6 @@ use Illuminate\Support\Facades\Storage;
 
 class StudentDocumentController extends Controller
 {
-    /**
-     * GET /api/students/{student}/documents
-     */
     public function index(Student $student): JsonResponse
     {
         $documents = $student->documents()->latest()->get()->map(fn($d) => $this->format($d));
@@ -21,9 +18,6 @@ class StudentDocumentController extends Controller
         return response()->json($documents);
     }
 
-    /**
-     * POST /api/students/{student}/documents
-     */
     public function store(Request $request, Student $student): JsonResponse
     {
         $request->validate([
@@ -43,9 +37,6 @@ class StudentDocumentController extends Controller
         return response()->json($this->format($document), 201);
     }
 
-    /**
-     * DELETE /api/students/{student}/documents/{document}
-     */
     public function destroy(Student $student, StudentDocument $document): JsonResponse
     {
         if ($document->student_id !== $student->id) {

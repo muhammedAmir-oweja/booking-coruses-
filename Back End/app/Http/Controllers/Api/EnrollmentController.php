@@ -10,20 +10,15 @@ use Illuminate\Validation\Rule;
 
 class EnrollmentController extends Controller
 {
-    /**
-     * GET /api/enrollments
-     */
     public function index(Request $request): JsonResponse
     {
         $query = Enrollment::with(['student', 'course']);
 
-        // Students only see their own enrollments
         if ($request->user()?->role === 'student') {
             $student = \App\Models\Student::where('user_id', $request->user()->id)->first();
             $query->where('student_id', $student?->id ?? 0);
         }
 
-        // Instructors only see enrollments for their own courses
         if ($request->user()?->role === 'instructor') {
             $query->whereHas('course', fn($q) => $q->where('instructor_id', $request->user()->id));
         }
@@ -47,18 +42,12 @@ class EnrollmentController extends Controller
         return response()->json($enrollments);
     }
 
-    /**
-     * GET /api/enrollments/{id}
-     */
     public function show(Enrollment $enrollment): JsonResponse
     {
         $enrollment->load(['student', 'course']);
         return response()->json($this->format($enrollment));
     }
 
-    /**
-     * POST /api/enrollments
-     */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -81,9 +70,6 @@ class EnrollmentController extends Controller
         return response()->json($this->format($enrollment), 201);
     }
 
-    /**
-     * PUT /api/enrollments/{id}
-     */
     public function update(Request $request, Enrollment $enrollment): JsonResponse
     {
         $data = $request->validate([
@@ -97,9 +83,6 @@ class EnrollmentController extends Controller
         return response()->json($this->format($enrollment));
     }
 
-    /**
-     * DELETE /api/enrollments/{id}
-     */
     public function destroy(Enrollment $enrollment): JsonResponse
     {
         $enrollment->delete();

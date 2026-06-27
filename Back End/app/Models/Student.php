@@ -30,13 +30,11 @@ class Student extends Model
         ];
     }
 
-    // Full URL to the stored photo
     public function getPhotoUrlAttribute(): ?string
     {
         return $this->photo ? asset('storage/' . $this->photo) : null;
     }
 
-    // Relations
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

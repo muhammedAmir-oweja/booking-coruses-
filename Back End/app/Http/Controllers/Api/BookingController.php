@@ -9,14 +9,10 @@ use Illuminate\Http\Request;
 
 class BookingController extends Controller
 {
-    /**
-     * GET /api/bookings
-     */
     public function index(Request $request): JsonResponse
     {
         $query = Booking::with(['student', 'course']);
 
-        // Students only see their own bookings
         if ($request->user()?->role === 'student') {
             $student = \App\Models\Student::where('user_id', $request->user()->id)->first();
             $query->where('student_id', $student?->id ?? 0);
@@ -45,18 +41,12 @@ class BookingController extends Controller
         return response()->json($bookings);
     }
 
-    /**
-     * GET /api/bookings/{id}
-     */
     public function show(Booking $booking): JsonResponse
     {
         $booking->load(['student', 'course']);
         return response()->json($this->format($booking));
     }
 
-    /**
-     * POST /api/bookings
-     */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -80,9 +70,6 @@ class BookingController extends Controller
         return response()->json($this->format($booking), 201);
     }
 
-    /**
-     * PATCH /api/bookings/{id}/status
-     */
     public function updateStatus(Request $request, Booking $booking): JsonResponse
     {
         $data = $request->validate([
@@ -102,9 +89,6 @@ class BookingController extends Controller
         return response()->json($this->format($booking));
     }
 
-    /**
-     * DELETE /api/bookings/{id}
-     */
     public function destroy(Booking $booking): JsonResponse
     {
         $booking->delete();

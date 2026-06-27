@@ -9,15 +9,10 @@ use Illuminate\Http\Request;
 
 class TrainingSessionController extends Controller
 {
-    /**
-     * GET /api/training-sessions
-     * Optionally filter by course_id, search by title.
-     */
     public function index(Request $request): JsonResponse
     {
         $query = TrainingSession::with('course');
 
-        // Instructors only see sessions for their own courses
         if ($request->user()?->role === 'instructor') {
             $query->whereHas('course', fn($q) => $q->where('instructor_id', $request->user()->id));
         }
@@ -42,18 +37,12 @@ class TrainingSessionController extends Controller
         return response()->json($sessions);
     }
 
-    /**
-     * GET /api/training-sessions/{id}
-     */
     public function show(TrainingSession $trainingSession): JsonResponse
     {
         $trainingSession->load('course');
         return response()->json($this->format($trainingSession));
     }
 
-    /**
-     * POST /api/training-sessions
-     */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -73,12 +62,8 @@ class TrainingSessionController extends Controller
         return response()->json($this->format($session), 201);
     }
 
-    /**
-     * PUT /api/training-sessions/{id}
-     */
     public function update(Request $request, TrainingSession $trainingSession): JsonResponse
     {
-        // Instructors can only edit sessions for their own courses
         if ($request->user()?->role === 'instructor') {
             $trainingSession->load('course');
             if ($trainingSession->course?->instructor_id !== $request->user()->id) {
@@ -103,9 +88,6 @@ class TrainingSessionController extends Controller
         return response()->json($this->format($trainingSession));
     }
 
-    /**
-     * DELETE /api/training-sessions/{id}
-     */
     public function destroy(TrainingSession $trainingSession): JsonResponse
     {
         $trainingSession->delete();

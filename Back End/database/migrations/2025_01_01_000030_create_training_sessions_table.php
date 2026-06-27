@@ -15,7 +15,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->dateTime('starts_at');
             $table->dateTime('ends_at');
-            $table->string('location')->nullable();  // room / online link
+            $table->string('location')->nullable();
             $table->unsignedInteger('max_attendees')->nullable();
             $table->enum('status', ['scheduled', 'ongoing', 'completed', 'cancelled'])->default('scheduled');
             $table->timestamps();

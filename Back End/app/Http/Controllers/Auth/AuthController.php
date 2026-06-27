@@ -13,9 +13,6 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    /**
-     * POST /api/auth/register
-     */
     public function register(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -40,9 +37,6 @@ class AuthController extends Controller
         ], 201);
     }
 
-    /**
-     * POST /api/auth/login
-     */
     public function login(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -56,10 +50,8 @@ class AuthController extends Controller
             ]);
         }
 
-        /** @var User $user */
         $user = Auth::user();
 
-        // Revoke all previous tokens so only one session exists at a time
         $user->tokens()->delete();
 
         $token = $user->createToken('api-token')->plainTextToken;
@@ -70,9 +62,6 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * POST /api/auth/logout
-     */
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();
@@ -80,18 +69,11 @@ class AuthController extends Controller
         return response()->json(['message' => 'Logged out successfully.']);
     }
 
-    /**
-     * GET /api/auth/me
-     */
     public function me(Request $request): JsonResponse
     {
         return response()->json($request->user());
     }
 
-    /**
-     * GET /api/auth/me/student
-     * Returns the Student record linked to the current user (for student role).
-     */
     public function myStudent(Request $request): JsonResponse
     {
         $student = \App\Models\Student::where('user_id', $request->user()->id)->first();
@@ -110,9 +92,6 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * POST /api/auth/change-password
-     */
     public function changePassword(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -120,7 +99,6 @@ class AuthController extends Controller
             'password'         => ['required', 'confirmed', Password::min(8)],
         ]);
 
-        /** @var User $user */
         $user = $request->user();
 
         if (! Hash::check($data['current_password'], $user->password)) {

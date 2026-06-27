@@ -10,9 +10,6 @@ use Illuminate\Support\Facades\Storage;
 
 class StudentController extends Controller
 {
-    /**
-     * GET /api/students
-     */
     public function index(Request $request): JsonResponse
     {
         $query = Student::query();
@@ -33,17 +30,11 @@ class StudentController extends Controller
         return response()->json($students);
     }
 
-    /**
-     * GET /api/students/{id}
-     */
     public function show(Student $student): JsonResponse
     {
         return response()->json($this->format($student));
     }
 
-    /**
-     * POST /api/students
-     */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -64,10 +55,6 @@ class StudentController extends Controller
         return response()->json($this->format($student), 201);
     }
 
-    /**
-     * POST /api/students/{id} with _method=PUT (multipart-friendly)
-     * Also handles regular PUT for JSON updates without file.
-     */
     public function update(Request $request, Student $student): JsonResponse
     {
         $data = $request->validate([
@@ -80,7 +67,6 @@ class StudentController extends Controller
         ]);
 
         if ($request->hasFile('photo')) {
-            // Delete old photo if it exists
             if ($student->photo) {
                 Storage::disk('public')->delete($student->photo);
             }
@@ -92,9 +78,6 @@ class StudentController extends Controller
         return response()->json($this->format($student));
     }
 
-    /**
-     * DELETE /api/students/{id}
-     */
     public function destroy(Student $student): JsonResponse
     {
         if ($student->photo) {

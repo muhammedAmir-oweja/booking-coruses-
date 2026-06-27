@@ -9,15 +9,11 @@ use Illuminate\Http\Request;
 
 class CourseController extends Controller
 {
-    /**
-     * GET /api/courses
-     */
     public function index(Request $request): JsonResponse
     {
         $query = Course::with('instructor')
             ->withCount('enrollments');
 
-        // Instructors only see their own courses
         if ($request->user()?->role === 'instructor') {
             $query->where('instructor_id', $request->user()->id);
         }
@@ -38,9 +34,6 @@ class CourseController extends Controller
         return response()->json($courses);
     }
 
-    /**
-     * GET /api/courses/{id}
-     */
     public function show(Course $course): JsonResponse
     {
         $course->loadCount('enrollments');
@@ -49,9 +42,6 @@ class CourseController extends Controller
         return response()->json($this->format($course));
     }
 
-    /**
-     * POST /api/courses
-     */
     public function store(Request $request): JsonResponse
     {
         $isInstructor = $request->user()?->role === 'instructor';
@@ -68,7 +58,6 @@ class CourseController extends Controller
             'end_date'      => ['nullable', 'date', 'after:start_date'],
         ]);
 
-        // Instructors are always assigned as the course instructor
         if ($isInstructor) {
             $data['instructor_id'] = $request->user()->id;
         }
@@ -80,12 +69,8 @@ class CourseController extends Controller
         return response()->json($this->format($course), 201);
     }
 
-    /**
-     * PUT /api/courses/{id}
-     */
     public function update(Request $request, Course $course): JsonResponse
     {
-        // Instructors can only edit their own courses
         if ($request->user()?->role === 'instructor' && $course->instructor_id !== $request->user()->id) {
             return response()->json(['message' => 'Forbidden.'], 403);
         }
@@ -109,9 +94,6 @@ class CourseController extends Controller
         return response()->json($this->format($course));
     }
 
-    /**
-     * DELETE /api/courses/{id}
-     */
     public function destroy(Course $course): JsonResponse
     {
         $course->delete();

@@ -15,11 +15,9 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // ── Keep existing real accounts, just get their IDs ──────────
         $admin      = User::where('role', 'admin')->first();
         $instructor = User::where('role', 'instructor')->first();
 
-        // ── Add a second instructor ───────────────────────────────────
         $instructor2 = User::firstOrCreate(
             ['email' => 'maya.hassan@gmail.com'],
             [
@@ -29,7 +27,6 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // ── 10 Courses ───────────────────────────────────────────────
         $coursesData = [
             [
                 'title'         => 'Python for Data Science',
@@ -148,29 +145,20 @@ class DatabaseSeeder extends Seeder
             $courses[] = Course::firstOrCreate(['title' => $data['title']], $data);
         }
 
-        // ── 15 Training Sessions (spread across courses) ──────────────
         $sessionsData = [
-            // Course 0 — Python
             ['course' => 0, 'title' => 'Introduction to Python Syntax',        'starts_at' => now()->addDays(5)->setTime(9,0),  'ends_at' => now()->addDays(5)->setTime(12,0),  'location' => 'Room A-101', 'max_attendees' => 35, 'status' => 'scheduled'],
             ['course' => 0, 'title' => 'Data Manipulation with Pandas',        'starts_at' => now()->addDays(7)->setTime(9,0),  'ends_at' => now()->addDays(7)->setTime(12,0),  'location' => 'Room A-101', 'max_attendees' => 35, 'status' => 'scheduled'],
-            // Course 1 — Laravel
             ['course' => 1, 'title' => 'Laravel Routing & Controllers',        'starts_at' => now()->addDays(10)->setTime(10,0), 'ends_at' => now()->addDays(10)->setTime(13,0), 'location' => 'Room B-202', 'max_attendees' => 30, 'status' => 'scheduled'],
             ['course' => 1, 'title' => 'Eloquent ORM & Database Relations',    'starts_at' => now()->addDays(12)->setTime(10,0), 'ends_at' => now()->addDays(12)->setTime(13,0), 'location' => 'Room B-202', 'max_attendees' => 30, 'status' => 'scheduled'],
             ['course' => 1, 'title' => 'Building RESTful APIs with Laravel',   'starts_at' => now()->addDays(15)->setTime(10,0), 'ends_at' => now()->addDays(15)->setTime(14,0), 'location' => 'Online - Zoom', 'max_attendees' => 30, 'status' => 'scheduled'],
-            // Course 2 — React
             ['course' => 2, 'title' => 'React Hooks Deep Dive',                'starts_at' => now()->addDays(3)->setTime(14,0),  'ends_at' => now()->addDays(3)->setTime(17,0),  'location' => 'Room C-303', 'max_attendees' => 25, 'status' => 'scheduled'],
             ['course' => 2, 'title' => 'State Management with Context API',    'starts_at' => now()->addDays(6)->setTime(14,0),  'ends_at' => now()->addDays(6)->setTime(17,0),  'location' => 'Room C-303', 'max_attendees' => 25, 'status' => 'scheduled'],
-            // Course 3 — UI/UX
             ['course' => 3, 'title' => 'Wireframing & Prototyping in Figma',   'starts_at' => now()->addDays(7)->setTime(11,0),  'ends_at' => now()->addDays(7)->setTime(14,0),  'location' => 'Design Lab', 'max_attendees' => 20, 'status' => 'scheduled'],
-            // Course 5 — Digital Marketing
             ['course' => 5, 'title' => 'SEO Strategy & Google Analytics',      'starts_at' => now()->addDays(2)->setTime(9,0),   'ends_at' => now()->addDays(2)->setTime(11,0),  'location' => 'Online - Teams', 'max_attendees' => 50, 'status' => 'scheduled'],
             ['course' => 5, 'title' => 'Social Media Advertising Masterclass', 'starts_at' => now()->addDays(4)->setTime(9,0),   'ends_at' => now()->addDays(4)->setTime(11,0),  'location' => 'Online - Teams', 'max_attendees' => 50, 'status' => 'scheduled'],
-            // Course 6 — Cybersecurity
             ['course' => 6, 'title' => 'Network Security Fundamentals',        'starts_at' => now()->addDays(20)->setTime(10,0), 'ends_at' => now()->addDays(20)->setTime(13,0), 'location' => 'Lab D-404',  'max_attendees' => 20, 'status' => 'scheduled'],
-            // Course 7 — PMP
             ['course' => 7, 'title' => 'Agile & Scrum Methodology',            'starts_at' => now()->addDays(1)->setTime(9,0),   'ends_at' => now()->addDays(1)->setTime(12,0),  'location' => 'Room E-105', 'max_attendees' => 30, 'status' => 'scheduled'],
             ['course' => 7, 'title' => 'Risk Management in Projects',          'starts_at' => now()->addDays(8)->setTime(9,0),   'ends_at' => now()->addDays(8)->setTime(12,0),  'location' => 'Room E-105', 'max_attendees' => 30, 'status' => 'scheduled'],
-            // Course 9 — English
             ['course' => 9, 'title' => 'Business Email Writing Workshop',      'starts_at' => now()->subDays(3)->setTime(16,0),  'ends_at' => now()->subDays(3)->setTime(18,0),  'location' => 'Room F-201', 'max_attendees' => 40, 'status' => 'completed'],
             ['course' => 9, 'title' => 'Presentation Skills in English',       'starts_at' => now()->addDays(5)->setTime(16,0),  'ends_at' => now()->addDays(5)->setTime(18,0),  'location' => 'Room F-201', 'max_attendees' => 40, 'status' => 'scheduled'],
         ];
@@ -190,7 +178,6 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        // ── 20 Students ───────────────────────────────────────────────
         $studentsData = [
             ['name' => 'Ahmed Al-Rashidi',    'email' => 'ahmed.rashidi@gmail.com',    'phone' => '0501234567', 'dob' => '1998-03-15'],
             ['name' => 'Sara Al-Mutairi',     'email' => 'sara.mutairi@hotmail.com',   'phone' => '0559876543', 'dob' => '2000-07-22'],
@@ -226,8 +213,6 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        // ── 30 Enrollments ────────────────────────────────────────────
-        // Each student enrolled in 1–2 courses, spread across all 10 courses
         $enrollmentPairs = [
             [0, 0], [0, 4],
             [1, 1], [1, 5],
@@ -259,7 +244,6 @@ class DatabaseSeeder extends Seeder
             $enrollments[] = ['student' => $students[$si], 'course' => $courses[$ci], 'enrollment' => $e];
         }
 
-        // ── 25 Bookings ───────────────────────────────────────────────
         $paymentMethods = ['cash', 'credit_card', 'bank_transfer', 'credit_card', 'cash'];
         $bookingCount   = 0;
 

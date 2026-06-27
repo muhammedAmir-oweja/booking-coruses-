@@ -33,7 +33,6 @@ class Booking extends Model
         ];
     }
 
-    // Relations
     public function student(): BelongsTo
     {
         return $this->belongsTo(Student::class);
