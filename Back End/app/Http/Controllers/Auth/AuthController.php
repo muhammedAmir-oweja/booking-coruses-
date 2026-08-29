@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,34 +12,10 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function register(Request $request): JsonResponse
-    {
-        $data = $request->validate([
-            'name'      => ['required', 'string', 'max:255'],
-            'email'     => ['required', 'email', 'unique:users,email'],
-            'password'  => ['required', 'confirmed', Password::min(8)],
-            'role'      => ['sometimes', 'in:student,instructor'],
-        ]);
-
-        $user = User::create([
-            'name'     => $data['name'],
-            'email'    => $data['email'],
-            'password' => Hash::make($data['password']),
-            'role'     => $data['role'] ?? 'student',
-        ]);
-
-        $token = $user->createToken('api-token')->plainTextToken;
-
-        return response()->json([
-            'token' => $token,
-            'user'  => $user,
-        ], 201);
-    }
-
     public function login(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'email'    => ['required', 'email'],
+            'email' => ['required', 'email'],
             'password' => ['required', 'string'],
         ]);
 
@@ -58,7 +33,7 @@ class AuthController extends Controller
 
         return response()->json([
             'token' => $token,
-            'user'  => $user,
+            'user' => $user,
         ]);
     }
 
@@ -74,29 +49,11 @@ class AuthController extends Controller
         return response()->json($request->user());
     }
 
-    public function myStudent(Request $request): JsonResponse
-    {
-        $student = \App\Models\Student::where('user_id', $request->user()->id)->first();
-
-        if (! $student) {
-            return response()->json(['message' => 'No student profile linked to this account.'], 404);
-        }
-
-        return response()->json([
-            'id'            => $student->id,
-            'name'          => $student->name,
-            'email'         => $student->email,
-            'phone'         => $student->phone,
-            'date_of_birth' => $student->date_of_birth?->toDateString(),
-            'photo_url'     => $student->photo_url,
-        ]);
-    }
-
     public function changePassword(Request $request): JsonResponse
     {
         $data = $request->validate([
             'current_password' => ['required', 'string'],
-            'password'         => ['required', 'confirmed', Password::min(8)],
+            'password' => ['required', 'confirmed', Password::min(8)],
         ]);
 
         $user = $request->user();
@@ -104,7 +61,7 @@ class AuthController extends Controller
         if (! Hash::check($data['current_password'], $user->password)) {
             return response()->json([
                 'message' => 'The current password is incorrect.',
-                'errors'  => ['current_password' => ['The current password is incorrect.']],
+                'errors' => ['current_password' => ['The current password is incorrect.']],
             ], 422);
         }
 

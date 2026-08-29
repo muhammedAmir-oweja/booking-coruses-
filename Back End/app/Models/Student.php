@@ -32,7 +32,7 @@ class Student extends Model
 
     public function getPhotoUrlAttribute(): ?string
     {
-        return $this->photo ? asset('storage/' . $this->photo) : null;
+        return $this->photo ? asset('storage/'.$this->photo) : null;
     }
 
     public function user(): BelongsTo
@@ -43,8 +43,8 @@ class Student extends Model
     public function courses(): BelongsToMany
     {
         return $this->belongsToMany(Course::class, 'enrollments')
-                    ->withPivot(['enrolled_at', 'status'])
-                    ->withTimestamps();
+            ->withPivot(['enrolled_at', 'status'])
+            ->withTimestamps();
     }
 
     public function enrollments(): HasMany

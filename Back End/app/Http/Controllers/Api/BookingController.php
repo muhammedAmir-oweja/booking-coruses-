@@ -13,11 +13,6 @@ class BookingController extends Controller
     {
         $query = Booking::with(['student', 'course']);
 
-        if ($request->user()?->role === 'student') {
-            $student = \App\Models\Student::where('user_id', $request->user()->id)->first();
-            $query->where('student_id', $student?->id ?? 0);
-        }
-
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
@@ -36,7 +31,7 @@ class BookingController extends Controller
 
         $perPage = min((int) $request->get('per_page', 10), 200);
         $bookings = $query->latest('booked_at')->paginate($perPage);
-        $bookings->getCollection()->transform(fn($b) => $this->format($b));
+        $bookings->getCollection()->transform(fn ($b) => $this->format($b));
 
         return response()->json($bookings);
     }
@@ -44,24 +39,25 @@ class BookingController extends Controller
     public function show(Booking $booking): JsonResponse
     {
         $booking->load(['student', 'course']);
+
         return response()->json($this->format($booking));
     }
 
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'student_id'     => ['required', 'exists:students,id'],
-            'course_id'      => ['required', 'exists:courses,id'],
-            'amount'         => ['required', 'numeric', 'min:0'],
-            'status'         => ['sometimes', 'in:pending,confirmed,cancelled'],
+            'student_id' => ['required', 'exists:students,id'],
+            'course_id' => ['required', 'exists:courses,id'],
+            'amount' => ['required', 'numeric', 'min:0'],
+            'status' => ['sometimes', 'in:pending,confirmed,cancelled'],
             'payment_status' => ['sometimes', 'in:unpaid,paid,refunded'],
             'payment_method' => ['nullable', 'string', 'max:50'],
             'transaction_id' => ['nullable', 'string', 'max:100'],
         ]);
 
-        $data['user_id']    = $request->user()->id;
-        $data['booked_at']  = now();
-        $data['status']     = $data['status'] ?? 'pending';
+        $data['user_id'] = $request->user()->id;
+        $data['booked_at'] = now();
+        $data['status'] = $data['status'] ?? 'pending';
         $data['payment_status'] = $data['payment_status'] ?? 'unpaid';
 
         $booking = Booking::create($data);
@@ -73,7 +69,7 @@ class BookingController extends Controller
     public function updateStatus(Request $request, Booking $booking): JsonResponse
     {
         $data = $request->validate([
-            'status'         => ['sometimes', 'in:pending,confirmed,cancelled'],
+            'status' => ['sometimes', 'in:pending,confirmed,cancelled'],
             'payment_status' => ['sometimes', 'in:unpaid,paid,refunded'],
             'payment_method' => ['nullable', 'string', 'max:50'],
             'transaction_id' => ['nullable', 'string', 'max:100'],
@@ -92,34 +88,35 @@ class BookingController extends Controller
     public function destroy(Booking $booking): JsonResponse
     {
         $booking->delete();
+
         return response()->json(['message' => 'Booking cancelled successfully.']);
     }
 
     private function format(Booking $b): array
     {
         return [
-            'id'             => $b->id,
-            'student_id'     => $b->student_id,
-            'course_id'      => $b->course_id,
-            'user_id'        => $b->user_id,
-            'student'        => $b->student ? [
-                'id'    => $b->student->id,
-                'name'  => $b->student->name,
+            'id' => $b->id,
+            'student_id' => $b->student_id,
+            'course_id' => $b->course_id,
+            'user_id' => $b->user_id,
+            'student' => $b->student ? [
+                'id' => $b->student->id,
+                'name' => $b->student->name,
                 'email' => $b->student->email,
             ] : null,
-            'course'         => $b->course ? [
-                'id'    => $b->course->id,
+            'course' => $b->course ? [
+                'id' => $b->course->id,
                 'title' => $b->course->title,
                 'price' => $b->course->price,
             ] : null,
-            'amount'         => (float) $b->amount,
-            'status'         => $b->status,
+            'amount' => (float) $b->amount,
+            'status' => $b->status,
             'payment_status' => $b->payment_status,
             'payment_method' => $b->payment_method,
             'transaction_id' => $b->transaction_id,
-            'booked_at'      => $b->booked_at?->toDateTimeString(),
-            'paid_at'        => $b->paid_at?->toDateTimeString(),
-            'created_at'     => $b->created_at,
+            'booked_at' => $b->booked_at?->toDateTimeString(),
+            'paid_at' => $b->paid_at?->toDateTimeString(),
+            'created_at' => $b->created_at,
         ];
     }
 }

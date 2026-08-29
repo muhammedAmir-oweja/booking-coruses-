@@ -27,9 +27,9 @@ class Booking extends Model
     protected function casts(): array
     {
         return [
-            'amount'    => 'decimal:2',
+            'amount' => 'decimal:2',
             'booked_at' => 'datetime',
-            'paid_at'   => 'datetime',
+            'paid_at' => 'datetime',
         ];
     }
 

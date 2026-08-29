@@ -26,7 +26,7 @@ class TrainingSession extends Model
     {
         return [
             'starts_at' => 'datetime',
-            'ends_at'   => 'datetime',
+            'ends_at' => 'datetime',
         ];
     }
 

@@ -28,9 +28,9 @@ class Course extends Model
     protected function casts(): array
     {
         return [
-            'price'      => 'decimal:2',
+            'price' => 'decimal:2',
             'start_date' => 'date',
-            'end_date'   => 'date',
+            'end_date' => 'date',
         ];
     }
 
@@ -47,8 +47,8 @@ class Course extends Model
     public function students(): BelongsToMany
     {
         return $this->belongsToMany(Student::class, 'enrollments')
-                    ->withPivot(['enrolled_at', 'status'])
-                    ->withTimestamps();
+            ->withPivot(['enrolled_at', 'status'])
+            ->withTimestamps();
     }
 
     public function trainingSessions(): HasMany
