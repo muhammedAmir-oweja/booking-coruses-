@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Link } from 'react-router-dom'
 import { getBookings, updateBookingStatus, cancelBooking } from '../api/bookings'
 import type { Booking } from '../types'
 import { useToast } from '../context/ToastContext'
@@ -49,7 +48,13 @@ export default function Bookings() {
     }
   }, [page, statusFilter, paymentFilter])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      void load()
+    }, 0)
+
+    return () => clearTimeout(timeout)
+  }, [load])
 
   const handleConfirm = async (id: number) => {
     setActionId(id)
