@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import type { User } from '../../types'
+import { useState } from 'react'
 
 interface SidebarProps {
   user: User | null
@@ -90,19 +91,24 @@ const navGroups: NavGroup[] = [
 ]
 
 const ROLE_LABELS: Record<string, string> = {
-  admin:      'Administrator',
+  admin: 'Administrator',
   instructor: 'Instructor',
-  student:    'Student',
+  student: 'Student',
 }
 
 export default function Sidebar({ user }: SidebarProps) {
   const location = useLocation()
   const { isAdmin, isInstructor, isStudent } = useAuth()
 
+  const [overrides, setOverrides] = useState<Record<string, boolean>>({})
+
+  const toggleGroup = (label: string, currentlyOpen: boolean) =>
+    setOverrides(prev => ({ ...prev, [label]: !currentlyOpen }))
+
   const visibleGroups = navGroups.filter(g => {
-    if (isAdmin)      return g.roles.includes('admin')
+    if (isAdmin) return g.roles.includes('admin')
     if (isInstructor) return g.roles.includes('instructor')
-    if (isStudent)    return g.roles.includes('student')
+    if (isStudent) return g.roles.includes('student')
     return false
   })
 
@@ -114,7 +120,12 @@ export default function Sidebar({ user }: SidebarProps) {
   })
 
   const isGroupActive = (group: NavGroup) =>
-    group.children.some((c) => location.pathname.startsWith(c.to) && (c.to !== '/' || location.pathname === '/'))
+    group.children.some(
+      (c) => location.pathname.startsWith(c.to) && (c.to !== '/' || location.pathname === '/')
+    )
+
+  const isGroupOpen = (group: NavGroup) =>
+    overrides[group.label] ?? isGroupActive(group)
 
   return (
     <aside className="main-sidebar sidebar-dark-primary elevation-4">
@@ -147,11 +158,13 @@ export default function Sidebar({ user }: SidebarProps) {
           >
             {filteredGroups.map((group) => {
               const active = isGroupActive(group)
+              const open = isGroupOpen(group)
               return (
-                <li key={group.label} className={`nav-item has-treeview${active ? ' menu-open' : ''}`}>
+                <li key={group.label} className={`nav-item has-treeview${open ? ' menu-open' : ''}`}>
                   <a href="#" className={`nav-link${active ? ' active' : ''}`}
-                    onClick={(e) => e.preventDefault()}
+                    onClick={(e) => { e.preventDefault(); toggleGroup(group.label, open) }}
                   >
+
                     <i className={`nav-icon ${group.icon}`} />
                     <p>
                       {group.label}
