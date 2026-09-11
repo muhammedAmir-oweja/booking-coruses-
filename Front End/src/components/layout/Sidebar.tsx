@@ -3,7 +3,6 @@ import { useAuth } from '../../context/AuthContext'
 import type { User } from '../../types'
 
 interface SidebarProps {
-  collapsed: boolean
   user: User | null
 }
 
@@ -96,7 +95,7 @@ const ROLE_LABELS: Record<string, string> = {
   student:    'Student',
 }
 
-export default function Sidebar({ collapsed, user }: SidebarProps) {
+export default function Sidebar({ user }: SidebarProps) {
   const location = useLocation()
   const { isAdmin, isInstructor, isStudent } = useAuth()
 
@@ -118,7 +117,7 @@ export default function Sidebar({ collapsed, user }: SidebarProps) {
     group.children.some((c) => location.pathname.startsWith(c.to) && (c.to !== '/' || location.pathname === '/'))
 
   return (
-    <aside className={`main-sidebar sidebar-dark-primary elevation-4${collapsed ? ' sidebar-collapse' : ''}`}>
+    <aside className="main-sidebar sidebar-dark-primary elevation-4">
       <NavLink to="/" className="brand-link">
         <i className="fas fa-graduation-cap brand-image img-circle elevation-3" style={{ fontSize: 22, lineHeight: '33px', opacity: 0.8 }} />
         <span className="brand-text font-weight-light">Course Booking</span>

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { DEV_NO_AUTH } from './devAuth'
 import Layout from './components/layout/Layout'
 import Dashboard from './pages/Dashboard'
 import Courses from './pages/Courses'
@@ -17,6 +18,7 @@ import Register from './pages/Register'
 import NotFound from './pages/NotFound'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
+  if (DEV_NO_AUTH) return <>{children}</>
   const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
   return token ? <>{children}</> : <Navigate to="/login" replace />
 }
@@ -26,8 +28,8 @@ export default function App() {
     <BrowserRouter>
     <AuthProvider>
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={DEV_NO_AUTH ? <Navigate to="/" replace /> : <Login />} />
+        <Route path="/register" element={DEV_NO_AUTH ? <Navigate to="/" replace /> : <Register />} />
         <Route path="/forgot-password" element={<Navigate to="/login" replace />} />
 
         <Route

@@ -62,7 +62,7 @@ class DashboardController extends Controller
         $monthlyRevenue = Booking::where('payment_status', 'paid')
             ->where('booked_at', '>=', now()->subMonths(6)->startOfMonth())
             ->select(
-                DB::raw("DATE_FORMAT(booked_at, '%Y-%m') as month"),
+                DB::raw($this->monthExpression() . ' as month'),
                 DB::raw('SUM(amount) as revenue')
             )
             ->groupBy('month')
@@ -75,7 +75,7 @@ class DashboardController extends Controller
 
         $monthlyBookings = Booking::where('booked_at', '>=', now()->subMonths(6)->startOfMonth())
             ->select(
-                DB::raw("DATE_FORMAT(booked_at, '%Y-%m') as month"),
+                DB::raw($this->monthExpression() . ' as month'),
                 DB::raw('COUNT(*) as count')
             )
             ->groupBy('month')
@@ -96,5 +96,12 @@ class DashboardController extends Controller
             'monthly_revenue' => $monthlyRevenue,
             'monthly_bookings' => $monthlyBookings,
         ]);
+    }
+
+    private function monthExpression(string $column = 'booked_at'): string
+    {
+        return DB::connection()->getDriverName() === 'mysql'
+            ? "DATE_FORMAT($column, '%Y-%m')"
+            : "TO_CHAR($column, 'YYYY-MM')";
     }
 }

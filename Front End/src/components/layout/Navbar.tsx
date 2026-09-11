@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { logout } from '../../api/auth'
+import { DEV_NO_AUTH } from '../../devAuth'
 import type { User } from '../../types'
 
 interface NavbarProps {
@@ -16,6 +17,18 @@ const ROLE_COLORS: Record<string, string> = {
 
 export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLLIElement>(null)
+
+  // The dropdown is toggled by React, not Bootstrap's JS, so nothing was
+  // closing it when you clicked elsewhere on the page.
+  useEffect(() => {
+    if (!userMenuOpen) return
+    const closeOnOutsideClick = (e: MouseEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) setUserMenuOpen(false)
+    }
+    document.addEventListener('mousedown', closeOnOutsideClick)
+    return () => document.removeEventListener('mousedown', closeOnOutsideClick)
+  }, [userMenuOpen])
 
   const handleLogout = async () => {
     await logout().catch(() => null)
@@ -44,7 +57,7 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
       </ul>
 
       <ul className="navbar-nav ml-auto">
-        <li className={`nav-item dropdown ${userMenuOpen ? 'show' : ''}`}>
+        <li ref={menuRef} className={`nav-item dropdown ${userMenuOpen ? 'show' : ''}`}>
           <a
             className="nav-link"
             href="#"
@@ -80,9 +93,15 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
               <i className="fas fa-user mr-2" /> My Profile
             </Link>
             <div className="dropdown-divider" />
-            <button className="dropdown-item text-danger" onClick={handleLogout}>
-              <i className="fas fa-sign-out-alt mr-2" /> Sign Out
-            </button>
+            {DEV_NO_AUTH ? (
+              <div className="dropdown-item disabled" style={{ fontSize: 11, color: '#6c757d', padding: '4px 16px' }}>
+                <i className="fas fa-unlock mr-2" /> Dev mode &mdash; auth bypassed
+              </div>
+            ) : (
+              <button className="dropdown-item text-danger" onClick={handleLogout}>
+                <i className="fas fa-sign-out-alt mr-2" /> Sign Out
+              </button>
+            )}
           </div>
         </li>
       </ul>

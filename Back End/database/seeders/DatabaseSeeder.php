@@ -15,8 +15,25 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin = User::where('role', 'admin')->first();
-        $instructor = User::where('role', 'instructor')->first();
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@coursebooking.test'],
+            [
+                'name'              => 'System Admin',
+                'password'          => Hash::make('Admin1234'),
+                'role'              => 'admin',
+                'email_verified_at' => now(),
+            ]
+        );
+
+        $instructor = User::firstOrCreate(
+            ['email' => 'omar.farouk@coursebooking.test'],
+            [
+                'name'              => 'Omar Farouk',
+                'password'          => Hash::make('Teach1234'),
+                'role'              => 'instructor',
+                'email_verified_at' => now(),
+            ]
+        );
 
         $instructor2 = User::firstOrCreate(
             ['email' => 'maya.hassan@gmail.com'],

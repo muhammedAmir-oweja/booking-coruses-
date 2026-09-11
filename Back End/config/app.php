@@ -17,6 +17,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Dev Auth Bypass
+    |--------------------------------------------------------------------------
+    |
+    | When true (and only in the local environment), the admin API routes skip
+    | Sanctum and the admin gate, and every request is signed in as an admin
+    | user. Handy while building the admin UI before auth exists. Never enable
+    | this outside local development.
+    |
+    */
+
+    'dev_no_auth' => (bool) env('DEV_NO_AUTH', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |
@@ -52,7 +66,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'http://localhost'),
+    'FRONTEND_URL' => env('FRONTEND_URL', 'http://localhost:5173'),
 
     /*
     |--------------------------------------------------------------------------

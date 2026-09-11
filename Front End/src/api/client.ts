@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { DEV_NO_AUTH } from '../devAuth'
 
 const client = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api',
@@ -20,7 +21,7 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    if (err.response?.status === 401 && !DEV_NO_AUTH) {
       localStorage.removeItem('auth_token')
       sessionStorage.removeItem('auth_token')
       window.location.href = '/login'

@@ -9,13 +9,20 @@ use App\Http\Controllers\Api\StudentDocumentController;
 use App\Http\Controllers\Api\TrainingSessionController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Middleware\DevAuthBypass;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
 });
 
-Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+// Dev only: DEV_NO_AUTH=true swaps the real auth stack for a middleware that
+// signs each request in as an admin, so the admin app runs without a login.
+$adminOnly = config('app.dev_no_auth')
+    ? [DevAuthBypass::class]
+    : ['auth:sanctum', 'admin'];
+
+Route::middleware($adminOnly)->group(function () {
 
     Route::prefix('auth')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);

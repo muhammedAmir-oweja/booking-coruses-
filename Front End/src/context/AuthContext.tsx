@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { getMe } from '../api/auth'
+import { DEV_NO_AUTH, DEV_USER } from '../devAuth'
 import type { User } from '../types'
 
 interface AuthContextValue {
@@ -23,11 +24,13 @@ const AuthContext = createContext<AuthContextValue>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const hasToken = !!(localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token'))
-  const [loading, setLoading] = useState(hasToken)
+  const [loading, setLoading] = useState(hasToken || DEV_NO_AUTH)
 
   const fetchUser = () => {
     const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
-    if (!token) {
+    // Dev-only: no token needed — the API signs us in as an admin, and if it
+    // is not running we still fall back to a stand-in so the UI renders.
+    if (!token && !DEV_NO_AUTH) {
       setUser(null)
       setLoading(false)
       return
@@ -35,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true)
     getMe()
       .then(setUser)
-      .catch(() => setUser(null))
+      .catch(() => setUser(DEV_NO_AUTH ? DEV_USER : null))
       .finally(() => setLoading(false))
   }
 
