@@ -11,25 +11,44 @@ export default function Courses() {
   const { isAdmin, isInstructor } = useAuth()
   const [data, setData] = useState<PaginatedResponse<Course> | null>(null)
   const [loading, setLoading] = useState(true)
+  const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [reloadKey, setReloadKey] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
 
-  const load = (p = page, s = search) => {
-    setLoading(true)
-    getCourses({ page: p, search: s || undefined })
-      .then(({ data }) => setData(data))
-      .catch(() => setError('Failed to load courses.'))
-      .finally(() => setLoading(false))
-  }
+  // The spinner is switched on by whatever the user did (paged, searched,
+  // deleted), not inside the effect - setting it here would cascade a render.
+  const reload = () => { setLoading(true); setReloadKey(k => k + 1) }
+  const goToPage = (p: number) => { setLoading(true); setPage(p) }
 
-  useEffect(() => { load() }, [page])
+  useEffect(() => {
+    let cancelled = false
+
+    void (async () => {
+      try {
+        const { data } = await getCourses({ page, search: search || undefined })
+        if (cancelled) return
+        setData(data)
+        setError(null)
+      } catch {
+        if (!cancelled) setError('Failed to load courses.')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+
+    // A newer request supersedes this one - drop its response on the floor
+    // so fast pagination clicks cannot land out of order.
+    return () => { cancelled = true }
+  }, [page, search, reloadKey])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
+    setLoading(true)
     setPage(1)
-    load(1, search)
+    setSearch(searchInput)
   }
 
   const handleDelete = async (id: number) => {
@@ -38,7 +57,7 @@ export default function Courses() {
     try {
       await deleteCourse(id)
       showToast('Course deleted successfully.')
-      load()
+      reload()
     } catch {
       showToast('Failed to delete course.', 'error')
     } finally {
@@ -86,8 +105,8 @@ export default function Courses() {
                     type="text"
                     className="form-control"
                     placeholder="Search courses..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
                   />
                   <div className="input-group-append">
                     <button type="submit" className="btn btn-default">
@@ -183,17 +202,17 @@ export default function Courses() {
               <div className="card-footer clearfix">
                 <ul className="pagination pagination-sm m-0 float-right">
                   <li className={`page-item ${page <= 1 ? 'disabled' : ''}`}>
-                    <button className="page-link" onClick={() => setPage(page - 1)}>
+                    <button className="page-link" onClick={() => goToPage(page - 1)}>
                       &laquo;
                     </button>
                   </li>
                   {Array.from({ length: data.last_page }, (_, i) => i + 1).map((p) => (
                     <li key={p} className={`page-item ${p === page ? 'active' : ''}`}>
-                      <button className="page-link" onClick={() => setPage(p)}>{p}</button>
+                      <button className="page-link" onClick={() => goToPage(p)}>{p}</button>
                     </li>
                   ))}
                   <li className={`page-item ${page >= data.last_page ? 'disabled' : ''}`}>
-                    <button className="page-link" onClick={() => setPage(page + 1)}>
+                    <button className="page-link" onClick={() => goToPage(page + 1)}>
                       &raquo;
                     </button>
                   </li>

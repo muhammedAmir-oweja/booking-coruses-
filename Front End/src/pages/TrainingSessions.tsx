@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getTrainingSessions, deleteTrainingSession } from '../api/trainingSessions'
 import type { TrainingSession } from '../types'
@@ -32,30 +32,43 @@ export default function TrainingSessions() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [deleting, setDeleting] = useState<number | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    setError('')
-    try {
-      const { data } = await getTrainingSessions({
-        page,
-        search: search || undefined,
-        status: statusFilter || undefined,
-      })
-      setSessions(data.data)
-      setLastPage(data.last_page)
-      setTotal(data.total)
-    } catch {
-      setError('Failed to load training sessions.')
-    } finally {
-      setLoading(false)
-    }
-  }, [page, search, statusFilter])
+  // The spinner is switched on by whatever the user did (paged, searched,
+  // filtered, deleted), not inside the effect - that would cascade a render.
+  const reload = () => { setLoading(true); setReloadKey(k => k + 1) }
+  const goToPage = (p: number) => { setLoading(true); setPage(p) }
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    let cancelled = false
+
+    void (async () => {
+      try {
+        const { data } = await getTrainingSessions({
+          page,
+          search: search || undefined,
+          status: statusFilter || undefined,
+        })
+        if (cancelled) return
+        setSessions(data.data)
+        setLastPage(data.last_page)
+        setTotal(data.total)
+        setError('')
+      } catch {
+        if (!cancelled) setError('Failed to load training sessions.')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+
+    // A newer request supersedes this one - drop its response on the floor
+    // so fast pagination clicks cannot land out of order.
+    return () => { cancelled = true }
+  }, [page, search, statusFilter, reloadKey])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
+    setLoading(true)
     setPage(1)
     setSearch(searchInput)
   }
@@ -66,7 +79,7 @@ export default function TrainingSessions() {
     try {
       await deleteTrainingSession(session.id)
       showToast('Training session deleted successfully.')
-      load()
+      reload()
     } catch {
       showToast('Failed to delete training session.', 'error')
     } finally {
@@ -111,7 +124,7 @@ export default function TrainingSessions() {
                 </button>
                 {search && (
                   <button type="button" className="btn btn-default btn-sm"
-                    onClick={() => { setSearchInput(''); setSearch(''); setPage(1) }}>
+                    onClick={() => { setLoading(true); setSearchInput(''); setSearch(''); setPage(1) }}>
                     Clear
                   </button>
                 )}
@@ -121,7 +134,7 @@ export default function TrainingSessions() {
                 className="form-control form-control-sm"
                 style={{ maxWidth: 150 }}
                 value={statusFilter}
-                onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
+                onChange={(e) => { setLoading(true); setStatusFilter(e.target.value); setPage(1) }}
               >
                 <option value="">All Statuses</option>
                 <option value="scheduled">Scheduled</option>
@@ -205,15 +218,15 @@ export default function TrainingSessions() {
               <div className="card-footer clearfix">
                 <ul className="pagination pagination-sm m-0 float-right">
                   <li className={`page-item${page === 1 ? ' disabled' : ''}`}>
-                    <button className="page-link" onClick={() => setPage(p => p - 1)}>«</button>
+                    <button className="page-link" onClick={() => goToPage(page - 1)}>«</button>
                   </li>
                   {Array.from({ length: lastPage }, (_, i) => i + 1).map((p) => (
                     <li key={p} className={`page-item${p === page ? ' active' : ''}`}>
-                      <button className="page-link" onClick={() => setPage(p)}>{p}</button>
+                      <button className="page-link" onClick={() => goToPage(p)}>{p}</button>
                     </li>
                   ))}
                   <li className={`page-item${page === lastPage ? ' disabled' : ''}`}>
-                    <button className="page-link" onClick={() => setPage(p => p + 1)}>»</button>
+                    <button className="page-link" onClick={() => goToPage(page + 1)}>»</button>
                   </li>
                 </ul>
               </div>

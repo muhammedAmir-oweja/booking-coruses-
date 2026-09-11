@@ -70,7 +70,16 @@ class CourseController extends Controller
             'hours' => ['nullable', 'integer', 'min:0'],
             'status' => ['sometimes', 'in:draft,active,inactive'],
             'start_date' => ['sometimes', 'date'],
-            'end_date' => ['nullable', 'date', 'after:start_date'],
+            // `after:start_date` reads the request body, so on a partial update
+            // that omits start_date it has nothing to compare and silently
+            // passes. Fall back to the stored value.
+            'end_date' => ['nullable', 'date', function ($attribute, $value, $fail) use ($request, $course) {
+                $start = $request->input('start_date', $course->start_date?->toDateString());
+
+                if ($start && $value && strtotime($value) <= strtotime($start)) {
+                    $fail('The end date must be after the start date.');
+                }
+            }],
         ]);
 
         $course->update($data);

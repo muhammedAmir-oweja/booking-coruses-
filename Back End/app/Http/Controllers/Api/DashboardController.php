@@ -49,7 +49,7 @@ class DashboardController extends Controller
             ->map(fn ($c) => [
                 'id' => $c->id,
                 'title' => $c->title,
-                'price' => $c->price,
+                'price' => (float) $c->price,
                 'capacity' => $c->capacity,
                 'status' => $c->status,
                 'enrolled_count' => $c->enrollments_count,
@@ -100,8 +100,10 @@ class DashboardController extends Controller
 
     private function monthExpression(string $column = 'booked_at'): string
     {
-        return DB::connection()->getDriverName() === 'mysql'
-            ? "DATE_FORMAT($column, '%Y-%m')"
-            : "TO_CHAR($column, 'YYYY-MM')";
+        return match (DB::connection()->getDriverName()) {
+            'mysql', 'mariadb' => "DATE_FORMAT($column, '%Y-%m')",
+            'sqlite' => "strftime('%Y-%m', $column)",
+            default => "TO_CHAR($column, 'YYYY-MM')",
+        };
     }
 }

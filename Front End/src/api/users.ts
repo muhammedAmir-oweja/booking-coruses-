@@ -1,6 +1,6 @@
 import client from './client'
-import type { User } from '../types'
+import type { User, PaginatedResponse } from '../types'
 
-export function getUsers(params?: { role?: string }) {
-  return client.get<User[]>('/users', { params })
+export function getUsers(params?: { role?: string; per_page?: number }) {
+  return client.get<PaginatedResponse<User>>('/users', { params })
 }

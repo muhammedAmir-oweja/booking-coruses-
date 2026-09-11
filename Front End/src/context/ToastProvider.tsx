@@ -1,18 +1,6 @@
-import { createContext, useContext, useState, useCallback, useRef } from 'react'
-
-type ToastType = 'success' | 'error' | 'warning' | 'info'
-
-interface Toast {
-  id: number
-  message: string
-  type: ToastType
-}
-
-interface ToastContextValue {
-  showToast: (message: string, type?: ToastType) => void
-}
-
-const ToastContext = createContext<ToastContextValue | null>(null)
+import { useState, useCallback, useRef } from 'react'
+import { ToastContext } from './ToastContext'
+import type { Toast, ToastType } from './ToastContext'
 
 const ICONS: Record<ToastType, string> = {
   success: 'fas fa-check-circle',
@@ -85,10 +73,4 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       <style>{`@keyframes slideIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }`}</style>
     </ToastContext.Provider>
   )
-}
-
-export function useToast(): ToastContextValue {
-  const ctx = useContext(ToastContext)
-  if (!ctx) throw new Error('useToast must be used inside ToastProvider')
-  return ctx
 }

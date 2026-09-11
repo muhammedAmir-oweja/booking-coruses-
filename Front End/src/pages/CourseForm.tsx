@@ -43,8 +43,8 @@ export default function CourseForm() {
   const [apiError, setApiError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchInstructors = getUsers({ role: 'instructor' }).then(({ data }) =>
-      setInstructors(data)
+    const fetchInstructors = getUsers({ role: 'instructor', per_page: 200 }).then(
+      ({ data }) => setInstructors(data.data)
     )
 
     if (isEdit) {
@@ -107,7 +107,7 @@ export default function CourseForm() {
       hours: Number(form.hours),
       status: form.status as Course['status'],
       start_date: form.start_date,
-      end_date: form.end_date || undefined,
+      end_date: form.end_date || null,
     }
 
     try {

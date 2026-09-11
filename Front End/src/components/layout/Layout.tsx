@@ -4,7 +4,7 @@ import Navbar from './Navbar'
 import Sidebar from './Sidebar'
 import Footer from './Footer'
 import { useAuth } from '../../context/AuthContext'
-import { ToastProvider } from '../../context/ToastContext'
+import { ToastProvider } from '../../context/ToastProvider'
 
 export default function Layout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)

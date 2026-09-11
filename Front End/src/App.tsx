@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider } from './context/AuthContext'
+import { AuthProvider } from './context/AuthProvider'
 import { DEV_NO_AUTH } from './devAuth'
 import Layout from './components/layout/Layout'
 import Dashboard from './pages/Dashboard'
@@ -53,8 +53,9 @@ export default function App() {
           <Route path="/enrollments/new" element={<EnrollmentForm />} />
           <Route path="/bookings" element={<Bookings />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="*" element={<NotFound />} />
         </Route>
+
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </AuthProvider>
     </BrowserRouter>

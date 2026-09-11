@@ -38,12 +38,12 @@ export interface TrainingSession {
   course_id: number
   course?: { id: number; title: string }
   title: string
-  description?: string
+  description?: string | null
   starts_at: string
   ends_at: string
   duration_minutes?: number
-  location?: string
-  max_attendees?: number
+  location?: string | null
+  max_attendees?: number | null
   status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled'
   created_at: string
 }

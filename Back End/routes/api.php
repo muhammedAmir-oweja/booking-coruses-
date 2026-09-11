@@ -38,7 +38,8 @@ Route::middleware($adminOnly)->group(function () {
     Route::apiResource('students', StudentController::class);
     Route::apiResource('training-sessions', TrainingSessionController::class);
     Route::apiResource('enrollments', EnrollmentController::class);
-    Route::apiResource('bookings', BookingController::class);
+    Route::apiResource('bookings', BookingController::class)->except(['update']);
+    Route::patch('/bookings/{booking}/status', [BookingController::class, 'updateStatus']);
 
     Route::get('/students/{student}/documents', [StudentDocumentController::class, 'index']);
     Route::post('/students/{student}/documents', [StudentDocumentController::class, 'store']);

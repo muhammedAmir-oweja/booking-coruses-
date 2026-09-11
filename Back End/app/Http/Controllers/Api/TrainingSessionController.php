@@ -66,7 +66,15 @@ class TrainingSessionController extends Controller
             'title' => ['sometimes', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'starts_at' => ['sometimes', 'date'],
-            'ends_at' => ['sometimes', 'date', 'after:starts_at'],
+            // See CourseController@update - `after:` compares against the
+            // request body, which a partial update may not carry.
+            'ends_at' => ['sometimes', 'date', function ($attribute, $value, $fail) use ($request, $trainingSession) {
+                $start = $request->input('starts_at', $trainingSession->starts_at?->toDateTimeString());
+
+                if ($start && $value && strtotime($value) <= strtotime($start)) {
+                    $fail('The end time must be after the start time.');
+                }
+            }],
             'location' => ['nullable', 'string', 'max:255'],
             'max_attendees' => ['nullable', 'integer', 'min:1'],
             'status' => ['sometimes', 'in:scheduled,ongoing,completed,cancelled'],

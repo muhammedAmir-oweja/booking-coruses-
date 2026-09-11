@@ -110,11 +110,11 @@ export default function TrainingSessionForm() {
     const payload: Partial<TrainingSession> = {
       course_id: Number(form.course_id),
       title: form.title,
-      description: form.description || undefined,
+      description: form.description || null,
       starts_at: toApiFormat(form.starts_at),
       ends_at: toApiFormat(form.ends_at),
-      location: form.location || undefined,
-      max_attendees: form.max_attendees ? Number(form.max_attendees) : undefined,
+      location: form.location || null,
+      max_attendees: form.max_attendees ? Number(form.max_attendees) : null,
       status: form.status as TrainingSession['status'],
     }
 

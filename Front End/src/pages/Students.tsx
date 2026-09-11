@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getStudents, deleteStudent } from '../api/students'
 import type { Student } from '../types'
@@ -17,26 +17,39 @@ export default function Students() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [deleting, setDeleting] = useState<number | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    setError('')
-    try {
-      const { data } = await getStudents({ page, search: search || undefined })
-      setStudents(data.data)
-      setLastPage(data.last_page)
-      setTotal(data.total)
-    } catch {
-      setError('Failed to load students.')
-    } finally {
-      setLoading(false)
-    }
-  }, [page, search])
+  // The spinner is switched on by whatever the user did (paged, searched,
+  // deleted), not inside the effect - setting it here would cascade a render.
+  const reload = () => { setLoading(true); setReloadKey(k => k + 1) }
+  const goToPage = (p: number) => { setLoading(true); setPage(p) }
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    let cancelled = false
+
+    void (async () => {
+      try {
+        const { data } = await getStudents({ page, search: search || undefined })
+        if (cancelled) return
+        setStudents(data.data)
+        setLastPage(data.last_page)
+        setTotal(data.total)
+        setError('')
+      } catch {
+        if (!cancelled) setError('Failed to load students.')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+
+    // A newer request supersedes this one - drop its response on the floor
+    // so fast pagination clicks cannot land out of order.
+    return () => { cancelled = true }
+  }, [page, search, reloadKey])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
+    setLoading(true)
     setPage(1)
     setSearch(searchInput)
   }
@@ -47,7 +60,7 @@ export default function Students() {
     try {
       await deleteStudent(student.id)
       showToast('Student deleted successfully.')
-      load()
+      reload()
     } catch {
       showToast('Failed to delete student.', 'error')
     } finally {
@@ -94,7 +107,7 @@ export default function Students() {
                   <button
                     type="button"
                     className="btn btn-default btn-sm"
-                    onClick={() => { setSearchInput(''); setSearch(''); setPage(1) }}
+                    onClick={() => { setLoading(true); setSearchInput(''); setSearch(''); setPage(1) }}
                   >
                     Clear
                   </button>
@@ -183,15 +196,15 @@ export default function Students() {
               <div className="card-footer clearfix">
                 <ul className="pagination pagination-sm m-0 float-right">
                   <li className={`page-item${page === 1 ? ' disabled' : ''}`}>
-                    <button className="page-link" onClick={() => setPage(p => p - 1)}>«</button>
+                    <button className="page-link" onClick={() => goToPage(page - 1)}>«</button>
                   </li>
                   {Array.from({ length: lastPage }, (_, i) => i + 1).map((p) => (
                     <li key={p} className={`page-item${p === page ? ' active' : ''}`}>
-                      <button className="page-link" onClick={() => setPage(p)}>{p}</button>
+                      <button className="page-link" onClick={() => goToPage(p)}>{p}</button>
                     </li>
                   ))}
                   <li className={`page-item${page === lastPage ? ' disabled' : ''}`}>
-                    <button className="page-link" onClick={() => setPage(p => p + 1)}>»</button>
+                    <button className="page-link" onClick={() => goToPage(page + 1)}>»</button>
                   </li>
                 </ul>
               </div>
