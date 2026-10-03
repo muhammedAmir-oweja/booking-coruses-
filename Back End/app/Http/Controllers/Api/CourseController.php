@@ -12,10 +12,11 @@ class CourseController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Course::with('instructor')
-            ->withCount('enrollments');
+            ->withCount(['enrollments','bookings as active_bookings_count' => fn($q) => $q
+                ->whereIn('status', ['pending', 'confirmed']),]);
 
         if ($request->filled('search')) {
-            $query->where('title', 'like', '%'.$request->search.'%');
+            $query->where('title', 'like', '%' . $request->search . '%');
         }
 
         if ($request->filled('status')) {
@@ -25,7 +26,7 @@ class CourseController extends Controller
         $perPage = min((int) $request->get('per_page', 10), 200);
         $courses = $query->latest()->paginate($perPage);
 
-        $courses->getCollection()->transform(fn ($c) => $this->format($c));
+        $courses->getCollection()->transform(fn($c) => $this->format($c));
 
         return response()->json($courses);
     }
