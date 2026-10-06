@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Course Booking Todo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#f2f4f3; --surface:#ffffff; --surface-2:#e9edec;
+  --line:#d4dcda; --line-soft:#e4e9e8;
+  --ink:#111a1b; --ink-2:#3f5255; --ink-3:#6d8184;
+  --accent:#0b6d7a; --accent-ink:#064954; --accent-wash:#e0eef0;
+  --ok:#14715c; --ok-wash:#e0f0eb;
+  --warn:#8a5708; --warn-wash:#f8efdc;
+  --danger:#a8322a; --danger-wash:#f9e9e7;
+  --shadow:0 1px 2px rgba(11,32,36,.05);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0a1112; --surface:#101a1c; --surface-2:#162325;
+    --line:#213134; --line-soft:#1a292c;
+    --ink:#e2ebea; --ink-2:#adc1c2; --ink-3:#7b9195;
+    --accent:#55b5c0; --accent-ink:#8bd2d9; --accent-wash:#10292d;
+    --ok:#46bc9d; --ok-wash:#0e2b26;
+    --warn:#d49a42; --warn-wash:#2e2311;
+    --danger:#e0776d; --danger-wash:#331b19;
+    --shadow:0 1px 2px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0a1112; --surface:#101a1c; --surface-2:#162325;
+  --line:#213134; --line-soft:#1a292c;
+  --ink:#e2ebea; --ink-2:#adc1c2; --ink-3:#7b9195;
+  --accent:#55b5c0; --accent-ink:#8bd2d9; --accent-wash:#10292d;
+  --ok:#46bc9d; --ok-wash:#0e2b26;
+  --warn:#d49a42; --warn-wash:#2e2311;
+  --danger:#e0776d; --danger-wash:#331b19;
+  --shadow:0 1px 2px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font:400 15px/1.6 'IBM Plex Sans','Segoe UI',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.frame{max-width:960px; margin:0 auto; padding:0 22px 90px}
+a{color:var(--accent)}
+
+/* ---------- sticky summary ---------- */
+.bar{
+  position:sticky; top:0; z-index:20;
+  background:color-mix(in srgb, var(--ground) 92%, transparent);
+  backdrop-filter:blur(8px); border-bottom:1px solid var(--line);
+}
+.bar-in{max-width:960px; margin:0 auto; padding:11px 22px; display:flex; align-items:center; gap:14px; flex-wrap:wrap}
+.bar-id{font:500 12px/1 'IBM Plex Mono',monospace; color:var(--ink-3)}
+.bar-count{font:500 12px/1 'IBM Plex Mono',monospace; color:var(--ink-2); margin-inline-start:auto}
+.meter{flex:1 1 180px; min-width:120px; height:6px; background:var(--surface-2); border-radius:99px; overflow:hidden}
+.meter > i{display:block; height:100%; background:var(--accent); border-radius:99px; transition:width .18s ease}
+
+/* ---------- masthead ---------- */
+.mast{padding:46px 0 26px; border-bottom:1px solid var(--line)}
+.eyebrow{font:500 11.5px/1 'IBM Plex Mono',monospace; letter-spacing:.11em; text-transform:uppercase; color:var(--accent); margin:0 0 14px}
+h1{font:700 36px/1.1 Archivo,sans-serif; letter-spacing:-.022em; margin:0 0 14px; text-wrap:balance}
+.lede{font-size:16px; color:var(--ink-2); margin:0; max-width:62ch}
+
+/* ---------- controls ---------- */
+.controls{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:26px 0 0}
+.chipbtn{
+  font:500 12.5px/1 'IBM Plex Sans',sans-serif; color:var(--ink-2);
+  background:var(--surface); border:1px solid var(--line); border-radius:99px;
+  padding:7px 13px; cursor:pointer;
+}
+.chipbtn:hover{border-color:var(--accent); color:var(--accent)}
+.chipbtn[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:#fff}
+.chipbtn.ghost{margin-inline-start:auto; border-style:dashed}
+.chipbtn.ghost:hover{border-color:var(--danger); color:var(--danger)}
+
+/* ---------- task card ---------- */
+.task{
+  background:var(--surface); border:1px solid var(--line); border-radius:10px;
+  margin:16px 0 0; box-shadow:var(--shadow); overflow:hidden;
+}
+.task[data-blocked="true"]{opacity:.62}
+.task[data-state="done"]{border-color:color-mix(in srgb, var(--ok) 42%, var(--line))}
+.task-head{
+  display:flex; align-items:center; gap:13px; flex-wrap:wrap;
+  padding:15px 18px; cursor:pointer; background:none; border:0; width:100%; text-align:start;
+  font:inherit; color:inherit;
+}
+.task-head:hover{background:var(--surface-2)}
+.no{
+  font:500 11px/1 'IBM Plex Mono',monospace; color:var(--accent);
+  border:1px solid var(--accent); background:var(--accent-wash);
+  border-radius:4px; padding:6px 7px; flex:none;
+}
+.task-title{font:600 16px/1.3 Archivo,sans-serif; letter-spacing:-.008em; flex:1 1 200px; min-width:0}
+.task[data-state="done"] .task-title{color:var(--ink-3); text-decoration:line-through}
+.pill{
+  font:500 10px/1 'IBM Plex Mono',monospace; letter-spacing:.07em; text-transform:uppercase;
+  border-radius:3px; padding:5px 7px; flex:none;
+}
+.p-ready{background:var(--accent-wash); color:var(--accent-ink)}
+.p-doing{background:var(--warn-wash); color:var(--warn)}
+.p-done{background:var(--ok-wash); color:var(--ok)}
+.p-block{background:var(--danger-wash); color:var(--danger)}
+.frac{font:500 11.5px/1 'IBM Plex Mono',monospace; color:var(--ink-3); flex:none}
+.chev{font:400 11px/1 'IBM Plex Mono',monospace; color:var(--ink-3); flex:none; transition:transform .15s}
+.task[data-open="true"] .chev{transform:rotate(90deg)}
+
+.task-body{display:none; border-top:1px solid var(--line-soft); padding:4px 0 10px}
+.task[data-open="true"] .task-body{display:block}
+.meta{
+  display:flex; gap:7px 16px; flex-wrap:wrap; align-items:baseline;
+  padding:12px 18px 10px; font:400 12.5px/1.5 'IBM Plex Mono',monospace; color:var(--ink-3);
+}
+.meta b{color:var(--ink-2); font-weight:500}
+.meta a{text-decoration:none; border-bottom:1px solid currentColor}
+
+ul.items{list-style:none; margin:0; padding:0}
+ul.items li{border-top:1px solid var(--line-soft)}
+ul.items label{display:flex; gap:11px; align-items:flex-start; padding:10px 18px; cursor:pointer}
+ul.items label:hover{background:var(--surface-2)}
+ul.items input{margin:4px 0 0; accent-color:var(--accent); flex:none; width:15px; height:15px}
+.txt{font-size:14.2px; min-width:0}
+ul.items input:checked ~ .txt{color:var(--ink-3); text-decoration:line-through}
+.where{
+  display:block; margin-top:3px; font:400 11.5px/1.5 'IBM Plex Mono',monospace;
+  color:var(--ink-3); overflow-wrap:anywhere; text-decoration:none;
+}
+ul.items input:checked ~ .txt .where{text-decoration:line-through}
+
+.empty{padding:30px 18px; text-align:center; color:var(--ink-3); font-size:14px}
+.foot{margin:34px 0 0; padding-top:20px; border-top:1px solid var(--line); font-size:13.5px; color:var(--ink-3)}
+.foot code{font:500 12px/1.4 'IBM Plex Mono',monospace; background:var(--surface-2); border-radius:4px; padding:1.5px 5px}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+@media(max-width:620px){
+  h1{font-size:28px}
+  .task-head{padding:13px 14px}
+  ul.items label{padding:10px 14px}
+  .meta{padding:12px 14px 10px}
+}
+</style>
+
+<div class="bar">
+  <div class="bar-in">
+    <span class="bar-id">booking-coruses- · 9 tasks</span>
+    <span class="meter"><i id="meter" style="width:0%"></i></span>
+    <span class="bar-count" id="count">0 / 0</span>
+  </div>
+</div>
+
+<div class="frame">
+  <header class="mast">
+    <p class="eyebrow">Course booking system · todo</p>
+    <h1>What is left, as a checklist</h1>
+    <p class="lede">
+      Every step from the build plan, as items you can tick. A task unlocks when the tasks it depends
+      on are finished. Progress is saved in this browser; <b>Copy as markdown</b> hands you the same
+      list for a commit message, a PR body or the task tracker.
+    </p>
+    <div class="controls">
+      <button class="chipbtn" data-filter="all" aria-pressed="true">All</button>
+      <button class="chipbtn" data-filter="ready" aria-pressed="false">Ready now</button>
+      <button class="chipbtn" data-filter="blocked" aria-pressed="false">Blocked</button>
+      <button class="chipbtn" data-filter="open" aria-pressed="false">Unfinished</button>
+      <button class="chipbtn" id="copy">Copy as markdown</button>
+      <button class="chipbtn ghost" id="reset">Reset</button>
+    </div>
+  </header>
+
+  <main id="list"></main>
+
+  <p class="foot">
+    Steps, file paths and line numbers come from
+    <a href="TASKS-20-26-PLAN.html">TASKS-20-26-PLAN.html</a> — each task heading links to its
+    section there. Ticks live in <code>localStorage</code> under
+    <code>lms-todo-v1</code>, so they are per-browser and never leave this machine.
+  </p>
+</div>
+
+<script>
+/* ------------------------------------------------------------------ data ---
+   One entry per tracker item, in the order the plan says to do them.
+   `deps` gates a task: it stays blocked until every id listed is complete.
+   `where` is the file and line the plan points at, so an item is actionable
+   without opening the plan at all. Item ids are stable - renaming one loses
+   its tick.                                                                */
+const TASKS = [
+  {
+    id: 'task-21-capacity', no: 'TASK 21', href: 'TASKS-20-26-PLAN.html#t21', deps: [],
+    title: 'Wire the capacity helper',
+    note: 'The helper is written and autoloaded. These are the call sites it is missing — including the one that refuses a booking on a full course.',
+    items: [
+      { id: 'cap-loadcount', text: 'Replace the three identical loadCount(\'enrollments\') calls with the enrollments + active_bookings_count pair', where: 'Api/CourseController.php:36, 57, 87' },
+      { id: 'cap-format', text: 'Add taken_seats, remaining_seats and is_available to format()', where: 'Api/CourseController.php:114' },
+      { id: 'cap-booking-guard', text: 'Refuse a booking on a full course with course_is_available(), plus the Course and ValidationException imports', where: 'Api/BookingController.php:6, 62' },
+      { id: 'cap-enroll-guard', text: 'Same guard in the enrollment path', where: 'Api/EnrollmentController.php:6, 56' },
+      { id: 'cap-dashboard', text: 'Add the bookings count to $topCourses and two keys to its map()', where: 'Api/DashboardController.php:44, 55' },
+      { id: 'cap-accessor', text: 'Delete the dead getEnrolledCountAttribute() accessor', where: 'app/Models/Course.php:37-40' },
+      { id: 'cap-types', text: 'Add three fields to Course and two to TopCourse', where: 'Front End/src/types/index.ts:18, 96' },
+      { id: 'cap-courses-ui', text: 'Show seats left / Full instead of enrolled_count / capacity', where: 'Front End/src/pages/Courses.tsx:168' },
+      { id: 'cap-enroll-ui', text: 'Disable full courses in the course picker and label the seats left', where: 'Front End/src/pages/EnrollmentForm.tsx:155-157' },
+    ],
+  },
+  {
+    id: 'task-22-notifications', no: 'TASK 22', href: 'TASKS-20-26-PLAN.html#t22', deps: [],
+    title: 'Notification body, endpoints and the bell',
+    note: 'The table is migrated and the class exists as the artisan stub. What fires it is the events task.',
+    items: [
+      { id: 'nt-body', text: 'Replace the stub with via(), toArray() and toMail(), plus the Booking import', where: 'app/Notifications/BookingCreated.php:17-40' },
+      { id: 'nt-controller', text: 'Write index, unreadCount, markAsRead, markAllAsRead and destroy — each scoped to the user\'s own relation', where: 'Api/NotificationController.php:13' },
+      { id: 'nt-routes', text: 'Add the five routes to the any-role group (uuid parameter, not int)', where: 'Back End/routes/api.php' },
+      { id: 'nt-type', text: 'Add the AppNotification type — not Notification, which is a DOM global', where: 'Front End/src/types/index.ts' },
+      { id: 'nt-api', text: 'Create the API module, same shape as api/bookings.ts', where: 'Front End/src/api/notifications.ts' },
+      { id: 'nt-bell', text: 'Add the bell markup between lmsnav-spacer and lmsnav-user', where: 'Front End/src/components/layout/Navbar.tsx:233' },
+      { id: 'nt-state', text: 'Add bell state, the load effect, and the optimistic open / readAll handlers', where: 'Front End/src/components/layout/Navbar.tsx' },
+      { id: 'nt-outside', text: 'Fold bellRef into the existing outside-click effect instead of adding a second one', where: 'Front End/src/components/layout/Navbar.tsx' },
+    ],
+  },
+  {
+    id: 'task-20-localization', no: 'TASK 20', href: 'TASKS-20-26-PLAN.html#t20', deps: [],
+    title: 'Localization — English and Arabic',
+    note: 'lang/en is published; nothing else exists. The only task that installs npm packages.',
+    items: [
+      { id: 'loc-ar-dir', text: 'Create lang/ar and copy the four published framework files into it', where: 'Back End/lang/ar/' },
+      { id: 'loc-ar-translate', text: 'Translate lang/ar/validation.php, auth.php, passwords.php, pagination.php — keys stay English', where: 'Back End/lang/ar/*.php' },
+      { id: 'loc-messages', text: 'Write lang/en/messages.php and its Arabic twin', where: 'Back End/lang/{en,ar}/messages.php' },
+      { id: 'loc-swap', text: 'Swap the 11 hardcoded API messages to __() — AdminMiddleware\'s twelfth is handled by the roles task', where: '9 controllers, listed in the plan' },
+      { id: 'loc-setlocale', text: 'Fill SetLocale::handle(): X-Locale header, then prefs cookie, then config', where: 'app/Http/Middleware/SetLocale.php:17-20' },
+      { id: 'loc-register', text: 'Append SetLocale to the api group — it has never been registered', where: 'Back End/bootstrap/app.php' },
+      { id: 'loc-install', text: 'npm i i18next react-i18next i18next-browser-languagedetector', where: 'Front End/' },
+      { id: 'loc-i18n', text: 'Write the i18next init plus en.json and ar.json', where: 'Front End/src/i18n/' },
+      { id: 'loc-main', text: 'Side-effect import of ./i18n above App, so init runs before the first render', where: 'Front End/src/main.tsx' },
+      { id: 'loc-navbar-arrays', text: 'Move DESTINATIONS and ROLE_LABELS inside the component behind useMemo([t]) — including the search keywords', where: 'layout/Navbar.tsx:29, 51' },
+      { id: 'loc-sidebar-arrays', text: 'Same for the GROUPS array and its nested children labels', where: 'layout/Sidebar.tsx:24-80' },
+      { id: 'loc-switcher', text: 'Add the EN / ع switcher to the navbar', where: 'layout/Navbar.tsx' },
+      { id: 'loc-rtl', text: 'Add an Arabic-capable font and the RTL override block', where: 'Front End/index.html:14 · src/index.css' },
+      { id: 'loc-pages', text: 'Convert the pages — no English literal in headings, table headers, badges, toasts or confirms', where: 'the coverage table in the plan' },
+    ],
+  },
+  {
+    id: 'task-20-22-auth-roles', no: 'ROLES', href: 'TASKS-20-26-PLAN.html#auth', deps: [],
+    title: 'Role-based backend auth and validation',
+    note: 'The root of the tracker graph. Every API route is admin-only today, so an instructor or student gets 403 on everything.',
+    items: [
+      { id: 'rl-middleware', text: 'Write EnsureUserHasRole — 401 unauthenticated, 403 wrong role, variadic ...$roles', where: 'app/Http/Middleware/EnsureUserHasRole.php' },
+      { id: 'rl-alias', text: 'Alias it as role, and delete AdminMiddleware once nothing references it', where: 'Back End/bootstrap/app.php:21' },
+      { id: 'rl-routes', text: 'Split routes/api.php into public, any-role, admin+instructor, admin+student and admin-only groups, mirroring Navbar DESTINATIONS', where: 'Back End/routes/api.php:15-50' },
+      { id: 'rl-policies', text: 'Write CoursePolicy, BookingPolicy and StudentPolicy — before() for admin, ownership in the methods', where: 'app/Policies/' },
+      { id: 'rl-authorizes', text: 'Add the AuthorizesRequests trait to the base controller, or use Gate::authorize() everywhere', where: 'app/Http/Controllers/Controller.php' },
+      { id: 'rl-scope-courses', text: 'Scope index() to the instructor\'s own courses', where: 'Api/CourseController.php:16' },
+      { id: 'rl-scope-bookings', text: 'Scope index() to the student\'s own bookings', where: 'Api/BookingController.php:14' },
+      { id: 'rl-scope-enroll', text: 'Scope enrollments for both students and instructors', where: 'Api/EnrollmentController.php' },
+      { id: 'rl-requests', text: 'Create the 11 form requests and move every inline validate() array into them', where: 'app/Http/Requests/' },
+      { id: 'rl-move-guard', text: 'Move the task-21 full-course guard into StoreBookingRequest::after() and delete it from the controller', where: 'StoreBookingRequest.php' },
+      { id: 'rl-register', text: 'Add POST /auth/register with RegisterRequest — role allow-list excludes admin', where: 'Auth/AuthController.php:93 · routes/api.php' },
+      { id: 'rl-student-row', text: 'Decide whether register() creates the students row, since BookingPolicy::create() needs it', where: 'Auth/AuthController.php' },
+      { id: 'rl-verify', text: 'Walk the whole role matrix with DEV_NO_AUTH=false in both .env files', where: 'the matrix table in the plan' },
+    ],
+  },
+  {
+    id: 'task-22-events-listeners', no: 'EVENTS', href: 'TASKS-20-26-PLAN.html#events', deps: ['task-22-notifications'],
+    title: 'Booking events and listeners',
+    note: 'No app/Events or app/Listeners yet. Laravel 13 discovers listeners, so there is no provider to register.',
+    items: [
+      { id: 'ev-events', text: 'Create BookingCreated and BookingStatusChanged as value objects', where: 'app/Events/' },
+      { id: 'ev-dispatch', text: 'Dispatch from store(), and from updateStatus() behind wasChanged()', where: 'Api/BookingController.php:63, 78-84' },
+      { id: 'ev-notify-listener', text: 'SendBookingCreatedNotifications — every admin plus the student, with the class alias for the name clash', where: 'app/Listeners/' },
+      { id: 'ev-student-notifiable', text: 'Add the Notifiable trait to Student, or it cannot be notified at all', where: 'app/Models/Student.php:10, 14' },
+      { id: 'ev-status-listener', text: 'RecordBookingStatusChange — move the paid_at stamping out of the controller, saveQuietly()', where: 'app/Listeners/' },
+      { id: 'ev-verify', text: 'event:list shows both events with their listeners, and the jobs table is 0 after a booking', where: 'php artisan event:list' },
+    ],
+  },
+  {
+    id: 'task-22-mail', no: 'MAIL', href: 'TASKS-20-26-PLAN.html#mail', deps: ['task-22-notifications'],
+    title: 'Backend mail notifications',
+    note: 'MAIL_MAILER=log, so every mail renders into storage/logs/laravel.log. No SMTP account needed.',
+    items: [
+      { id: 'ml-frontend-url', text: 'Add frontend_url to config/app.php, or every mail button points at the API host', where: 'Back End/config/app.php:30' },
+      { id: 'ml-mailable', text: 'Fill the Envelope and Content, passing everything the template needs explicitly', where: 'app/Mail/BookingConfirmed.php' },
+      { id: 'ml-blade', text: 'Write the markdown body with x-mail::message / table / button', where: 'resources/views/emails/bookings/confirmed.blade.php' },
+      { id: 'ml-listener', text: 'SendBookingConfirmationMail on the same event, guarded on a null student email', where: 'app/Listeners/' },
+      { id: 'ml-lang', text: 'Write lang/en/bookings.php and its Arabic twin — the notification body uses these keys too', where: 'Back End/lang/{en,ar}/bookings.php' },
+      { id: 'ml-from', text: 'Change MAIL_FROM_ADDRESS off the skeleton default', where: 'Back End/.env' },
+      { id: 'ml-dedupe', text: 'Decide between the notification toMail() and the mailable, so the student gets one mail, not two', where: 'BookingCreated::via()' },
+    ],
+  },
+  {
+    id: 'task-24-rate-limiting', no: 'TASK 24', href: 'TASKS-20-26-PLAN.html#limits', deps: ['task-21-capacity'],
+    title: 'Rate limiting for bookings',
+    note: 'Verified: nothing is throttled today, not even login. An undefined limiter name throws, so limiters and routes land together.',
+    items: [
+      { id: 'rt-limiters', text: 'Fill the empty AppServiceProvider::boot() with the bookings, login, uploads and api limiters — keyed by user id, not IP', where: 'app/Providers/AppServiceProvider.php:11' },
+      { id: 'rt-throttleapi', text: 'Call throttleApi() so the api limiter is consulted at all', where: 'Back End/bootstrap/app.php:18' },
+      { id: 'rt-routes', text: 'Attach throttle:login, throttle:bookings and throttle:uploads to their routes', where: 'Back End/routes/api.php' },
+      { id: 'rt-lang', text: 'Write lang/en/errors.php for the 429 message', where: 'Back End/lang/en/errors.php' },
+      { id: 'rt-client', text: 'Handle 429 in the interceptor above the 401 branch — lowercase retry-after, no redirect, no token clear', where: 'Front End/src/api/client.ts:24' },
+      { id: 'rt-verify', text: 'Seven bookings give 201×5 then 429, and route:list shows throttle: in the middleware column', where: 'cache:clear first' },
+    ],
+  },
+  {
+    id: 'task-25-storage-files', no: 'TASK 25', href: 'TASKS-20-26-PLAN.html#files', deps: ['task-20-22-auth-roles'],
+    title: 'Organized course file storage',
+    note: 'courses has no file column, so this needs a new table. student_documents is the pattern to copy and the anti-pattern to fix.',
+    items: [
+      { id: 'fs-migration', text: 'Write the course_files schema — course_id, uploaded_by nullOnDelete, disk, category, the composite index', where: 'database/migrations/' },
+      { id: 'fs-model', text: 'CourseFile with downloadUrl() and deliberately no public url accessor, plus Course::files()', where: 'app/Models/' },
+      { id: 'fs-disk', text: 'Add the private course_files disk — no url, no serve', where: 'Back End/config/filesystems.php:39' },
+      { id: 'fs-controller', text: 'index / store / download / destroy, each authorized, each checking the file belongs to the course', where: 'Api/CourseFileController.php' },
+      { id: 'fs-request', text: 'StoreCourseFileRequest with a mimes allow-list and a size cap', where: 'app/Http/Requests/' },
+      { id: 'fs-routes', text: 'Add the four routes to the admin+instructor group, upload behind throttle:uploads', where: 'Back End/routes/api.php' },
+      { id: 'fs-cleanup', text: 'Delete the folder on forceDeleted — not deleting, which fires on a soft delete too', where: 'app/Models/Course.php' },
+      { id: 'fs-php-ini', text: 'Raise upload_max_filesize and post_max_size, or the size rule is a lie', where: 'php.ini' },
+      { id: 'fs-docs-decision', text: 'Migrate student_documents fully (disk column, download route, frontend link) or leave it alone — not halfway', where: 'Api/StudentDocumentController.php:28, 46' },
+    ],
+  },
+  {
+    id: 'task-26-cookies', no: 'TASK 26', href: 'TASKS-20-26-PLAN.html#cookies', deps: ['task-20-localization'],
+    title: 'Cookie-based user preferences',
+    note: 'Start with the env line: Vite is on localhost:5173, which is not a stateful domain, so a queued cookie is dropped.',
+    items: [
+      { id: 'ck-env', text: 'Add APP_URL and SANCTUM_STATEFUL_DOMAINS including localhost:5173, then config:clear', where: 'Back End/.env' },
+      { id: 'ck-encrypt', text: 'Exempt prefs from cookie encryption so document.cookie can read it', where: 'Back End/bootstrap/app.php:20' },
+      { id: 'ck-controller', text: 'PreferenceController show/update — merge, never replace, and fall back on an unparseable cookie', where: 'Api/PreferenceController.php' },
+      { id: 'ck-request', text: 'UpdatePreferencesRequest with an in: allow-list per key', where: 'app/Http/Requests/' },
+      { id: 'ck-routes', text: 'GET and PUT /preferences in the any-role group', where: 'Back End/routes/api.php' },
+      { id: 'ck-prefs-ts', text: 'Write readPrefs / writePrefsCookie over document.cookie — synchronous, try/catch, no npm package', where: 'Front End/src/prefs.ts' },
+      { id: 'ck-provider', text: 'PreferencesProvider in the ToastProvider shape, setting data-theme, lang and dir', where: 'Front End/src/context/' },
+      { id: 'ck-header', text: 'Send X-Locale on every request so API messages match the UI language', where: 'Front End/src/api/client.ts:13' },
+      { id: 'ck-layout', text: 'Take the sidebar\'s initial state from the cookie instead of a hardcoded default', where: 'Front End/src/components/layout/Layout.tsx' },
+      { id: 'ck-verify', text: 'A PUT with an Origin header returns set-cookie with readable JSON; without it, none at all', where: 'curl -i' },
+    ],
+  },
+];
+
+/* ----------------------------------------------------------------- state --- */
+const KEY = 'lms-todo-v1';
+let done = {};
+try { done = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { done = {}; }
+
+const save = () => {
+  try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) { /* private window */ }
+};
+
+const byId = Object.fromEntries(TASKS.map((t) => [t.id, t]));
+const doneCount = (t) => t.items.filter((i) => done[i.id]).length;
+const isDone = (t) => doneCount(t) === t.items.length;
+const blockedBy = (t) => t.deps.filter((d) => byId[d] && !isDone(byId[d]));
+
+function stateOf(t) {
+  if (isDone(t)) return 'done';
+  if (blockedBy(t).length) return 'blocked';
+  return doneCount(t) ? 'doing' : 'ready';
+}
+
+const LABEL = { done: 'done', blocked: 'blocked', doing: 'in progress', ready: 'ready' };
+const PILL = { done: 'p-done', blocked: 'p-block', doing: 'p-doing', ready: 'p-ready' };
+
+/* ---------------------------------------------------------------- render --- */
+let filter = 'all';
+const list = document.getElementById('list');
+const open = {};
+
+function matches(t) {
+  const st = stateOf(t);
+  if (filter === 'all') return true;
+  if (filter === 'ready') return st === 'ready' || st === 'doing';
+  if (filter === 'blocked') return st === 'blocked';
+  if (filter === 'open') return st !== 'done';
+  return true;
+}
+
+function render() {
+  const visible = TASKS.filter(matches);
+  list.innerHTML = '';
+
+  if (!visible.length) {
+    const p = document.createElement('p');
+    p.className = 'empty';
+    p.textContent = filter === 'blocked'
+      ? 'Nothing is blocked — every remaining task is ready to start.'
+      : 'Nothing matches this filter.';
+    list.append(p);
+  }
+
+  for (const t of visible) {
+    const st = stateOf(t);
+    const blockers = blockedBy(t);
+
+    const card = document.createElement('section');
+    card.className = 'task';
+    card.dataset.state = st;
+    card.dataset.blocked = String(st === 'blocked');
+    // Default to open for whatever you can actually work on next.
+    card.dataset.open = String(open[t.id] ?? (st === 'ready' || st === 'doing'));
+
+    const head = document.createElement('button');
+    head.type = 'button';
+    head.className = 'task-head';
+    head.setAttribute('aria-expanded', card.dataset.open);
+    head.innerHTML =
+      '<span class="no"></span>' +
+      '<span class="task-title"></span>' +
+      '<span class="pill ' + PILL[st] + '"></span>' +
+      '<span class="frac"></span>' +
+      '<span class="chev">›</span>';
+    head.querySelector('.no').textContent = t.no;
+    head.querySelector('.task-title').textContent = t.title;
+    head.querySelector('.pill').textContent = LABEL[st];
+    head.querySelector('.frac').textContent = doneCount(t) + '/' + t.items.length;
+    head.addEventListener('click', () => {
+      open[t.id] = card.dataset.open !== 'true';
+      card.dataset.open = String(open[t.id]);
+      head.setAttribute('aria-expanded', card.dataset.open);
+    });
+
+    const body = document.createElement('div');
+    body.className = 'task-body';
+
+    const meta = document.createElement('p');
+    meta.className = 'meta';
+    meta.innerHTML = '<span></span>';
+    meta.querySelector('span').textContent = t.note;
+
+    const links = document.createElement('p');
+    links.className = 'meta';
+    const a = document.createElement('a');
+    a.href = t.href;
+    a.textContent = 'plan → ' + t.no;
+    links.append(document.createTextNode(t.id + '  '), a);
+    if (blockers.length) {
+      const b = document.createElement('span');
+      b.innerHTML = '<b>blocked by</b> ';
+      b.append(document.createTextNode(blockers.map((d) => byId[d].no).join(', ')));
+      links.append(b);
+    }
+
+    const ul = document.createElement('ul');
+    ul.className = 'items';
+    for (const item of t.items) {
+      const li = document.createElement('li');
+      const label = document.createElement('label');
+      const box = document.createElement('input');
+      box.type = 'checkbox';
+      box.checked = !!done[item.id];
+      box.addEventListener('change', () => {
+        done[item.id] = box.checked;
+        if (!box.checked) delete done[item.id];
+        save();
+        render();   // a tick can unblock another task, so redraw everything
+      });
+      const txt = document.createElement('span');
+      txt.className = 'txt';
+      txt.textContent = item.text;
+      const where = document.createElement('span');
+      where.className = 'where';
+      where.textContent = item.where;
+      txt.append(where);
+      label.append(box, txt);
+      li.append(label);
+      ul.append(li);
+    }
+
+    body.append(meta, links, ul);
+    card.append(head, body);
+    list.append(card);
+  }
+
+  const total = TASKS.reduce((n, t) => n + t.items.length, 0);
+  const got = TASKS.reduce((n, t) => n + doneCount(t), 0);
+  document.getElementById('meter').style.width = (total ? (got / total) * 100 : 0) + '%';
+  document.getElementById('count').textContent =
+    got + ' / ' + total + ' steps · ' + TASKS.filter(isDone).length + ' / ' + TASKS.length + ' tasks';
+}
+
+/* --------------------------------------------------------------- controls --- */
+for (const btn of document.querySelectorAll('[data-filter]')) {
+  btn.addEventListener('click', () => {
+    filter = btn.dataset.filter;
+    for (const b of document.querySelectorAll('[data-filter]')) {
+      b.setAttribute('aria-pressed', String(b === btn));
+    }
+    render();
+  });
+}
+
+document.getElementById('copy').addEventListener('click', async (e) => {
+  const md = TASKS.map((t) => {
+    const head = '## ' + t.no + ' — ' + t.title + '  (' + doneCount(t) + '/' + t.items.length + ', ' + LABEL[stateOf(t)] + ')';
+    const rows = t.items.map((i) => '- [' + (done[i.id] ? 'x' : ' ') + '] ' + i.text + ' — `' + i.where + '`');
+    return [head, ...rows].join('\n');
+  }).join('\n\n');
+
+  const text = '# Course booking — outstanding work\n\n' + md + '\n';
+  try {
+    await navigator.clipboard.writeText(text);
+    e.target.textContent = 'Copied';
+  } catch (err) {
+    // file:// without clipboard permission - fall back to a selectable prompt
+    window.prompt('Copy the markdown below', text);
+  }
+  setTimeout(() => { e.target.textContent = 'Copy as markdown'; }, 1400);
+});
+
+document.getElementById('reset').addEventListener('click', () => {
+  if (!window.confirm('Clear every tick? This cannot be undone.')) return;
+  done = {};
+  save();
+  render();
+});
+
+render();
+</script>
