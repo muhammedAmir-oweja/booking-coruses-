@@ -34,11 +34,6 @@ class Course extends Model
         ];
     }
 
-    public function getEnrolledCountAttribute(): int
-    {
-        return $this->students()->count();
-    }
-
     public function instructor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'instructor_id');

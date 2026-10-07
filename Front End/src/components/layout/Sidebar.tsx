@@ -1,7 +1,8 @@
+import { useTranslation } from 'react-i18next'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import type { User } from '../../types'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 interface SidebarProps {
   user: User | null
@@ -14,96 +15,129 @@ interface NavItem {
 }
 
 interface NavGroup {
+  key: string
   label: string
   icon: string
   children: NavItem[]
   roles: ('admin' | 'instructor' | 'student')[]
 }
 
-const navGroups: NavGroup[] = [
+/**
+ * Route, icon and roles only - no translatable text at module level, for the
+ * same reason as Navbar's ROUTES: a module-level array is evaluated once at
+ * import time, so a t() call in here would freeze every label to the language
+ * the bundle booted in. `labelKey` names the `nav.*` entry, resolved inside the
+ * component against a `t` that changes identity on every language switch.
+ *
+ * `key` is also the group's identity for the open/closed overrides below. That
+ * used to be the English label, which would have reset every expanded group
+ * the moment the language changed.
+ */
+const GROUPS: {
+  key: string
+  labelKey: string
+  icon: string
+  roles: ('admin' | 'instructor' | 'student')[]
+  children: { labelKey: string; to: string; icon: string }[]
+}[] = [
   {
-    label: 'Dashboard',
+    key: 'dashboard',
+    labelKey: 'nav.dashboard',
     icon: 'fas fa-tachometer-alt',
     roles: ['admin', 'instructor', 'student'],
-    children: [{ label: 'Overview', to: '/', icon: 'far fa-circle' }],
+    children: [{ labelKey: 'nav.overview', to: '/', icon: 'far fa-circle' }],
   },
   {
-    label: 'Courses',
+    key: 'courses',
+    labelKey: 'nav.courses',
     icon: 'fas fa-book',
     roles: ['admin'],
     children: [
-      { label: 'All Courses', to: '/courses', icon: 'far fa-circle' },
-      { label: 'Add Course', to: '/courses/new', icon: 'far fa-circle' },
+      { labelKey: 'nav.all_courses', to: '/courses', icon: 'far fa-circle' },
+      { labelKey: 'nav.add_course', to: '/courses/new', icon: 'far fa-circle' },
     ],
   },
   {
-    label: 'My Courses',
+    key: 'my_courses',
+    labelKey: 'nav.my_courses',
     icon: 'fas fa-book-open',
     roles: ['instructor'],
     children: [
-      { label: 'My Courses', to: '/courses', icon: 'far fa-circle' },
-      { label: 'Add Course', to: '/courses/new', icon: 'far fa-circle' },
+      { labelKey: 'nav.my_courses', to: '/courses', icon: 'far fa-circle' },
+      { labelKey: 'nav.add_course', to: '/courses/new', icon: 'far fa-circle' },
     ],
   },
   {
-    label: 'Browse Courses',
+    key: 'browse_courses',
+    labelKey: 'nav.browse_courses',
     icon: 'fas fa-search',
     roles: ['student'],
     children: [
-      { label: 'All Courses', to: '/courses', icon: 'far fa-circle' },
+      { labelKey: 'nav.all_courses', to: '/courses', icon: 'far fa-circle' },
     ],
   },
   {
-    label: 'Students',
+    key: 'students',
+    labelKey: 'nav.students',
     icon: 'fas fa-user-graduate',
     roles: ['admin'],
     children: [
-      { label: 'All Students', to: '/students', icon: 'far fa-circle' },
-      { label: 'Add Student', to: '/students/new', icon: 'far fa-circle' },
+      { labelKey: 'nav.all_students', to: '/students', icon: 'far fa-circle' },
+      { labelKey: 'nav.add_student', to: '/students/new', icon: 'far fa-circle' },
     ],
   },
   {
-    label: 'Sessions',
+    key: 'sessions',
+    labelKey: 'nav.sessions',
     icon: 'fas fa-chalkboard-teacher',
     roles: ['admin', 'instructor'],
     children: [
-      { label: 'All Sessions', to: '/training-sessions', icon: 'far fa-circle' },
-      { label: 'Add Session', to: '/training-sessions/new', icon: 'far fa-circle' },
+      { labelKey: 'nav.all_sessions', to: '/training-sessions', icon: 'far fa-circle' },
+      { labelKey: 'nav.add_session', to: '/training-sessions/new', icon: 'far fa-circle' },
     ],
   },
   {
-    label: 'Enrollments',
+    key: 'enrollments',
+    labelKey: 'nav.enrollments',
     icon: 'fas fa-user-plus',
     roles: ['admin', 'instructor', 'student'],
     children: [
-      { label: 'All Enrollments', to: '/enrollments', icon: 'far fa-circle' },
-      { label: 'Enroll Student', to: '/enrollments/new', icon: 'far fa-circle' },
+      { labelKey: 'nav.all_enrollments', to: '/enrollments', icon: 'far fa-circle' },
+      { labelKey: 'nav.enroll_student', to: '/enrollments/new', icon: 'far fa-circle' },
     ],
   },
   {
-    label: 'Bookings',
+    key: 'bookings',
+    labelKey: 'nav.bookings',
     icon: 'fas fa-calendar-check',
     roles: ['admin', 'student'],
     children: [
-      { label: 'All Bookings', to: '/bookings', icon: 'far fa-circle' },
+      { labelKey: 'nav.all_bookings', to: '/bookings', icon: 'far fa-circle' },
     ],
   },
 ]
 
-const ROLE_LABELS: Record<string, string> = {
-  admin: 'Administrator',
-  instructor: 'Instructor',
-  student: 'Student',
-}
-
 export default function Sidebar({ user }: SidebarProps) {
   const location = useLocation()
+  const { t } = useTranslation()
   const { isAdmin, isInstructor, isStudent } = useAuth()
 
   const [overrides, setOverrides] = useState<Record<string, boolean>>({})
 
-  const toggleGroup = (label: string, currentlyOpen: boolean) =>
-    setOverrides(prev => ({ ...prev, [label]: !currentlyOpen }))
+  const toggleGroup = (key: string, currentlyOpen: boolean) =>
+    setOverrides(prev => ({ ...prev, [key]: !currentlyOpen }))
+
+  // Rebuilt on every language change, because `t` is a dependency.
+  const navGroups = useMemo<NavGroup[]>(
+    () => GROUPS.map(g => ({
+      key: g.key,
+      label: t(g.labelKey),
+      icon: g.icon,
+      roles: g.roles,
+      children: g.children.map(c => ({ label: t(c.labelKey), to: c.to, icon: c.icon })),
+    })),
+    [t]
+  )
 
   const visibleGroups = navGroups.filter(g => {
     if (isAdmin) return g.roles.includes('admin')
@@ -113,7 +147,7 @@ export default function Sidebar({ user }: SidebarProps) {
   })
 
   const filteredGroups = visibleGroups.map(g => {
-    if (isStudent && g.label === 'Enrollments') {
+    if (isStudent && g.key === 'enrollments') {
       return { ...g, children: g.children.filter(c => c.to !== '/enrollments/new') }
     }
     return g
@@ -125,13 +159,13 @@ export default function Sidebar({ user }: SidebarProps) {
     )
 
   const isGroupOpen = (group: NavGroup) =>
-    overrides[group.label] ?? isGroupActive(group)
+    overrides[group.key] ?? isGroupActive(group)
 
   return (
     <aside className="main-sidebar sidebar-dark-primary elevation-4">
       <NavLink to="/" className="brand-link">
         <i className="fas fa-graduation-cap brand-image img-circle elevation-3" style={{ fontSize: 22, lineHeight: '33px', opacity: 0.8 }} />
-        <span className="brand-text font-weight-light">Course Booking</span>
+        <span className="brand-text font-weight-light">{t('app.name')}</span>
       </NavLink>
 
       <div className="sidebar">
@@ -144,7 +178,7 @@ export default function Sidebar({ user }: SidebarProps) {
               {user?.name ?? '...'}
             </NavLink>
             <small style={{ color: '#6c757d', fontSize: 11 }}>
-              {user ? (ROLE_LABELS[user.role] ?? user.role) : ''}
+              {user ? t(`roles.${user.role}`, { defaultValue: user.role }) : ''}
             </small>
           </div>
         </div>
@@ -160,9 +194,9 @@ export default function Sidebar({ user }: SidebarProps) {
               const active = isGroupActive(group)
               const open = isGroupOpen(group)
               return (
-                <li key={group.label} className={`nav-item has-treeview${open ? ' menu-open' : ''}`}>
+                <li key={group.key} className={`nav-item has-treeview${open ? ' menu-open' : ''}`}>
                   <a href="#" className={`nav-link${active ? ' active' : ''}`}
-                    onClick={(e) => { e.preventDefault(); toggleGroup(group.label, open) }}
+                    onClick={(e) => { e.preventDefault(); toggleGroup(group.key, open) }}
                   >
 
                     <i className={`nav-icon ${group.icon}`} />

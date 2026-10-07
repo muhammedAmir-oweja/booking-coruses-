@@ -18,3 +18,50 @@ body {
 .gap-2 {
   gap: 0.5rem;
 }
+
+/* ---------------------------------------------------------------- RTL ---
+   Arabic needs its own family; Source Sans Pro has no Arabic glyphs and the
+   browser falls back to something that does not match the rest of the chrome. */
+html[dir='rtl'] body,
+html[lang='ar'] body {
+  font-family: 'IBM Plex Sans Arabic', 'Source Sans Pro', sans-serif;
+  line-height: 1.8;              /* Arabic sits taller than Latin */
+}
+
+/* AdminLTE's fixed sidebar is positioned left in px, so mirror the shell. */
+html[dir='rtl'] .main-sidebar { right: 0; left: auto; }
+html[dir='rtl'] .content-wrapper,
+html[dir='rtl'] .main-header,
+html[dir='rtl'] .main-footer { margin-right: 250px; margin-left: 0; }
+html[dir='rtl'] .sidebar-collapse .content-wrapper,
+html[dir='rtl'] .sidebar-collapse .main-header,
+html[dir='rtl'] .sidebar-collapse .main-footer { margin-right: 4.6rem; }
+
+/* #root resets text-align: left for LTR; mirror it rather than overriding
+   every child. */
+html[dir='rtl'] #root { text-align: right; }
+
+/* Icons that encode a direction have to flip; a bell or a book must not. */
+html[dir='rtl'] .fa-chevron-right,
+html[dir='rtl'] .fa-chevron-left,
+html[dir='rtl'] .fa-arrow-right,
+html[dir='rtl'] .fa-arrow-left,
+html[dir='rtl'] .fa-sign-out-alt,
+html[dir='rtl'] .fa-long-arrow-alt-right,
+html[dir='rtl'] .fa-long-arrow-alt-left { transform: scaleX(-1); }
+
+/* Numbers, money, emails and dates stay LTR inside an RTL paragraph. Opt in
+   with .text-ltr - deliberately NOT a blanket .badge rule, because status
+   badges carry translated words ("مؤكد"), not numbers. */
+html[dir='rtl'] .text-ltr,
+html[dir='rtl'] td.num { direction: ltr; unicode-bidi: embed; }
+
+/* Bootstrap 4 float utilities are physical and AdminLTE leans on them. */
+html[dir='rtl'] .float-right { float: left !important; }
+html[dir='rtl'] .float-left { float: right !important; }
+html[dir='rtl'] .text-right { text-align: left !important; }
+html[dir='rtl'] .text-left { text-align: right !important; }
+html[dir='rtl'] .ml-1 { margin-left: 0 !important; margin-right: .25rem !important; }
+html[dir='rtl'] .mr-1 { margin-right: 0 !important; margin-left: .25rem !important; }
+html[dir='rtl'] .ml-2 { margin-left: 0 !important; margin-right: .5rem !important; }
+html[dir='rtl'] .mr-2 { margin-right: 0 !important; margin-left: .5rem !important; }

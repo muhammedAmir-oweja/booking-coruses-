@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { logout } from '../../api/auth'
+import { getNotifications, markAllRead, markRead } from '../../api/notifications'
 import { DEV_NO_AUTH } from '../../devAuth'
-import type { User } from '../../types'
+import type { AppNotification, User } from '../../types'
 
 interface NavbarProps {
   onToggleSidebar: () => void
@@ -26,19 +28,25 @@ interface Destination {
  *
  * This mirrors Sidebar.tsx's groups. If the two drift, lift them both onto a
  * shared `src/navigation.ts`.
+ *
+ * Only the untranslatable half lives at module level: route, icon and roles
+ * never change with the language. `key` names the `nav.*` entries that supply
+ * the label and the search keywords, and those are resolved inside the
+ * component so a language switch rebuilds them. Put a t() call in this array
+ * and every label freezes to whatever language the bundle booted in.
  */
-const DESTINATIONS: Destination[] = [
-  { label: 'Dashboard',         to: '/',                      icon: 'fas fa-tachometer-alt',     keywords: 'home overview stats revenue', roles: ['admin', 'instructor', 'student'] },
-  { label: 'Courses',           to: '/courses',               icon: 'fas fa-book',               keywords: 'catalogue catalog classes',   roles: ['admin', 'instructor', 'student'] },
-  { label: 'New course',        to: '/courses/new',           icon: 'fas fa-plus',               keywords: 'add create course',           roles: ['admin', 'instructor'] },
-  { label: 'Students',          to: '/students',              icon: 'fas fa-user-graduate',      keywords: 'people learners roster',      roles: ['admin'] },
-  { label: 'New student',       to: '/students/new',          icon: 'fas fa-plus',               keywords: 'add create student',          roles: ['admin'] },
-  { label: 'Training sessions', to: '/training-sessions',     icon: 'fas fa-chalkboard-teacher', keywords: 'schedule calendar',           roles: ['admin', 'instructor'] },
-  { label: 'New session',       to: '/training-sessions/new', icon: 'fas fa-plus',               keywords: 'add create session',          roles: ['admin', 'instructor'] },
-  { label: 'Enrollments',       to: '/enrollments',           icon: 'fas fa-user-plus',          keywords: 'enrolments signups',          roles: ['admin', 'instructor', 'student'] },
-  { label: 'Enroll a student',  to: '/enrollments/new',       icon: 'fas fa-plus',               keywords: 'add create enrollment',       roles: ['admin', 'instructor'] },
-  { label: 'Bookings',          to: '/bookings',              icon: 'fas fa-calendar-check',     keywords: 'payments paid unpaid',        roles: ['admin', 'student'] },
-  { label: 'My profile',        to: '/profile',               icon: 'fas fa-user',               keywords: 'account password settings',   roles: ['admin', 'instructor', 'student'] },
+const ROUTES: { key: string; to: string; icon: string; roles: Role[] }[] = [
+  { key: 'dashboard',         to: '/',                      icon: 'fas fa-tachometer-alt',     roles: ['admin', 'instructor', 'student'] },
+  { key: 'courses',           to: '/courses',               icon: 'fas fa-book',               roles: ['admin', 'instructor', 'student'] },
+  { key: 'new_course',        to: '/courses/new',           icon: 'fas fa-plus',               roles: ['admin', 'instructor'] },
+  { key: 'students',          to: '/students',              icon: 'fas fa-user-graduate',      roles: ['admin'] },
+  { key: 'new_student',       to: '/students/new',          icon: 'fas fa-plus',               roles: ['admin'] },
+  { key: 'training_sessions', to: '/training-sessions',     icon: 'fas fa-chalkboard-teacher', roles: ['admin', 'instructor'] },
+  { key: 'new_session',       to: '/training-sessions/new', icon: 'fas fa-plus',               roles: ['admin', 'instructor'] },
+  { key: 'enrollments',       to: '/enrollments',           icon: 'fas fa-user-plus',          roles: ['admin', 'instructor', 'student'] },
+  { key: 'enroll_student',    to: '/enrollments/new',       icon: 'fas fa-plus',               roles: ['admin', 'instructor'] },
+  { key: 'bookings',          to: '/bookings',              icon: 'fas fa-calendar-check',     roles: ['admin', 'student'] },
+  { key: 'profile',           to: '/profile',               icon: 'fas fa-user',               roles: ['admin', 'instructor', 'student'] },
 ]
 
 // Saturated enough to hold their own against the #343a40 bar.
@@ -49,12 +57,6 @@ const ROLE_FILLS: Record<string, string> = {
 }
 const NEUTRAL_FILL = '#5a6470'
 
-const ROLE_LABELS: Record<string, string> = {
-  admin:      'Administrator',
-  instructor: 'Instructor',
-  student:    'Student',
-}
-
 const initialsOf = (name: string) =>
   name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('') || '?'
 
@@ -63,23 +65,45 @@ const isApplePlatform = () =>
 
 export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
   const navigate = useNavigate()
+  const { t, i18n } = useTranslation()
 
   const [menuOpen, setMenuOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [bellOpen, setBellOpen] = useState(false)
+  const [items, setItems] = useState<AppNotification[]>([])
+  const [unread, setUnread] = useState(0)
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
 
   const userRef = useRef<HTMLDivElement>(null)
+  const bellRef = useRef<HTMLDivElement>(null)
+  const bellTriggerRef = useRef<HTMLButtonElement>(null)
   const menuTriggerRef = useRef<HTMLButtonElement>(null)
   const jumpTriggerRef = useRef<HTMLButtonElement>(null)
 
   const fill = user ? (ROLE_FILLS[user.role] ?? NEUTRAL_FILL) : NEUTRAL_FILL
-  const roleLabel = user ? (ROLE_LABELS[user.role] ?? user.role) : ''
+  const roleLabel = user ? t(`roles.${user.role}`, { defaultValue: user.role }) : ''
   const modKey = isApplePlatform() ? '⌘' : 'Ctrl'
+  const isArabic = i18n.resolvedLanguage === 'ar'
+
+  // Rebuilt whenever the language changes, because `t` is a dependency.
+  // useTranslation() hands back a new `t` on languageChanged - that identity
+  // change is the signal that re-renders the labels. An empty dependency array
+  // would reintroduce exactly the bug ROUTES exists to avoid.
+  const destinations = useMemo<Destination[]>(
+    () => ROUTES.map((r) => ({
+      label: t(`nav.${r.key}`),
+      keywords: t(`nav.${r.key}_keywords`, { defaultValue: '' }),
+      to: r.to,
+      icon: r.icon,
+      roles: r.roles,
+    })),
+    [t]
+  )
 
   const reachable = useMemo(
-    () => (user ? DESTINATIONS.filter((d) => d.roles.includes(user.role)) : DESTINATIONS),
-    [user]
+    () => (user ? destinations.filter((d) => d.roles.includes(user.role)) : destinations),
+    [user, destinations]
   )
 
   const matches = useMemo(() => {
@@ -114,6 +138,24 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
     navigate(to)
   }
 
+  const openNotification = (n: AppNotification) => {
+    // Optimistic: mark it locally, then navigate. The request can lose.
+    if (!n.read_at) {
+      setUnread((u) => Math.max(0, u - 1))
+      setItems((list) => list.map((x) =>
+        x.id === n.id ? { ...x, read_at: new Date().toISOString() } : x))
+      void markRead(n.id).catch(() => {})
+    }
+    setBellOpen(false)
+    navigate(n.data.url)
+  }
+
+  const readAll = () => {
+    setUnread(0)
+    setItems((list) => list.map((x) => ({ ...x, read_at: x.read_at ?? new Date().toISOString() })))
+    void markAllRead().catch(() => {})
+  }
+
   // Cmd/Ctrl-K from anywhere in the app.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -134,18 +176,45 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
     document.getElementById(`lmsnav-opt-${activeIndex}`)?.scrollIntoView({ block: 'nearest' })
   }, [paletteOpen, activeIndex])
 
-  // Close the account menu on an outside click, and on Escape - handing focus
-  // back to the trigger so keyboard users are not dropped at the top.
+  // Load on mount, and again whenever the panel is opened, so the list is not
+  // stale the one time someone actually looks at it.
   useEffect(() => {
-    if (!menuOpen) return
+    if (!user) return
+    let cancelled = false
+
+    void getNotifications()
+      .then((r) => {
+        if (cancelled) return
+        setItems(r.data)
+        setUnread(r.unread_count)
+      })
+      .catch(() => { /* a dead bell must not break the navbar */ })
+
+    return () => { cancelled = true }
+  }, [user, bellOpen])
+
+  // Close the account menu and the bell on an outside click, and on Escape -
+  // handing focus back to the trigger so keyboard users are not dropped at the
+  // top. One handler for both: two independent listeners would fight over
+  // which dropdown closes first.
+  useEffect(() => {
+    if (!menuOpen && !bellOpen) return
 
     const onPointerDown = (e: MouseEvent) => {
-      if (!userRef.current?.contains(e.target as Node)) setMenuOpen(false)
+      const target = e.target as Node
+      if (!userRef.current?.contains(target)) setMenuOpen(false)
+      if (!bellRef.current?.contains(target)) setBellOpen(false)
     }
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
-      setMenuOpen(false)
-      menuTriggerRef.current?.focus()
+      if (bellOpen) {
+        setBellOpen(false)
+        bellTriggerRef.current?.focus()
+      }
+      if (menuOpen) {
+        setMenuOpen(false)
+        menuTriggerRef.current?.focus()
+      }
     }
 
     document.addEventListener('mousedown', onPointerDown)
@@ -154,7 +223,7 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
       document.removeEventListener('mousedown', onPointerDown)
       document.removeEventListener('keydown', onKeyDown)
     }
-  }, [menuOpen])
+  }, [menuOpen, bellOpen])
 
   // Don't let the page scroll behind the palette.
   useEffect(() => {
@@ -216,8 +285,8 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
         type="button"
         className="lmsnav-icon"
         onClick={onToggleSidebar}
-        aria-label="Toggle sidebar"
-        title="Toggle sidebar"
+        aria-label={t('navbar.toggle_sidebar')}
+        title={t('navbar.toggle_sidebar')}
       >
         <i className="fas fa-bars" />
       </button>
@@ -226,11 +295,77 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
 
       <button ref={jumpTriggerRef} type="button" className="lmsnav-jump" onClick={openPalette}>
         <i className="fas fa-search" aria-hidden="true" />
-        <span className="lmsnav-jump-label">Jump to a page</span>
+        <span className="lmsnav-jump-label">{t('navbar.jump_to_page')}</span>
         <kbd className="lmsnav-kbd">{modKey} K</kbd>
       </button>
 
       <div className="lmsnav-spacer" />
+
+      {/* The switch is instant: changeLanguage re-renders every t() consumer,
+          and i18n's languageChanged handler persists it to the prefs cookie
+          and flips <html lang>/<html dir>. Nothing reloads. */}
+      <button
+        type="button"
+        className="lmsnav-lang"
+        onClick={() => void i18n.changeLanguage(isArabic ? 'en' : 'ar')}
+        aria-label={isArabic ? t('navbar.switch_to_english') : t('navbar.switch_to_arabic')}
+        title={isArabic ? t('navbar.switch_to_english') : t('navbar.switch_to_arabic')}
+      >
+        {isArabic ? 'EN' : 'ع'}
+      </button>
+
+      <div className="lmsnav-bell-wrap" ref={bellRef}>
+        <button
+          ref={bellTriggerRef}
+          type="button"
+          className="lmsnav-icon"
+          aria-haspopup="menu"
+          aria-expanded={bellOpen}
+          aria-label={unread
+            ? t('navbar.notifications_unread', { count: unread })
+            : t('navbar.notifications')}
+          onClick={() => setBellOpen((open) => !open)}
+        >
+          <i className="far fa-bell" />
+          {unread > 0 && (
+            <span className="lmsnav-badge">{unread > 9 ? '9+' : unread}</span>
+          )}
+        </button>
+
+        {bellOpen && (
+          <div className="lmsnav-menu" role="menu">
+            {items.length === 0
+              ? <div className="lmsnav-empty">{t('navbar.nothing_new')}</div>
+              : items.map((n) => (
+                  <button
+                    key={n.id}
+                    type="button"
+                    role="menuitem"
+                    className="lmsnav-item"
+                    onClick={() => openNotification(n)}
+                  >
+                    <i className="fas fa-calendar-check" />
+                    <span>
+                      {t('navbar.booked', {
+                        student: n.data.student_name,
+                        course: n.data.course_title,
+                      })}
+                      {!n.read_at && <span className="lmsnav-dot" />}
+                    </span>
+                  </button>
+                ))}
+            {unread > 0 && (
+              <>
+                <div className="lmsnav-sep" />
+                <button type="button" className="lmsnav-item" onClick={readAll}>
+                  <i className="fas fa-check-double" />
+                  {t('navbar.mark_all_read')}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
 
       <div className="lmsnav-user" ref={userRef}>
         <button
@@ -248,7 +383,7 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
               <span className="lmsnav-role">{roleLabel}</span>
             </span>
           ) : (
-            <span className="lmsnav-meta" role="status" aria-label="Loading account">
+            <span className="lmsnav-meta" role="status" aria-label={t('navbar.loading_account')}>
               <span className="lmsnav-skel lmsnav-pulse" style={{ width: 78, height: 9 }} />
               <span className="lmsnav-skel lmsnav-pulse" style={{ width: 50, height: 8 }} />
             </span>
@@ -261,7 +396,7 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
             <div className="lmsnav-id">
               {avatar(38, 13)}
               <div className="lmsnav-id-text">
-                <div className="lmsnav-id-name">{user?.name ?? 'Loading account'}</div>
+                <div className="lmsnav-id-name">{user?.name ?? t('navbar.loading_account')}</div>
                 {user?.email && <div className="lmsnav-id-mail">{user.email}</div>}
               </div>
             </div>
@@ -269,7 +404,7 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
             <div className="lmsnav-sep" />
 
             <Link to="/profile" className="lmsnav-item" role="menuitem" onClick={() => setMenuOpen(false)}>
-              <i className="fas fa-user" aria-hidden="true" /> My profile
+              <i className="fas fa-user" aria-hidden="true" /> {t('navbar.my_profile')}
             </Link>
             <button
               type="button"
@@ -277,7 +412,7 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
               role="menuitem"
               onClick={() => { setMenuOpen(false); openPalette() }}
             >
-              <i className="fas fa-search" aria-hidden="true" /> Jump to a page
+              <i className="fas fa-search" aria-hidden="true" /> {t('navbar.jump_to_page')}
               <kbd className="lmsnav-kbd lmsnav-kbd-sm">{modKey} K</kbd>
             </button>
 
@@ -286,11 +421,11 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
             {DEV_NO_AUTH ? (
               <div className="lmsnav-note">
                 <i className="fas fa-unlock" aria-hidden="true" />
-                <span>Dev mode &mdash; authentication bypassed</span>
+                <span>{t('navbar.dev_mode')}</span>
               </div>
             ) : (
               <button type="button" className="lmsnav-item lmsnav-danger" role="menuitem" onClick={handleLogout}>
-                <i className="fas fa-sign-out-alt" aria-hidden="true" /> Sign out
+                <i className="fas fa-sign-out-alt" aria-hidden="true" /> {t('navbar.sign_out')}
               </button>
             )}
           </div>
@@ -302,18 +437,18 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
           className="lmsnav-scrim"
           onMouseDown={(e) => { if (e.target === e.currentTarget) closePalette() }}
         >
-          <div className="lmsnav-pal" role="dialog" aria-modal="true" aria-label="Jump to a page">
+          <div className="lmsnav-pal" role="dialog" aria-modal="true" aria-label={t('navbar.jump_to_page')}>
             <div className="lmsnav-pal-search">
               <i className="fas fa-search" aria-hidden="true" />
               <input
                 autoFocus
                 className="lmsnav-pal-input"
                 type="text"
-                placeholder="Search pages…"
+                placeholder={t('navbar.jump_placeholder')}
                 value={query}
                 onChange={(e) => { setQuery(e.target.value); setActive(0) }}
                 onKeyDown={onPaletteKeyDown}
-                aria-label="Search pages"
+                aria-label={t('navbar.search_pages')}
                 role="combobox"
                 aria-expanded="true"
                 aria-controls="lmsnav-pal-list"
@@ -349,13 +484,13 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
                 ))}
               </ul>
             ) : (
-              <p className="lmsnav-pal-empty">Nothing matches &ldquo;{query}&rdquo;</p>
+              <p className="lmsnav-pal-empty">{t('navbar.nothing_matches', { query })}</p>
             )}
 
             <div className="lmsnav-pal-foot">
-              <span><kbd className="lmsnav-kbd lmsnav-kbd-sm">&uarr;&darr;</kbd> move</span>
-              <span><kbd className="lmsnav-kbd lmsnav-kbd-sm">&crarr;</kbd> open</span>
-              <span><kbd className="lmsnav-kbd lmsnav-kbd-sm">esc</kbd> close</span>
+              <span><kbd className="lmsnav-kbd lmsnav-kbd-sm">&uarr;&darr;</kbd> {t('navbar.hint_move')}</span>
+              <span><kbd className="lmsnav-kbd lmsnav-kbd-sm">&crarr;</kbd> {t('navbar.hint_open')}</span>
+              <span><kbd className="lmsnav-kbd lmsnav-kbd-sm">esc</kbd> {t('navbar.hint_close')}</span>
             </div>
           </div>
         </div>
@@ -383,7 +518,9 @@ const NAVBAR_CSS = `
   background: #343a40;
   border-bottom: 1px solid #4b545c;
 }
-.lmsnav-spacer { margin-left: auto; }
+/* Logical properties throughout this block, not left/right: they mirror
+   themselves under dir="rtl" and need no [dir='rtl'] override in index.css. */
+.lmsnav-spacer { margin-inline-start: auto; }
 .lmsnav kbd { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 .lmsnav-rule { width: 1px; height: 22px; background: rgba(255,255,255,.11); margin: 0 4px; flex: none; }
 
@@ -399,7 +536,8 @@ const NAVBAR_CSS = `
 
 .lmsnav-jump {
   display: flex; align-items: center; gap: 9px;
-  flex: 0 1 400px; height: 34px; padding: 0 7px 0 11px;
+  flex: 0 1 400px; height: 34px; padding-block: 0;
+  padding-inline: 11px 7px;
   border: 1px solid rgba(255,255,255,.10); border-radius: 8px;
   background: rgba(0,0,0,.20); color: rgba(255,255,255,.42);
   font: 400 13px/1 inherit; cursor: pointer;
@@ -409,7 +547,7 @@ const NAVBAR_CSS = `
   background: rgba(0,0,0,.30); border-color: rgba(255,255,255,.20); color: rgba(255,255,255,.68);
 }
 .lmsnav-jump > i { font-size: 12px; }
-.lmsnav-jump-label { flex: 1; text-align: left; }
+.lmsnav-jump-label { flex: 1; text-align: start; }
 
 .lmsnav-kbd {
   font-size: 10px; font-weight: 500; line-height: 1; color: rgba(255,255,255,.46);
@@ -417,6 +555,32 @@ const NAVBAR_CSS = `
   border-radius: 4px; padding: 4px 5px; white-space: nowrap;
 }
 .lmsnav-kbd-sm { padding: 3px 4px; }
+
+.lmsnav-lang {
+  flex: none; min-width: 34px; height: 34px; padding: 0 9px;
+  border: 1px solid rgba(255,255,255,.13); border-radius: 8px;
+  background: transparent; color: rgba(255,255,255,.66);
+  font: 600 12px/1 inherit; letter-spacing: .03em; cursor: pointer;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.lmsnav-lang:hover { background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.26); color: #fff; }
+
+.lmsnav-bell-wrap { position: relative; flex: none; }
+.lmsnav-bell-wrap > .lmsnav-icon { position: relative; }
+.lmsnav-badge {
+  position: absolute; top: 1px; inset-inline-end: 1px;
+  min-width: 15px; height: 15px; padding: 0 3px;
+  display: grid; place-items: center;
+  border-radius: 99px; background: #dc3545; color: #fff;
+  font: 700 9.5px/1 inherit; letter-spacing: 0;
+  box-shadow: 0 0 0 2px #343a40;
+}
+.lmsnav-empty { padding: 14px 10px; text-align: center; font-size: 12px; color: rgba(255,255,255,.44); }
+.lmsnav-dot {
+  display: inline-block; vertical-align: middle;
+  width: 6px; height: 6px; margin-inline-start: 6px;
+  border-radius: 50%; background: #4a9fd8;
+}
 
 .lmsnav-user { position: relative; flex: none; }
 .lmsnav-trigger {
@@ -441,7 +605,7 @@ const NAVBAR_CSS = `
 @keyframes lmsnav-pulse { 0%,100% { opacity: .45 } 50% { opacity: 1 } }
 
 .lmsnav-menu {
-  position: absolute; top: calc(100% + 5px); right: 0; width: 272px; padding: 6px;
+  position: absolute; top: calc(100% + 5px); inset-inline-end: 0; width: 272px; padding: 6px;
   background: #3c4349; border: 1px solid rgba(255,255,255,.11); border-radius: 10px;
   box-shadow: 0 16px 40px rgba(0,0,0,.42), 0 2px 6px rgba(0,0,0,.28);
   animation: lmsnav-pop .15s ease;
@@ -456,11 +620,11 @@ const NAVBAR_CSS = `
   display: flex; align-items: center; gap: 10px; width: 100%;
   padding: 8px 10px; border: 0; border-radius: 7px;
   background: transparent; color: rgba(255,255,255,.80);
-  font: 400 13px/1.3 inherit; text-align: left; text-decoration: none; cursor: pointer;
+  font: 400 13px/1.3 inherit; text-align: start; text-decoration: none; cursor: pointer;
   transition: background .12s ease, color .12s ease;
 }
 .lmsnav-item > i { width: 15px; text-align: center; color: rgba(255,255,255,.45); font-size: 12.5px; }
-.lmsnav-item > .lmsnav-kbd { margin-left: auto; }
+.lmsnav-item > .lmsnav-kbd { margin-inline-start: auto; }
 .lmsnav-item:hover { background: rgba(255,255,255,.09); color: #fff; text-decoration: none; }
 .lmsnav-item:hover > i { color: rgba(255,255,255,.75); }
 .lmsnav-danger { color: #f0958b; }

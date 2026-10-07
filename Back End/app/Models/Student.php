@@ -8,10 +8,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Notifications\Notifiable;
 
 class Student extends Model
 {
-    use HasFactory, SoftDeletes;
+    // Notifiable is what gives a Student ->notify() and ->notifications.
+    // The notifications table is polymorphic, so Student rows and User rows
+    // coexist in it - that is what makes the bell work for both.
+    use HasFactory, Notifiable, SoftDeletes;
 
     protected $fillable = [
         'user_id',

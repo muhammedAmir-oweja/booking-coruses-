@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getCourse, createCourse, updateCourse } from '../api/courses'
 import { getUsers } from '../api/users'
@@ -33,6 +34,7 @@ export default function CourseForm() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const isEdit = Boolean(id)
+  const { t } = useTranslation()
   const { showToast } = useToast()
 
   const [form, setForm] = useState<FormState>(empty)
@@ -64,11 +66,12 @@ export default function CourseForm() {
           })
         ),
       ])
-        .catch(() => setApiError('Failed to load course data.'))
+        // Keys, not sentences: this effect must not depend on `t`.
+        .catch(() => setApiError('course_form.load_failed'))
         .finally(() => setLoading(false))
     } else {
       fetchInstructors
-        .catch(() => setApiError('Failed to load instructors.'))
+        .catch(() => setApiError('course_form.load_instructors_failed'))
         .finally(() => setLoading(false))
     }
   }, [id, isEdit])
@@ -83,11 +86,11 @@ export default function CourseForm() {
 
   const validate = (): Record<string, string> => {
     const e: Record<string, string> = {}
-    if (!form.instructor_id) e.instructor_id = 'Instructor is required.'
-    if (!form.title.trim()) e.title = 'Title is required.'
-    if (Number(form.price) < 0) e.price = 'Price must be ≥ 0.'
-    if (Number(form.capacity) < 1) e.capacity = 'Capacity must be ≥ 1.'
-    if (!form.start_date) e.start_date = 'Start date is required.'
+    if (!form.instructor_id) e.instructor_id = t('course_form.err_instructor')
+    if (!form.title.trim()) e.title = t('course_form.err_title')
+    if (Number(form.price) < 0) e.price = t('course_form.err_price')
+    if (Number(form.capacity) < 1) e.capacity = t('course_form.err_capacity')
+    if (!form.start_date) e.start_date = t('course_form.err_start_date')
     return e
   }
 
@@ -113,10 +116,10 @@ export default function CourseForm() {
     try {
       if (isEdit) {
         await updateCourse(Number(id), payload)
-        showToast('Course updated successfully.')
+        showToast(t('course_form.updated'))
       } else {
         await createCourse(payload)
-        showToast('Course added successfully.')
+        showToast(t('course_form.created'))
       }
       navigate('/courses')
     } catch (err: unknown) {
@@ -124,7 +127,7 @@ export default function CourseForm() {
       if (resp?.errors) {
         setErrors(Object.fromEntries(Object.entries(resp.errors).map(([k, v]) => [k, v[0]])))
       } else {
-        setApiError(resp?.message ?? 'An error occurred.')
+        setApiError(resp?.message ?? 'errors.generic')
       }
     } finally {
       setSaving(false)
@@ -147,13 +150,13 @@ export default function CourseForm() {
         <div className="container-fluid">
           <div className="row mb-2">
             <div className="col-sm-6">
-              <h1 className="m-0">{isEdit ? 'Edit Course' : 'New Course'}</h1>
+              <h1 className="m-0">{isEdit ? t('course_form.edit_title') : t('course_form.new_title')}</h1>
             </div>
             <div className="col-sm-6">
               <ol className="breadcrumb float-sm-right">
-                <li className="breadcrumb-item"><Link to="/">Home</Link></li>
-                <li className="breadcrumb-item"><Link to="/courses">Courses</Link></li>
-                <li className="breadcrumb-item active">{isEdit ? 'Edit' : 'New'}</li>
+                <li className="breadcrumb-item"><Link to="/">{t('common.home')}</Link></li>
+                <li className="breadcrumb-item"><Link to="/courses">{t('courses.title')}</Link></li>
+                <li className="breadcrumb-item active">{isEdit ? t('course_form.crumb_edit') : t('course_form.crumb_new')}</li>
               </ol>
             </div>
           </div>
@@ -166,25 +169,25 @@ export default function CourseForm() {
             <div className="col-md-8">
               <div className="card card-primary">
                 <div className="card-header">
-                  <h3 className="card-title">{isEdit ? 'Edit Course' : 'Add New Course'}</h3>
+                  <h3 className="card-title">{isEdit ? t('course_form.card_edit') : t('course_form.card_new')}</h3>
                 </div>
                 <form onSubmit={handleSubmit}>
                   <div className="card-body">
                     {apiError && (
                       <div className="alert alert-danger">
-                        <i className="fas fa-exclamation-triangle mr-2" />{apiError}
+                        <i className="fas fa-exclamation-triangle mr-2" />{t(apiError)}
                       </div>
                     )}
 
                     <div className="form-group">
-                      <label>Instructor <span className="text-danger">*</span></label>
+                      <label>{t('course_form.instructor')} <span className="text-danger">*</span></label>
                       <select
                         name="instructor_id"
                         className={`form-control${errors.instructor_id ? ' is-invalid' : ''}`}
                         value={form.instructor_id}
                         onChange={handleChange}
                       >
-                        <option value="">— Select an instructor —</option>
+                        <option value="">{t('course_form.select_instructor')}</option>
                         {instructors.map(u => (
                           <option key={u.id} value={u.id}>{u.name}</option>
                         ))}
@@ -195,12 +198,12 @@ export default function CourseForm() {
                     </div>
 
                     <div className="form-group">
-                      <label>Course Title <span className="text-danger">*</span></label>
+                      <label>{t('course_form.course_title')} <span className="text-danger">*</span></label>
                       <input
                         name="title"
                         type="text"
                         className={`form-control${errors.title ? ' is-invalid' : ''}`}
-                        placeholder="Enter course title"
+                        placeholder={t('course_form.title_placeholder')}
                         value={form.title}
                         onChange={handleChange}
                       />
@@ -208,12 +211,12 @@ export default function CourseForm() {
                     </div>
 
                     <div className="form-group">
-                      <label>Description</label>
+                      <label>{t('course_form.description')}</label>
                       <textarea
                         name="description"
                         className="form-control"
                         rows={4}
-                        placeholder="Enter course description"
+                        placeholder={t('course_form.description_placeholder')}
                         value={form.description}
                         onChange={handleChange}
                       />
@@ -222,7 +225,7 @@ export default function CourseForm() {
                     <div className="row">
                       <div className="col-md-3">
                         <div className="form-group">
-                          <label>Price ($)</label>
+                          <label>{t('course_form.price')}</label>
                           <input
                             name="price"
                             type="number"
@@ -237,7 +240,7 @@ export default function CourseForm() {
                       </div>
                       <div className="col-md-3">
                         <div className="form-group">
-                          <label>Capacity</label>
+                          <label>{t('course_form.capacity')}</label>
                           <input
                             name="capacity"
                             type="number"
@@ -251,7 +254,7 @@ export default function CourseForm() {
                       </div>
                       <div className="col-md-3">
                         <div className="form-group">
-                          <label>Hours / عدد الساعات</label>
+                          <label>{t('course_form.hours')}</label>
                           <input
                             name="hours"
                             type="number"
@@ -264,16 +267,16 @@ export default function CourseForm() {
                       </div>
                       <div className="col-md-3">
                         <div className="form-group">
-                          <label>Status</label>
+                          <label>{t('course_form.status')}</label>
                           <select
                             name="status"
                             className="form-control"
                             value={form.status}
                             onChange={handleChange}
                           >
-                            <option value="draft">Draft</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
+                            <option value="draft">{t('status.draft')}</option>
+                            <option value="active">{t('status.active')}</option>
+                            <option value="inactive">{t('status.inactive')}</option>
                           </select>
                         </div>
                       </div>
@@ -282,7 +285,7 @@ export default function CourseForm() {
                     <div className="row">
                       <div className="col-md-6">
                         <div className="form-group">
-                          <label>Start Date <span className="text-danger">*</span></label>
+                          <label>{t('course_form.start_date')} <span className="text-danger">*</span></label>
                           <input
                             name="start_date"
                             type="date"
@@ -295,7 +298,7 @@ export default function CourseForm() {
                       </div>
                       <div className="col-md-6">
                         <div className="form-group">
-                          <label>End Date</label>
+                          <label>{t('course_form.end_date')}</label>
                           <input
                             name="end_date"
                             type="date"
@@ -311,9 +314,9 @@ export default function CourseForm() {
                   <div className="card-footer">
                     <button type="submit" className="btn btn-primary" disabled={saving}>
                       {saving && <i className="fas fa-spinner fa-spin mr-2" />}
-                      {isEdit ? 'Update Course' : 'Create Course'}
+                      {isEdit ? t('course_form.submit_edit') : t('course_form.submit_new')}
                     </button>
-                    <Link to="/courses" className="btn btn-default ml-2">Cancel</Link>
+                    <Link to="/courses" className="btn btn-default ml-2">{t('common.cancel')}</Link>
                   </div>
                 </form>
               </div>

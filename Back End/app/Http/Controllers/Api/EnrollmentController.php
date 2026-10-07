@@ -3,16 +3,27 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreEnrollmentRequest;
+use App\Http\Requests\UpdateEnrollmentRequest;
+use App\Models\Course;
 use App\Models\Enrollment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class EnrollmentController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
         $query = Enrollment::with(['student', 'course']);
+
+        // Students see their own enrollments; instructors see the ones on their
+        // own courses. Same reason as the other two lists.
+        if ($request->user()->isStudent()) {
+            $query->where('student_id', $request->user()->student?->id);
+        } elseif ($request->user()->isInstructor()) {
+            $query->whereHas('course', fn ($q) => $q->where('instructor_id', $request->user()->id));
+        }
 
         if ($request->filled('student_id')) {
             $query->where('student_id', $request->student_id);
@@ -40,21 +51,22 @@ class EnrollmentController extends Controller
         return response()->json($this->format($enrollment));
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreEnrollmentRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'student_id' => ['required', 'exists:students,id'],
-            'course_id' => [
-                'required',
-                'exists:courses,id',
-                Rule::unique('enrollments')->where(fn ($q) => $q->where('student_id', $request->student_id)),
-            ],
-            'enrolled_at' => ['nullable', 'date'],
-            'status' => ['sometimes', 'in:pending,confirmed,cancelled'],
-        ]);
+        $data = $request->validated();
 
         $data['enrolled_at'] = $data['enrolled_at'] ?? now()->toDateString();
         $data['status'] = $data['status'] ?? 'confirmed';
+
+        // One source of truth for "is this bookable", shared with BookingController
+        // and with the courses API. 422 so the SPA shows it as a field error.
+        $course = Course::findOrFail($data['course_id']);
+
+        if (! course_is_available($course)) {
+            throw ValidationException::withMessages([
+                'course_id' => [__('bookings.course_full')],
+            ]);
+        }
 
         $enrollment = Enrollment::create($data);
         $enrollment->load(['student', 'course']);
@@ -62,12 +74,9 @@ class EnrollmentController extends Controller
         return response()->json($this->format($enrollment), 201);
     }
 
-    public function update(Request $request, Enrollment $enrollment): JsonResponse
+    public function update(UpdateEnrollmentRequest $request, Enrollment $enrollment): JsonResponse
     {
-        $data = $request->validate([
-            'status' => ['sometimes', 'in:pending,confirmed,cancelled'],
-            'enrolled_at' => ['sometimes', 'date'],
-        ]);
+        $data = $request->validated();
 
         $enrollment->update($data);
         $enrollment->load(['student', 'course']);
@@ -79,7 +88,9 @@ class EnrollmentController extends Controller
     {
         $enrollment->delete();
 
-        return response()->json(['message' => 'Enrollment deleted successfully.']);
+        return response()->json(['message' => __('messages.deleted', [
+            'model' => __('messages.models.enrollment'),
+        ])]);
     }
 
     private function format(Enrollment $e): array

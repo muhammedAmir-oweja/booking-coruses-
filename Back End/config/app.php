@@ -66,7 +66,21 @@ return [
     |
     */
 
-    'FRONTEND_URL' => env('FRONTEND_URL', 'http://localhost:5173'),
+    'url' => env('APP_URL', 'http://localhost'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Frontend URL
+    |--------------------------------------------------------------------------
+    |
+    | Where the SPA lives, which is not where the API lives. Mail buttons and
+    | notification links have to point here - config('app.url') would send
+    | the recipient to the API host. Read as config('app.frontend_url'), so
+    | the key has to stay lower case.
+    |
+    */
+
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
 
     /*
     |--------------------------------------------------------------------------

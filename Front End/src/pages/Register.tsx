@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { register } from '../api/auth'
 import { useAuth } from '../context/AuthContext'
@@ -20,6 +21,7 @@ interface FieldErrors {
 
 export default function Register() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { refresh } = useAuth()
   const [form, setForm] = useState<FormState>({
     name: '',
@@ -42,11 +44,11 @@ export default function Register() {
 
   const validate = (): FieldErrors => {
     const e: FieldErrors = {}
-    if (!form.name.trim()) e.name = 'Full name is required.'
-    if (!form.email.trim()) e.email = 'Email is required.'
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Enter a valid email.'
-    if (form.password.length < 8) e.password = 'Password must be at least 8 characters.'
-    if (form.password !== form.password_confirmation) e.password_confirmation = 'Passwords do not match.'
+    if (!form.name.trim()) e.name = t('auth.err_name')
+    if (!form.email.trim()) e.email = t('auth.err_email_required')
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = t('auth.err_email_invalid')
+    if (form.password.length < 8) e.password = t('auth.err_password_short')
+    if (form.password !== form.password_confirmation) e.password_confirmation = t('auth.err_password_match')
     return e
   }
 
@@ -67,7 +69,7 @@ export default function Register() {
       if (data?.errors) {
         setErrors(Object.fromEntries(Object.entries(data.errors).map(([k, v]) => [k, (v as string[])[0]])))
       } else {
-        setApiError(data?.message ?? 'Registration failed. Please try again.')
+        setApiError(data?.message ?? 'auth.register_failed')
       }
     } finally {
       setLoading(false)
@@ -79,30 +81,30 @@ export default function Register() {
       <div style={styles.left}>
         <div style={styles.leftInner}>
           <i className="fas fa-graduation-cap" style={styles.leftIcon} />
-          <h1 style={styles.leftTitle}>Course Booking</h1>
-          <p style={styles.leftSub}>Join us to access courses, training sessions, and more.</p>
+          <h1 style={styles.leftTitle}>{t('app.name')}</h1>
+          <p style={styles.leftSub}>{t('auth.register_tagline')}</p>
         </div>
       </div>
 
       <div style={styles.right}>
         <div style={styles.formBox}>
-          <h2 style={styles.heading}>Create an account</h2>
-          <p style={styles.subHeading}>Fill in the details below to get started</p>
+          <h2 style={styles.heading}>{t('auth.register_title')}</h2>
+          <p style={styles.subHeading}>{t('auth.register_subtitle')}</p>
 
           {apiError && (
             <div style={styles.errorBox}>
               <i className="fas fa-exclamation-circle" style={{ marginRight: 8 }} />
-              {apiError}
+              {t(apiError)}
             </div>
           )}
 
           <form onSubmit={handleSubmit} noValidate>
             <div style={styles.field}>
-              <label style={styles.label}>Full Name</label>
+              <label style={styles.label}>{t('auth.name')}</label>
               <input
                 type="text"
                 style={errors.name ? { ...styles.input, ...styles.inputError } : styles.input}
-                placeholder="John Smith"
+                placeholder={t('auth.name_placeholder')}
                 autoComplete="name"
                 value={form.name}
                 onChange={set('name')}
@@ -111,11 +113,11 @@ export default function Register() {
             </div>
 
             <div style={styles.field}>
-              <label style={styles.label}>Email address</label>
+              <label style={styles.label}>{t('auth.email')}</label>
               <input
                 type="email"
                 style={errors.email ? { ...styles.input, ...styles.inputError } : styles.input}
-                placeholder="you@example.com"
+                placeholder={t('auth.email_placeholder')}
                 autoComplete="email"
                 value={form.email}
                 onChange={set('email')}
@@ -124,7 +126,7 @@ export default function Register() {
             </div>
 
             <div style={styles.field}>
-              <label style={styles.label}>I am a</label>
+              <label style={styles.label}>{t('auth.role')}</label>
               <div style={styles.roleRow}>
                 {(['student', 'instructor'] as const).map(r => (
                   <label
@@ -139,27 +141,33 @@ export default function Register() {
                       onChange={set('role')}
                       style={{ display: 'none' }}
                     />
-                    <i className={r === 'student' ? 'fas fa-user-graduate' : 'fas fa-chalkboard-teacher'} style={{ marginRight: 8 }} />
-                    {r.charAt(0).toUpperCase() + r.slice(1)}
+                    <i className={r === 'student' ? 'fas fa-user-graduate' : 'fas fa-chalkboard-teacher'} style={{ marginInlineEnd: 8 }} />
+                    {t(`roles.${r}`)}
                   </label>
                 ))}
               </div>
             </div>
 
             <div style={styles.field}>
-              <label style={styles.label}>Password</label>
+              <label style={styles.label}>{t('auth.password')}</label>
               <div style={styles.inputWrap}>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   style={errors.password
-                    ? { ...styles.input, ...styles.inputError, paddingRight: 44 }
-                    : { ...styles.input, paddingRight: 44 }}
-                  placeholder="At least 8 characters"
+                    ? { ...styles.input, ...styles.inputError, paddingInlineEnd: 44 }
+                    : { ...styles.input, paddingInlineEnd: 44 }}
+                  placeholder={t('auth.password_min_placeholder')}
                   autoComplete="new-password"
                   value={form.password}
                   onChange={set('password')}
                 />
-                <button type="button" style={styles.eyeBtn} tabIndex={-1} onClick={() => setShowPassword(v => !v)}>
+                <button
+                  type="button"
+                  style={styles.eyeBtn}
+                  tabIndex={-1}
+                  aria-label={showPassword ? t('auth.hide_password') : t('auth.show_password')}
+                  onClick={() => setShowPassword(v => !v)}
+                >
                   <i className={showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'} />
                 </button>
               </div>
@@ -167,19 +175,25 @@ export default function Register() {
             </div>
 
             <div style={styles.field}>
-              <label style={styles.label}>Confirm Password</label>
+              <label style={styles.label}>{t('auth.confirm_password')}</label>
               <div style={styles.inputWrap}>
                 <input
                   type={showConfirm ? 'text' : 'password'}
                   style={errors.password_confirmation
-                    ? { ...styles.input, ...styles.inputError, paddingRight: 44 }
-                    : { ...styles.input, paddingRight: 44 }}
-                  placeholder="Repeat your password"
+                    ? { ...styles.input, ...styles.inputError, paddingInlineEnd: 44 }
+                    : { ...styles.input, paddingInlineEnd: 44 }}
+                  placeholder={t('auth.confirm_placeholder')}
                   autoComplete="new-password"
                   value={form.password_confirmation}
                   onChange={set('password_confirmation')}
                 />
-                <button type="button" style={styles.eyeBtn} tabIndex={-1} onClick={() => setShowConfirm(v => !v)}>
+                <button
+                  type="button"
+                  style={styles.eyeBtn}
+                  tabIndex={-1}
+                  aria-label={showConfirm ? t('auth.hide_password') : t('auth.show_password')}
+                  onClick={() => setShowConfirm(v => !v)}
+                >
                   <i className={showConfirm ? 'fas fa-eye-slash' : 'fas fa-eye'} />
                 </button>
               </div>
@@ -188,14 +202,14 @@ export default function Register() {
 
             <button type="submit" style={loading ? { ...styles.btn, opacity: 0.75 } : styles.btn} disabled={loading}>
               {loading
-                ? <><i className="fas fa-spinner fa-spin" style={{ marginRight: 8 }} />Creating account…</>
-                : 'Create Account'}
+                ? <><i className="fas fa-spinner fa-spin" style={{ marginInlineEnd: 8 }} />{t('auth.registering')}</>
+                : t('auth.register')}
             </button>
           </form>
 
           <p style={styles.bottomText}>
-            Already have an account?{' '}
-            <Link to="/login" style={styles.link}>Sign in</Link>
+            {t('auth.have_account')}{' '}
+            <Link to="/login" style={styles.link}>{t('auth.sign_in')}</Link>
           </p>
         </div>
       </div>
@@ -207,7 +221,8 @@ const styles: Record<string, React.CSSProperties> = {
   page: {
     display: 'flex',
     minHeight: '100vh',
-    fontFamily: "'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif",
+    // Arabic first: this inline style beats index.css's html[dir='rtl'] rule.
+    fontFamily: "'IBM Plex Sans Arabic', 'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif",
   },
   left: {
     flex: 1,
@@ -308,7 +323,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   eyeBtn: {
     position: 'absolute',
-    right: 12,
+    insetInlineEnd: 12,
     top: '50%',
     transform: 'translateY(-50%)',
     background: 'none',

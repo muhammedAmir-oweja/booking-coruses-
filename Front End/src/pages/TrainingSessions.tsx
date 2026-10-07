@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { getTrainingSessions, deleteTrainingSession } from '../api/trainingSessions'
 import type { TrainingSession } from '../types'
@@ -20,6 +21,7 @@ function formatDateTime(dt: string) {
 }
 
 export default function TrainingSessions() {
+  const { t } = useTranslation()
   const { isAdmin, isInstructor } = useAuth()
   const { showToast } = useToast()
   const [sessions, setSessions] = useState<TrainingSession[]>([])
@@ -55,7 +57,8 @@ export default function TrainingSessions() {
         setTotal(data.total)
         setError('')
       } catch {
-        if (!cancelled) setError('Failed to load training sessions.')
+        // A key, not a sentence - see the same note in Courses.tsx.
+        if (!cancelled) setError('sessions.load_failed')
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -74,14 +77,14 @@ export default function TrainingSessions() {
   }
 
   const handleDelete = async (session: TrainingSession) => {
-    if (!confirm(`Delete "${session.title}"? This cannot be undone.`)) return
+    if (!confirm(t('sessions.delete_confirm', { title: session.title }))) return
     setDeleting(session.id)
     try {
       await deleteTrainingSession(session.id)
-      showToast('Training session deleted successfully.')
+      showToast(t('sessions.deleted'))
       reload()
     } catch {
-      showToast('Failed to delete training session.', 'error')
+      showToast(t('sessions.delete_failed'), 'error')
     } finally {
       setDeleting(null)
     }
@@ -93,12 +96,12 @@ export default function TrainingSessions() {
         <div className="container-fluid">
           <div className="row mb-2">
             <div className="col-sm-6">
-              <h1 className="m-0">Training Sessions</h1>
+              <h1 className="m-0">{t('sessions.title')}</h1>
             </div>
             <div className="col-sm-6 text-right">
               {(isAdmin || isInstructor) && (
                 <Link to="/training-sessions/new" className="btn btn-primary btn-sm">
-                  <i className="fas fa-plus mr-1" /> Add Session
+                  <i className="fas fa-plus mr-1" /> {t('nav.add_session')}
                 </Link>
               )}
             </div>
@@ -114,7 +117,7 @@ export default function TrainingSessions() {
                 <input
                   type="text"
                   className="form-control form-control-sm"
-                  placeholder="Search by title..."
+                  placeholder={t('sessions.search_placeholder')}
                   style={{ maxWidth: 260 }}
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
@@ -125,7 +128,7 @@ export default function TrainingSessions() {
                 {search && (
                   <button type="button" className="btn btn-default btn-sm"
                     onClick={() => { setLoading(true); setSearchInput(''); setSearch(''); setPage(1) }}>
-                    Clear
+                    {t('common.clear')}
                   </button>
                 )}
               </form>
@@ -136,39 +139,39 @@ export default function TrainingSessions() {
                 value={statusFilter}
                 onChange={(e) => { setLoading(true); setStatusFilter(e.target.value); setPage(1) }}
               >
-                <option value="">All Statuses</option>
-                <option value="scheduled">Scheduled</option>
-                <option value="ongoing">Ongoing</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
+                <option value="">{t('common.all_statuses')}</option>
+                <option value="scheduled">{t('status.scheduled')}</option>
+                <option value="ongoing">{t('status.ongoing')}</option>
+                <option value="completed">{t('status.completed')}</option>
+                <option value="cancelled">{t('status.cancelled')}</option>
               </select>
 
               <div className="card-tools ml-auto">
-                <span className="badge badge-info">{total} total</span>
+                <span className="badge badge-info">{t('common.total_count', { count: total })}</span>
               </div>
             </div>
 
             <div className="card-body p-0">
               {loading ? (
                 <div className="text-center p-4">
-                  <i className="fas fa-spinner fa-spin mr-2" /> Loading...
+                  <i className="fas fa-spinner fa-spin mr-2" /> {t('common.loading')}
                 </div>
               ) : error ? (
-                <div className="alert alert-danger m-3">{error}</div>
+                <div className="alert alert-danger m-3">{t(error)}</div>
               ) : sessions.length === 0 ? (
-                <div className="text-center p-4 text-muted">No training sessions found.</div>
+                <div className="text-center p-4 text-muted">{t('sessions.none_found')}</div>
               ) : (
                 <table className="table table-hover table-striped">
                   <thead>
                     <tr>
                       <th>#</th>
-                      <th>Title</th>
-                      <th>Course</th>
-                      <th>Starts At</th>
-                      <th>Duration</th>
-                      <th>Location</th>
-                      <th>Status</th>
-                      <th>Actions</th>
+                      <th>{t('sessions.col.title')}</th>
+                      <th>{t('sessions.col.course')}</th>
+                      <th>{t('sessions.col.starts_at')}</th>
+                      <th>{t('sessions.col.duration')}</th>
+                      <th>{t('sessions.col.location')}</th>
+                      <th>{t('sessions.col.status')}</th>
+                      <th>{t('common.actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -176,13 +179,13 @@ export default function TrainingSessions() {
                       <tr key={s.id}>
                         <td>{s.id}</td>
                         <td>{s.title}</td>
-                        <td>{s.course?.title ?? '—'}</td>
-                        <td style={{ whiteSpace: 'nowrap' }}>{formatDateTime(s.starts_at)}</td>
-                        <td>{s.duration_minutes != null ? `${s.duration_minutes} min` : '—'}</td>
-                        <td>{s.location || '—'}</td>
+                        <td>{s.course?.title ?? t('common.none')}</td>
+                        <td className="text-ltr" style={{ whiteSpace: 'nowrap' }}>{formatDateTime(s.starts_at)}</td>
+                        <td>{s.duration_minutes != null ? t('sessions.minutes', { count: s.duration_minutes }) : t('common.none')}</td>
+                        <td>{s.location || t('common.none')}</td>
                         <td>
                           <span className={`badge ${STATUS_BADGES[s.status] ?? 'badge-secondary'}`}>
-                            {s.status}
+                            {t(`status.${s.status}`)}
                           </span>
                         </td>
                         <td>
@@ -190,6 +193,7 @@ export default function TrainingSessions() {
                             <Link
                               to={`/training-sessions/${s.id}/edit`}
                               className="btn btn-xs btn-info mr-1"
+                              title={t('common.edit')}
                             >
                               <i className="fas fa-edit" />
                             </Link>
@@ -197,6 +201,7 @@ export default function TrainingSessions() {
                           {isAdmin && (
                             <button
                               className="btn btn-xs btn-danger"
+                              title={t('common.delete')}
                               disabled={deleting === s.id}
                               onClick={() => handleDelete(s)}
                             >

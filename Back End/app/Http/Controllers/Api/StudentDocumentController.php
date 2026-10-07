@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreStudentDocumentRequest;
 use App\Models\Student;
 use App\Models\StudentDocument;
 use Illuminate\Http\JsonResponse;
@@ -18,11 +19,8 @@ class StudentDocumentController extends Controller
         return response()->json($documents);
     }
 
-    public function store(Request $request, Student $student): JsonResponse
+    public function store(StoreStudentDocumentRequest $request, Student $student): JsonResponse
     {
-        $request->validate([
-            'document' => ['required', 'file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip'],
-        ]);
 
         $file = $request->file('document');
         $path = $file->store('student-documents', 'public');
@@ -40,13 +38,15 @@ class StudentDocumentController extends Controller
     public function destroy(Student $student, StudentDocument $document): JsonResponse
     {
         if ($document->student_id !== $student->id) {
-            return response()->json(['message' => 'Document does not belong to this student.'], 403);
+            return response()->json(['message' => __('messages.document_foreign')], 403);
         }
 
         Storage::disk('public')->delete($document->path);
         $document->delete();
 
-        return response()->json(['message' => 'Document deleted successfully.']);
+        return response()->json(['message' => __('messages.deleted', [
+            'model' => __('messages.models.document'),
+        ])]);
     }
 
     private function format(StudentDocument $document): array

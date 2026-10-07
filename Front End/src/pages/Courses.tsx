@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { getCourses, deleteCourse } from '../api/courses'
 import type { Course, PaginatedResponse } from '../types'
@@ -7,6 +8,7 @@ import { useAuth } from '../context/AuthContext'
 
 export default function Courses() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { showToast } = useToast()
   const { isAdmin, isInstructor } = useAuth()
   const [data, setData] = useState<PaginatedResponse<Course> | null>(null)
@@ -33,7 +35,10 @@ export default function Courses() {
         setData(data)
         setError(null)
       } catch {
-        if (!cancelled) setError('Failed to load courses.')
+        // Stored as a key, not a sentence: the effect does not depend on `t`
+        // (so a language switch costs no refetch) and the banner re-localizes
+        // itself on the next render.
+        if (!cancelled) setError('courses.load_failed')
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -52,14 +57,14 @@ export default function Courses() {
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Delete this course?')) return
+    if (!confirm(t('courses.delete_confirm'))) return
     setDeletingId(id)
     try {
       await deleteCourse(id)
-      showToast('Course deleted successfully.')
+      showToast(t('courses.deleted'))
       reload()
     } catch {
-      showToast('Failed to delete course.', 'error')
+      showToast(t('courses.delete_failed'), 'error')
     } finally {
       setDeletingId(null)
     }
@@ -67,7 +72,7 @@ export default function Courses() {
 
   const statusBadge = (status: Course['status']) => {
     const map = { active: 'success', inactive: 'secondary', draft: 'warning' }
-    return <span className={`badge badge-${map[status]}`}>{status}</span>
+    return <span className={`badge badge-${map[status]}`}>{t(`status.${status}`)}</span>
   }
 
   return (
@@ -76,12 +81,12 @@ export default function Courses() {
         <div className="container-fluid">
           <div className="row mb-2">
             <div className="col-sm-6">
-              <h1 className="m-0">Courses</h1>
+              <h1 className="m-0">{t('courses.title')}</h1>
             </div>
             <div className="col-sm-6">
               <ol className="breadcrumb float-sm-right">
-                <li className="breadcrumb-item"><Link to="/">Home</Link></li>
-                <li className="breadcrumb-item active">Courses</li>
+                <li className="breadcrumb-item"><Link to="/">{t('common.home')}</Link></li>
+                <li className="breadcrumb-item active">{t('courses.title')}</li>
               </ol>
             </div>
           </div>
@@ -92,19 +97,19 @@ export default function Courses() {
         <div className="container-fluid">
           {error && (
             <div className="alert alert-danger">
-              <i className="fas fa-exclamation-triangle mr-2" />{error}
+              <i className="fas fa-exclamation-triangle mr-2" />{t(error)}
             </div>
           )}
 
           <div className="card">
             <div className="card-header">
-              <h3 className="card-title">All Courses</h3>
+              <h3 className="card-title">{t('courses.all')}</h3>
               <div className="card-tools d-flex align-items-center gap-2">
                 <form onSubmit={handleSearch} className="input-group input-group-sm mr-2" style={{ width: 250 }}>
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="Search courses..."
+                    placeholder={t('courses.search_placeholder')}
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                   />
@@ -119,7 +124,7 @@ export default function Courses() {
                     className="btn btn-primary btn-sm"
                     onClick={() => navigate('/courses/new')}
                   >
-                    <i className="fas fa-plus mr-1" /> Add Course
+                    <i className="fas fa-plus mr-1" /> {t('nav.add_course')}
                   </button>
                 )}
               </div>
@@ -130,28 +135,28 @@ export default function Courses() {
                 <thead>
                   <tr>
                     <th>#</th>
-                    <th>Title</th>
-                    <th>Instructor</th>
-                    <th>Price</th>
-                    <th>Hours</th>
-                    <th>Enrolled</th>
-                    <th>Status</th>
-                    <th>Start Date</th>
-                    <th>Actions</th>
+                    <th>{t('courses.col.title')}</th>
+                    <th>{t('courses.col.instructor')}</th>
+                    <th>{t('courses.col.price')}</th>
+                    <th>{t('courses.col.hours')}</th>
+                    <th>{t('courses.col.enrolled')}</th>
+                    <th>{t('courses.col.status')}</th>
+                    <th>{t('courses.col.start_date')}</th>
+                    <th>{t('common.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading && (
                     <tr>
                       <td colSpan={9} className="text-center py-4">
-                        <i className="fas fa-spinner fa-spin mr-2" />Loading...
+                        <i className="fas fa-spinner fa-spin mr-2" />{t('common.loading')}
                       </td>
                     </tr>
                   )}
                   {!loading && !data?.data?.length && (
                     <tr>
                       <td colSpan={9} className="text-center py-4 text-muted">
-                        No courses found
+                        {t('courses.none_found')}
                       </td>
                     </tr>
                   )}
@@ -162,19 +167,22 @@ export default function Courses() {
                         <Link to={`/courses/${course.id}/edit`}>{course.title}</Link>
                       </td>
                       <td>{course.instructor?.name ?? `#${course.instructor_id}`}</td>
-                      <td>${course.price}</td>
-                      <td>{course.hours ?? 0}</td>
+                      <td className="text-ltr">${course.price}</td>
+                      <td className="text-ltr">{course.hours ?? 0}</td>
                       <td>
-                        {course.enrolled_count} / {course.capacity}
+                        <span className="text-ltr">{course.taken_seats} / {course.capacity}</span>
+                      {course.is_available
+                        ? <span className="badge badge-success ml-1">{t('courses.seats_left', { count: course.remaining_seats })}</span>
+                        : <span className="badge badge-danger ml-1">{t('courses.full')}</span>}
                       </td>
                       <td>{statusBadge(course.status)}</td>
-                      <td>{course.start_date ? new Date(course.start_date).toLocaleDateString() : '—'}</td>
+                      <td className="text-ltr">{course.start_date ? new Date(course.start_date).toLocaleDateString() : t('common.none')}</td>
                       <td>
                         {(isAdmin || isInstructor) && (
                           <Link
                             to={`/courses/${course.id}/edit`}
                             className="btn btn-sm btn-info mr-1"
-                            title="Edit"
+                            title={t('common.edit')}
                           >
                             <i className="fas fa-edit" />
                           </Link>
@@ -182,7 +190,7 @@ export default function Courses() {
                         {isAdmin && (
                           <button
                             className="btn btn-sm btn-danger"
-                            title="Delete"
+                            title={t('common.delete')}
                             disabled={deletingId === course.id}
                             onClick={() => handleDelete(course.id)}
                           >

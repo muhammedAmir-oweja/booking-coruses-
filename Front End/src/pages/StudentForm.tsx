@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getStudent, createStudent, updateStudent, getStudentDocuments, uploadStudentDocument, deleteStudentDocument } from '../api/students'
 import type { Student, StudentDocument } from '../types'
@@ -25,6 +26,7 @@ export default function StudentForm() {
   const { id } = useParams<{ id: string }>()
   const isEdit = Boolean(id)
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { showToast } = useToast()
 
   const [form, setForm] = useState<FormState>(empty)
@@ -65,7 +67,8 @@ export default function StudentForm() {
         })
         if (data.photo_url) setPhotoPreview(data.photo_url)
       })
-      .catch(() => setServerError('Failed to load student.'))
+      // A key, not a sentence - see the same note in Courses.tsx.
+      .catch(() => setServerError('student_form.load_failed'))
       .finally(() => setLoading(false))
   }, [id, isEdit])
 
@@ -86,10 +89,10 @@ export default function StudentForm() {
 
   const validate = (): boolean => {
     const errs: Record<string, string> = {}
-    if (!form.name.trim()) errs.name = 'Name is required.'
-    if (!form.email.trim()) errs.email = 'Email is required.'
-    else if (!/\S+@\S+\.\S+/.test(form.email)) errs.email = 'Enter a valid email.'
-    if (form.phone && !/^[0-9+\-() ]{5,20}$/.test(form.phone)) errs.phone = 'Enter a valid phone number.'
+    if (!form.name.trim()) errs.name = t('student_form.err_name')
+    if (!form.email.trim()) errs.email = t('student_form.err_email_required')
+    else if (!/\S+@\S+\.\S+/.test(form.email)) errs.email = t('student_form.err_email_invalid')
+    if (form.phone && !/^[0-9+\-() ]{5,20}$/.test(form.phone)) errs.phone = t('student_form.err_phone')
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -107,10 +110,10 @@ export default function StudentForm() {
     try {
       if (isEdit) {
         await updateStudent(Number(id), fd)
-        showToast('Student updated successfully.')
+        showToast(t('student_form.updated'))
       } else {
         await createStudent(fd)
-        showToast('Student added successfully.')
+        showToast(t('student_form.created'))
       }
       navigate('/students')
     } catch (err) {
@@ -122,7 +125,7 @@ export default function StudentForm() {
         })
         setErrors(serverErrs)
       } else {
-        setServerError(ax.response?.data?.message ?? 'An error occurred.')
+        setServerError(ax.response?.data?.message ?? 'errors.generic')
       }
     } finally {
       setSaving(false)
@@ -135,10 +138,10 @@ export default function StudentForm() {
     setUploadingDoc(true)
     try {
       await uploadStudentDocument(Number(id), file)
-      showToast('Document uploaded successfully.')
+      showToast(t('student_form.doc_uploaded'))
       loadDocuments()
     } catch {
-      showToast('Failed to upload document.', 'error')
+      showToast(t('student_form.doc_upload_failed'), 'error')
     } finally {
       setUploadingDoc(false)
       if (docRef.current) docRef.current.value = ''
@@ -146,14 +149,14 @@ export default function StudentForm() {
   }
 
   const handleDocumentDelete = async (docId: number) => {
-    if (!confirm('Delete this document?') || !id) return
+    if (!confirm(t('student_form.doc_delete_confirm')) || !id) return
     setDeletingDocId(docId)
     try {
       await deleteStudentDocument(Number(id), docId)
-      showToast('Document deleted.')
+      showToast(t('student_form.doc_deleted'))
       loadDocuments()
     } catch {
-      showToast('Failed to delete document.', 'error')
+      showToast(t('student_form.doc_delete_failed'), 'error')
     } finally {
       setDeletingDocId(null)
     }
@@ -192,11 +195,11 @@ export default function StudentForm() {
         <div className="container-fluid">
           <div className="row mb-2">
             <div className="col-sm-6">
-              <h1 className="m-0">{isEdit ? 'Edit Student' : 'Add Student'}</h1>
+              <h1 className="m-0">{isEdit ? t('student_form.edit_title') : t('student_form.new_title')}</h1>
             </div>
             <div className="col-sm-6 text-right">
               <Link to="/students" className="btn btn-default btn-sm">
-                <i className="fas fa-arrow-left mr-1" /> Back
+                <i className="fas fa-arrow-left mr-1" /> {t('common.back')}
               </Link>
             </div>
           </div>
@@ -210,13 +213,13 @@ export default function StudentForm() {
               <div className="card card-primary">
                 <div className="card-header">
                   <h3 className="card-title">
-                    {isEdit ? `Editing: ${student?.name}` : 'New Student'}
+                    {isEdit ? t('student_form.card_edit', { name: student?.name ?? '' }) : t('student_form.card_new')}
                   </h3>
                 </div>
                 <form onSubmit={handleSubmit} encType="multipart/form-data">
                   <div className="card-body">
                     {serverError && (
-                      <div className="alert alert-danger">{serverError}</div>
+                      <div className="alert alert-danger">{t(serverError)}</div>
                     )}
 
                     <div className="form-group text-center">
@@ -224,7 +227,7 @@ export default function StudentForm() {
                         {photoPreview ? (
                           <img
                             src={photoPreview}
-                            alt="Preview"
+                            alt={t('student_form.photo_preview')}
                             className="img-circle elevation-2"
                             style={{ width: 80, height: 80, objectFit: 'cover' }}
                           />
@@ -241,7 +244,7 @@ export default function StudentForm() {
                         onClick={() => fileRef.current?.click()}
                       >
                         <i className="fas fa-camera mr-1" />
-                        {photoPreview ? 'Change Photo' : 'Upload Photo'}
+                        {photoPreview ? t('student_form.change_photo') : t('student_form.upload_photo')}
                       </button>
                       <input
                         ref={fileRef}
@@ -254,12 +257,12 @@ export default function StudentForm() {
                     </div>
 
                     <div className="form-group">
-                      <label>Full Name <span className="text-danger">*</span></label>
+                      <label>{t('student_form.name')} <span className="text-danger">*</span></label>
                       <input
                         name="name"
                         type="text"
                         className={`form-control${errors.name ? ' is-invalid' : ''}`}
-                        placeholder="Enter full name"
+                        placeholder={t('student_form.name_placeholder')}
                         value={form.name}
                         onChange={handleChange}
                       />
@@ -267,12 +270,12 @@ export default function StudentForm() {
                     </div>
 
                     <div className="form-group">
-                      <label>Email <span className="text-danger">*</span></label>
+                      <label>{t('student_form.email')} <span className="text-danger">*</span></label>
                       <input
                         name="email"
                         type="email"
                         className={`form-control${errors.email ? ' is-invalid' : ''}`}
-                        placeholder="Enter email address"
+                        placeholder={t('student_form.email_placeholder')}
                         value={form.email}
                         onChange={handleChange}
                       />
@@ -280,12 +283,12 @@ export default function StudentForm() {
                     </div>
 
                     <div className="form-group">
-                      <label>Phone</label>
+                      <label>{t('student_form.phone')}</label>
                       <input
                         name="phone"
                         type="text"
                         className={`form-control${errors.phone ? ' is-invalid' : ''}`}
-                        placeholder="e.g. 0512345678"
+                        placeholder={t('student_form.phone_placeholder')}
                         value={form.phone}
                         onChange={handleChange}
                       />
@@ -293,7 +296,7 @@ export default function StudentForm() {
                     </div>
 
                     <div className="form-group">
-                      <label>Date of Birth</label>
+                      <label>{t('student_form.date_of_birth')}</label>
                       <input
                         name="date_of_birth"
                         type="date"
@@ -305,12 +308,12 @@ export default function StudentForm() {
                     </div>
 
                     <div className="form-group">
-                      <label>Address</label>
+                      <label>{t('student_form.address')}</label>
                       <textarea
                         name="address"
                         rows={3}
                         className={`form-control${errors.address ? ' is-invalid' : ''}`}
-                        placeholder="Enter address"
+                        placeholder={t('student_form.address_placeholder')}
                         value={form.address}
                         onChange={handleChange}
                       />
@@ -321,11 +324,11 @@ export default function StudentForm() {
                   <div className="card-footer">
                     <button type="submit" className="btn btn-primary" disabled={saving}>
                       {saving
-                        ? <><i className="fas fa-spinner fa-spin mr-1" /> Saving...</>
-                        : <><i className="fas fa-save mr-1" /> {isEdit ? 'Update Student' : 'Add Student'}</>
+                        ? <><i className="fas fa-spinner fa-spin mr-1" /> {t('common.saving')}</>
+                        : <><i className="fas fa-save mr-1" /> {isEdit ? t('student_form.submit_edit') : t('student_form.submit_new')}</>
                       }
                     </button>
-                    <Link to="/students" className="btn btn-default ml-2">Cancel</Link>
+                    <Link to="/students" className="btn btn-default ml-2">{t('common.cancel')}</Link>
                   </div>
                 </form>
               </div>
@@ -335,7 +338,7 @@ export default function StudentForm() {
               <div className="col-md-8 mt-4">
                 <div className="card card-secondary">
                   <div className="card-header d-flex align-items-center justify-content-between">
-                    <h3 className="card-title">Attached Documents</h3>
+                    <h3 className="card-title">{t('student_form.documents')}</h3>
                     <button
                       type="button"
                       className="btn btn-primary btn-sm"
@@ -343,8 +346,8 @@ export default function StudentForm() {
                       disabled={uploadingDoc}
                     >
                       {uploadingDoc
-                        ? <><i className="fas fa-spinner fa-spin mr-1" /> Uploading...</>
-                        : <><i className="fas fa-upload mr-1" /> Upload Document</>
+                        ? <><i className="fas fa-spinner fa-spin mr-1" /> {t('student_form.uploading')}</>
+                        : <><i className="fas fa-upload mr-1" /> {t('student_form.upload_document')}</>
                       }
                     </button>
                     <input
@@ -359,15 +362,15 @@ export default function StudentForm() {
                     {documents.length === 0 ? (
                       <div className="text-center text-muted p-4">
                         <i className="fas fa-folder-open fa-2x mb-2 d-block" />
-                        No documents uploaded yet.
+                        {t('student_form.no_documents')}
                       </div>
                     ) : (
                       <table className="table table-hover mb-0">
                         <thead>
                           <tr>
-                            <th>File</th>
-                            <th>Size</th>
-                            <th>Uploaded</th>
+                            <th>{t('student_form.doc_col.file')}</th>
+                            <th>{t('student_form.doc_col.size')}</th>
+                            <th>{t('student_form.doc_col.uploaded')}</th>
                             <th></th>
                           </tr>
                         </thead>
@@ -378,12 +381,13 @@ export default function StudentForm() {
                                 <i className={`${fileIcon(doc.mime_type)} mr-2`} />
                                 <a href={doc.url} target="_blank" rel="noreferrer">{doc.original_name}</a>
                               </td>
-                              <td className="text-muted small">{formatFileSize(doc.size)}</td>
-                              <td className="text-muted small">{new Date(doc.created_at).toLocaleDateString()}</td>
+                              <td className="text-muted small text-ltr">{formatFileSize(doc.size)}</td>
+                              <td className="text-muted small text-ltr">{new Date(doc.created_at).toLocaleDateString()}</td>
                               <td>
                                 <button
                                   type="button"
                                   className="btn btn-xs btn-danger"
+                                  title={t('common.delete')}
                                   disabled={deletingDocId === doc.id}
                                   onClick={() => handleDocumentDelete(doc.id)}
                                 >

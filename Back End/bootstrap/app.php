@@ -1,6 +1,7 @@
 <?php
 
-use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\EnsureUserHasRole;
+use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -17,7 +18,15 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
         $middleware->prepend(HandleCors::class);
-        $middleware->alias(['admin' => AdminMiddleware::class]);
+        $middleware->alias([
+            'role' => EnsureUserHasRole::class,
+        ]);
+
+        // Appended, not prepended: it has to run after Sanctum's stateful
+        // middleware or $request->cookie('prefs') is not readable yet, and the
+        // cookie source would silently return nothing while the header source
+        // kept working. Task 26 relies on this same line.
+        $middleware->appendToGroup('api', [SetLocale::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

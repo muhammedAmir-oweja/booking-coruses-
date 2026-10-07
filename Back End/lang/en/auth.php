@@ -17,4 +17,8 @@ return [
     'password' => 'The provided password is incorrect.',
     'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
 
+    // EnsureUserHasRole: 401 unauthenticated vs 403 wrong role.
+    'unauthenticated' => 'Unauthenticated.',
+    'forbidden_role' => 'You do not have permission to access this resource.',
+
 ];

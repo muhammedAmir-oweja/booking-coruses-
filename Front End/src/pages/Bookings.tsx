@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { getBookings, updateBookingStatus, cancelBooking } from '../api/bookings'
 import type { Booking } from '../types'
 import { useToast } from '../context/ToastContext'
@@ -17,6 +18,7 @@ const PAYMENT_BADGES: Record<string, string> = {
 }
 
 export default function Bookings() {
+  const { t } = useTranslation()
   const { isAdmin } = useAuth()
   const { showToast } = useToast()
   const [bookings, setBookings] = useState<Booking[]>([])
@@ -51,7 +53,8 @@ export default function Bookings() {
         setTotal(data.total)
         setError('')
       } catch {
-        if (!cancelled) setError('Failed to load bookings.')
+        // A key, not a sentence - see the same note in Courses.tsx.
+        if (!cancelled) setError('bookings.load_failed')
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -66,10 +69,10 @@ export default function Bookings() {
     setActionId(id)
     try {
       await updateBookingStatus(id, { status: 'confirmed' })
-      showToast('Booking confirmed successfully.')
+      showToast(t('bookings.confirmed'))
       reload()
     } catch {
-      showToast('Failed to confirm booking.', 'error')
+      showToast(t('bookings.confirm_failed'), 'error')
     } finally {
       setActionId(null)
     }
@@ -79,24 +82,24 @@ export default function Bookings() {
     setActionId(id)
     try {
       await updateBookingStatus(id, { payment_status: 'paid' })
-      showToast('Booking marked as paid.')
+      showToast(t('bookings.marked_paid'))
       reload()
     } catch {
-      showToast('Failed to mark booking as paid.', 'error')
+      showToast(t('bookings.mark_paid_failed'), 'error')
     } finally {
       setActionId(null)
     }
   }
 
   const handleCancel = async (id: number) => {
-    if (!confirm('Cancel this booking?')) return
+    if (!confirm(t('bookings.cancel_confirm'))) return
     setActionId(id)
     try {
       await cancelBooking(id)
-      showToast('Booking cancelled successfully.', 'warning')
+      showToast(t('bookings.cancelled'), 'warning')
       reload()
     } catch {
-      showToast('Failed to cancel booking.', 'error')
+      showToast(t('bookings.cancel_failed'), 'error')
     } finally {
       setActionId(null)
     }
@@ -108,7 +111,7 @@ export default function Bookings() {
         <div className="container-fluid">
           <div className="row mb-2">
             <div className="col-sm-6">
-              <h1 className="m-0">Bookings</h1>
+              <h1 className="m-0">{t('bookings.title')}</h1>
             </div>
           </div>
         </div>
@@ -116,21 +119,21 @@ export default function Bookings() {
 
       <div className="content">
         <div className="container-fluid">
-          {error && <div className="alert alert-danger">{error}</div>}
+          {error && <div className="alert alert-danger">{t(error)}</div>}
 
           <div className="card">
             <div className="card-header d-flex flex-wrap align-items-center" style={{ gap: 8 }}>
-              <h3 className="card-title mr-3">All Bookings</h3>
+              <h3 className="card-title mr-3">{t('bookings.all')}</h3>
               <select
                 className="form-control form-control-sm"
                 style={{ maxWidth: 160 }}
                 value={statusFilter}
                 onChange={(e) => { setLoading(true); setStatusFilter(e.target.value); setPage(1) }}
               >
-                <option value="">All Statuses</option>
-                <option value="pending">Pending</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="cancelled">Cancelled</option>
+                <option value="">{t('common.all_statuses')}</option>
+                <option value="pending">{t('status.pending')}</option>
+                <option value="confirmed">{t('status.confirmed')}</option>
+                <option value="cancelled">{t('status.cancelled')}</option>
               </select>
               <select
                 className="form-control form-control-sm"
@@ -138,35 +141,35 @@ export default function Bookings() {
                 value={paymentFilter}
                 onChange={(e) => { setLoading(true); setPaymentFilter(e.target.value); setPage(1) }}
               >
-                <option value="">All Payments</option>
-                <option value="unpaid">Unpaid</option>
-                <option value="paid">Paid</option>
-                <option value="refunded">Refunded</option>
+                <option value="">{t('bookings.all_payments')}</option>
+                <option value="unpaid">{t('status.unpaid')}</option>
+                <option value="paid">{t('status.paid')}</option>
+                <option value="refunded">{t('status.refunded')}</option>
               </select>
               <div className="ml-auto">
-                <span className="badge badge-info">{total} total</span>
+                <span className="badge badge-info">{t('common.total_count', { count: total })}</span>
               </div>
             </div>
 
             <div className="card-body p-0">
               {loading ? (
                 <div className="text-center p-4">
-                  <i className="fas fa-spinner fa-spin mr-2" /> Loading...
+                  <i className="fas fa-spinner fa-spin mr-2" /> {t('common.loading')}
                 </div>
               ) : bookings.length === 0 ? (
-                <div className="text-center p-4 text-muted">No bookings found.</div>
+                <div className="text-center p-4 text-muted">{t('bookings.none_found')}</div>
               ) : (
                 <table className="table table-hover table-striped">
                   <thead>
                     <tr>
                       <th>#</th>
-                      <th>Student</th>
-                      <th>Course</th>
-                      <th>Amount</th>
-                      <th>Status</th>
-                      <th>Payment</th>
-                      <th>Booked At</th>
-                      <th>Actions</th>
+                      <th>{t('bookings.col.student')}</th>
+                      <th>{t('bookings.col.course')}</th>
+                      <th>{t('bookings.col.amount')}</th>
+                      <th>{t('bookings.col.status')}</th>
+                      <th>{t('bookings.col.payment')}</th>
+                      <th>{t('bookings.col.booked_at')}</th>
+                      <th>{t('common.actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -176,21 +179,21 @@ export default function Bookings() {
                         <td>
                           <strong>{b.student?.name ?? `#${b.student_id}`}</strong>
                           <br />
-                          <small className="text-muted">{b.student?.email}</small>
+                          <small className="text-muted text-ltr">{b.student?.email}</small>
                         </td>
                         <td>{b.course?.title ?? `#${b.course_id}`}</td>
-                        <td>${b.amount.toFixed(2)}</td>
+                        <td className="text-ltr">${b.amount.toFixed(2)}</td>
                         <td>
                           <span className={`badge ${STATUS_BADGES[b.status] ?? 'badge-secondary'}`}>
-                            {b.status}
+                            {t(`status.${b.status}`)}
                           </span>
                         </td>
                         <td>
                           <span className={`badge ${PAYMENT_BADGES[b.payment_status] ?? 'badge-secondary'}`}>
-                            {b.payment_status}
+                            {t(`status.${b.payment_status}`)}
                           </span>
                         </td>
-                        <td style={{ whiteSpace: 'nowrap' }}>
+                        <td className="text-ltr" style={{ whiteSpace: 'nowrap' }}>
                           {new Date(b.booked_at).toLocaleDateString('en-GB', {
                             day: '2-digit', month: 'short', year: 'numeric'
                           })}
@@ -199,7 +202,7 @@ export default function Bookings() {
                           {isAdmin && b.status === 'pending' && (
                             <button
                               className="btn btn-xs btn-success mr-1"
-                              title="Confirm booking"
+                              title={t('bookings.confirm_title')}
                               disabled={actionId === b.id}
                               onClick={() => handleConfirm(b.id)}
                             >
@@ -209,7 +212,7 @@ export default function Bookings() {
                           {isAdmin && b.payment_status === 'unpaid' && b.status !== 'cancelled' && (
                             <button
                               className="btn btn-xs btn-info mr-1"
-                              title="Mark as paid"
+                              title={t('bookings.mark_paid_title')}
                               disabled={actionId === b.id}
                               onClick={() => handleMarkPaid(b.id)}
                             >
@@ -219,7 +222,7 @@ export default function Bookings() {
                           {isAdmin && b.status !== 'cancelled' && (
                             <button
                               className="btn btn-xs btn-danger"
-                              title="Cancel booking"
+                              title={t('bookings.cancel_title')}
                               disabled={actionId === b.id}
                               onClick={() => handleCancel(b.id)}
                             >

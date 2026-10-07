@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreStudentRequest;
+use App\Http\Requests\UpdateStudentRequest;
 use App\Models\Student;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -35,16 +37,9 @@ class StudentController extends Controller
         return response()->json($this->format($student));
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreStudentRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:students,email'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'date_of_birth' => ['nullable', 'date'],
-            'address' => ['nullable', 'string'],
-            'photo' => ['nullable', 'image', 'max:2048'],
-        ]);
+        $data = $request->validated();
 
         if ($request->hasFile('photo')) {
             $data['photo'] = $request->file('photo')->store('students', 'public');
@@ -55,16 +50,9 @@ class StudentController extends Controller
         return response()->json($this->format($student), 201);
     }
 
-    public function update(Request $request, Student $student): JsonResponse
+    public function update(UpdateStudentRequest $request, Student $student): JsonResponse
     {
-        $data = $request->validate([
-            'name' => ['sometimes', 'string', 'max:255'],
-            'email' => ['sometimes', 'email', 'unique:students,email,'.$student->id],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'date_of_birth' => ['nullable', 'date'],
-            'address' => ['nullable', 'string'],
-            'photo' => ['nullable', 'image', 'max:2048'],
-        ]);
+        $data = $request->validated();
 
         if ($request->hasFile('photo')) {
             if ($student->photo) {
@@ -86,7 +74,9 @@ class StudentController extends Controller
 
         $student->delete();
 
-        return response()->json(['message' => 'Student deleted successfully.']);
+        return response()->json(['message' => __('messages.deleted', [
+            'model' => __('messages.models.student'),
+        ])]);
     }
 
     private function format(Student $student): array

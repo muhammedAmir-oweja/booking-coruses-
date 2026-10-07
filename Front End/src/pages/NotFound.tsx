@@ -1,11 +1,14 @@
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 
 export default function NotFound() {
+  const { t } = useTranslation()
+
   return (
     <>
       <div className="content-header">
         <div className="container-fluid">
-          <h1 className="m-0">Page Not Found</h1>
+          <h1 className="m-0">{t('not_found.title')}</h1>
         </div>
       </div>
       <section className="content">
@@ -15,11 +18,11 @@ export default function NotFound() {
             <div className="error-content">
               <h3>
                 <i className="fas fa-exclamation-triangle text-warning mr-2" />
-                Oops! Page not found.
+                {t('not_found.heading')}
               </h3>
               <p>
-                We could not find the page you were looking for.{' '}
-                <Link to="/">Return to Dashboard</Link>
+                {t('not_found.body')}{' '}
+                <Link to="/">{t('not_found.back')}</Link>
               </p>
             </div>
           </div>

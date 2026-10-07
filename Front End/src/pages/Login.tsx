@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, Link } from 'react-router-dom'
 import { login } from '../api/auth'
 import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { refresh } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -30,7 +32,7 @@ export default function Login() {
       navigate('/')
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } }).response?.data?.message
-      setError(msg ?? 'Invalid email or password.')
+      setError(msg ?? 'auth.login_failed')
     } finally {
       setLoading(false)
     }
@@ -41,30 +43,30 @@ export default function Login() {
       <div style={styles.left}>
         <div style={styles.leftInner}>
           <i className="fas fa-graduation-cap" style={styles.leftIcon} />
-          <h1 style={styles.leftTitle}>Course Booking</h1>
-          <p style={styles.leftSub}>Manage courses, students, and sessions all in one place.</p>
+          <h1 style={styles.leftTitle}>{t('app.name')}</h1>
+          <p style={styles.leftSub}>{t('auth.brand_tagline')}</p>
         </div>
       </div>
 
       <div style={styles.right}>
         <div style={styles.formBox}>
-          <h2 style={styles.heading}>Welcome back</h2>
-          <p style={styles.subHeading}>Administration Portal</p>
+          <h2 style={styles.heading}>{t('auth.login_title')}</h2>
+          <p style={styles.subHeading}>{t('auth.login_subtitle')}</p>
 
           {error && (
             <div style={styles.errorBox}>
               <i className="fas fa-exclamation-circle" style={{ marginRight: 8 }} />
-              {error}
+              {t(error)}
             </div>
           )}
 
           <form onSubmit={handleSubmit} noValidate>
             <div style={styles.field}>
-              <label style={styles.label}>Email address</label>
+              <label style={styles.label}>{t('auth.email')}</label>
               <input
                 type="email"
                 style={styles.input}
-                placeholder="you@example.com"
+                placeholder={t('auth.email_placeholder')}
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -73,12 +75,12 @@ export default function Login() {
             </div>
 
             <div style={styles.field}>
-              <label style={styles.label}>Password</label>
+              <label style={styles.label}>{t('auth.password')}</label>
               <div style={styles.inputWrap}>
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  style={{ ...styles.input, paddingRight: 44 }}
-                  placeholder="••••••••"
+                  style={{ ...styles.input, paddingInlineEnd: 44 }}
+                  placeholder={t('auth.password_placeholder')}
                   autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -88,6 +90,7 @@ export default function Login() {
                   type="button"
                   style={styles.eyeBtn}
                   tabIndex={-1}
+                  aria-label={showPassword ? t('auth.hide_password') : t('auth.show_password')}
                   onClick={() => setShowPassword(v => !v)}
                 >
                   <i className={showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'} />
@@ -103,20 +106,20 @@ export default function Login() {
                   onChange={(e) => setRemember(e.target.checked)}
                   style={{ marginRight: 6 }}
                 />
-                Keep me signed in
+                {t('auth.remember_me')}
               </label>
             </div>
 
             <button type="submit" style={loading ? { ...styles.btn, opacity: 0.75 } : styles.btn} disabled={loading}>
               {loading
-                ? <><i className="fas fa-spinner fa-spin" style={{ marginRight: 8 }} />Signing in…</>
-                : 'Sign In'}
+                ? <><i className="fas fa-spinner fa-spin" style={{ marginRight: 8 }} />{t('auth.signing_in')}</>
+                : t('auth.sign_in')}
             </button>
           </form>
 
           <p style={styles.bottomText}>
-            Don't have an account?{' '}
-            <Link to="/register" style={styles.link}>Create one</Link>
+            {t('auth.no_account')}{' '}
+            <Link to="/register" style={styles.link}>{t('auth.create_one')}</Link>
           </p>
         </div>
       </div>
@@ -128,7 +131,10 @@ const styles: Record<string, React.CSSProperties> = {
   page: {
     display: 'flex',
     minHeight: '100vh',
-    fontFamily: "'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif",
+    // Arabic first in the stack: this inline style beats the html[dir='rtl']
+    // rule in index.css, so without it the login page alone would fall back
+    // to a font with no Arabic glyphs.
+    fontFamily: "'IBM Plex Sans Arabic', 'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif",
   },
   left: {
     flex: 1,
@@ -220,7 +226,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   eyeBtn: {
     position: 'absolute',
-    right: 12,
+    insetInlineEnd: 12,
     top: '50%',
     transform: 'translateY(-50%)',
     background: 'none',

@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\BookingCreated;
+use App\Events\BookingStatusChanged;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreBookingRequest;
+use App\Http\Requests\UpdateBookingStatusRequest;
 use App\Models\Booking;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,6 +16,12 @@ class BookingController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Booking::with(['student', 'course']);
+
+        // A student sees only their own rows. Null-safe on purpose: a student
+        // user with no students row sees an empty list, not everyone's.
+        if ($request->user()->isStudent()) {
+            $query->where('student_id', $request->user()->student?->id);
+        }
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -38,22 +48,19 @@ class BookingController extends Controller
 
     public function show(Booking $booking): JsonResponse
     {
+        $this->authorize('view', $booking);
+
         $booking->load(['student', 'course']);
 
         return response()->json($this->format($booking));
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreBookingRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'student_id' => ['required', 'exists:students,id'],
-            'course_id' => ['required', 'exists:courses,id'],
-            'amount' => ['required', 'numeric', 'min:0'],
-            'status' => ['sometimes', 'in:pending,confirmed,cancelled'],
-            'payment_status' => ['sometimes', 'in:unpaid,paid,refunded'],
-            'payment_method' => ['nullable', 'string', 'max:50'],
-            'transaction_id' => ['nullable', 'string', 'max:100'],
-        ]);
+        // Rules, the only-self check and the full-course guard all live in
+        // StoreBookingRequest now. Task 21 parked that guard here; it is not
+        // in both places.
+        $data = $request->validated();
 
         $data['user_id'] = $request->user()->id;
         $data['booked_at'] = now();
@@ -63,24 +70,31 @@ class BookingController extends Controller
         $booking = Booking::create($data);
         $booking->load(['student', 'course']);
 
+        // The controller dispatches and nothing else: it never learns that a
+        // booking notifies anyone or sends mail. That is why the mail task
+        // touches no controller at all.
+        BookingCreated::dispatch($booking);
+
         return response()->json($this->format($booking), 201);
     }
 
-    public function updateStatus(Request $request, Booking $booking): JsonResponse
+    public function updateStatus(UpdateBookingStatusRequest $request, Booking $booking): JsonResponse
     {
-        $data = $request->validate([
-            'status' => ['sometimes', 'in:pending,confirmed,cancelled'],
-            'payment_status' => ['sometimes', 'in:unpaid,paid,refunded'],
-            'payment_method' => ['nullable', 'string', 'max:50'],
-            'transaction_id' => ['nullable', 'string', 'max:100'],
-        ]);
+        $data = $request->validated();
 
-        if (isset($data['payment_status']) && $data['payment_status'] === 'paid' && ! $booking->paid_at) {
-            $data['paid_at'] = now();
-        }
+        // paid_at is stamped by RecordBookingStatusChange now, not here.
+        $previousStatus = $booking->status;
+        $previousPaymentStatus = $booking->payment_status;
 
         $booking->update($data);
         $booking->load(['student', 'course']);
+
+        // Only fire when something actually moved, or every no-op PATCH
+        // generates an audit row. wasChanged(), not isDirty(): after update()
+        // the model is saved, so isDirty() is already false.
+        if ($booking->wasChanged(['status', 'payment_status'])) {
+            BookingStatusChanged::dispatch($booking, $previousStatus, $previousPaymentStatus);
+        }
 
         return response()->json($this->format($booking));
     }
@@ -89,7 +103,7 @@ class BookingController extends Controller
     {
         $booking->delete();
 
-        return response()->json(['message' => 'Booking cancelled successfully.']);
+        return response()->json(['message' => __('messages.booking_cancelled')]);
     }
 
     private function format(Booking $b): array

@@ -41,7 +41,11 @@ class DashboardController extends Controller
                 ] : null,
             ]);
 
-        $topCourses = Course::withCount('enrollments')
+        $topCourses = Course::withCount([
+                'enrollments',
+                'bookings as active_bookings_count' => fn ($q) => $q
+                    ->whereIn('status', ['pending', 'confirmed']),
+            ])
             ->with('instructor')
             ->orderByDesc('enrollments_count')
             ->limit(5)
@@ -53,6 +57,8 @@ class DashboardController extends Controller
                 'capacity' => $c->capacity,
                 'status' => $c->status,
                 'enrolled_count' => $c->enrollments_count,
+                'remaining_seats' => course_remaining_seats($c),
+                'is_available' => course_is_available($c),
                 'instructor' => $c->instructor ? [
                     'id' => $c->instructor->id,
                     'name' => $c->instructor->name,

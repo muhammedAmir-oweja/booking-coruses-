@@ -1,28 +1,31 @@
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 
 export default function ForgotPassword() {
+  const { t } = useTranslation()
+
   return (
     <div className="hold-transition login-page">
       <div className="login-box">
         <div className="login-logo">
           <i className="fas fa-graduation-cap mr-2" style={{ color: '#007bff' }} />
-          <b>Course</b> Booking
+          <b>{t('app.name')}</b>
         </div>
 
         <div className="card">
           <div className="card-body login-card-body">
-            <p className="login-box-msg">Forgot your password?</p>
+            <p className="login-box-msg">{t('auth.forgot_title')}</p>
 
             <div className="alert alert-info text-center">
               <i className="fas fa-info-circle mr-2" />
-              Password reset is not available yet.
+              {t('auth.forgot_unavailable')}
               <br />
-              Please contact your administrator to reset your password.
+              {t('auth.forgot_contact_admin')}
             </div>
 
             <div className="mt-3 text-center">
               <Link to="/login" className="btn btn-default btn-block">
-                <i className="fas fa-arrow-left mr-1" /> Back to Login
+                <i className="fas fa-arrow-left mr-1" /> {t('auth.back_to_login')}
               </Link>
             </div>
           </div>

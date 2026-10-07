@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreTrainingSessionRequest;
+use App\Http\Requests\UpdateTrainingSessionRequest;
 use App\Models\TrainingSession;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -40,18 +42,9 @@ class TrainingSessionController extends Controller
         return response()->json($this->format($trainingSession));
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreTrainingSessionRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'course_id' => ['required', 'exists:courses,id'],
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'starts_at' => ['required', 'date'],
-            'ends_at' => ['required', 'date', 'after:starts_at'],
-            'location' => ['nullable', 'string', 'max:255'],
-            'max_attendees' => ['nullable', 'integer', 'min:1'],
-            'status' => ['required', 'in:scheduled,ongoing,completed,cancelled'],
-        ]);
+        $data = $request->validated();
 
         $session = TrainingSession::create($data);
         $session->load('course');
@@ -59,26 +52,9 @@ class TrainingSessionController extends Controller
         return response()->json($this->format($session), 201);
     }
 
-    public function update(Request $request, TrainingSession $trainingSession): JsonResponse
+    public function update(UpdateTrainingSessionRequest $request, TrainingSession $trainingSession): JsonResponse
     {
-        $data = $request->validate([
-            'course_id' => ['sometimes', 'exists:courses,id'],
-            'title' => ['sometimes', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'starts_at' => ['sometimes', 'date'],
-            // See CourseController@update - `after:` compares against the
-            // request body, which a partial update may not carry.
-            'ends_at' => ['sometimes', 'date', function ($attribute, $value, $fail) use ($request, $trainingSession) {
-                $start = $request->input('starts_at', $trainingSession->starts_at?->toDateTimeString());
-
-                if ($start && $value && strtotime($value) <= strtotime($start)) {
-                    $fail('The end time must be after the start time.');
-                }
-            }],
-            'location' => ['nullable', 'string', 'max:255'],
-            'max_attendees' => ['nullable', 'integer', 'min:1'],
-            'status' => ['sometimes', 'in:scheduled,ongoing,completed,cancelled'],
-        ]);
+        $data = $request->validated();
 
         $trainingSession->update($data);
         $trainingSession->load('course');
@@ -90,7 +66,9 @@ class TrainingSessionController extends Controller
     {
         $trainingSession->delete();
 
-        return response()->json(['message' => 'Training session deleted successfully.']);
+        return response()->json(['message' => __('messages.deleted', [
+            'model' => __('messages.models.training_session'),
+        ])]);
     }
 
     private function format(TrainingSession $s): array

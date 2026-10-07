@@ -16,6 +16,9 @@ export interface Course {
   capacity: number
   hours: number
   enrolled_count: number
+  taken_seats: number
+  remaining_seats: number
+  is_available: boolean
   status: 'active' | 'inactive' | 'draft'
   start_date: string | null
   end_date: string | null
@@ -94,6 +97,8 @@ export interface TopCourse {
   hours?: number
   status: 'active' | 'inactive' | 'draft'
   enrolled_count: number
+  remaining_seats: number
+  is_available: boolean
   instructor?: { id: number; name: string }
 }
 
@@ -132,4 +137,23 @@ export interface PaginatedResponse<T> {
 export interface ApiError {
   message: string
   errors?: Record<string, string[]>
+}
+
+/**
+ * Named AppNotification, not Notification: TypeScript's DOM lib already
+ * declares a global `Notification`, and shadowing it compiles fine right up
+ * until something else in the file touches the browser API.
+ */
+export interface AppNotification {
+  id: string                 // uuid
+  read_at: string | null
+  created_at: string
+  data: {
+    type: 'booking_created'
+    booking_id: number
+    course_title: string | null
+    student_name: string | null
+    amount: number
+    url: string
+  }
 }

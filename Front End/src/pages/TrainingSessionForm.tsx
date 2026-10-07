@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getTrainingSession, createTrainingSession, updateTrainingSession } from '../api/trainingSessions'
 import { getCourses } from '../api/courses'
@@ -42,6 +43,7 @@ export default function TrainingSessionForm() {
   const { id } = useParams<{ id: string }>()
   const isEdit = Boolean(id)
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { showToast } = useToast()
 
   const [form, setForm] = useState<FormState>(empty)
@@ -70,11 +72,12 @@ export default function TrainingSessionForm() {
           })
         }),
       ])
-        .catch(() => setServerError('Failed to load data.'))
+        // Keys, not sentences: this effect must not depend on `t`.
+        .catch(() => setServerError('session_form.load_failed'))
         .finally(() => setLoading(false))
     } else {
       fetchCourses
-        .catch(() => setServerError('Failed to load courses.'))
+        .catch(() => setServerError('session_form.load_courses_failed'))
         .finally(() => setLoading(false))
     }
   }, [id, isEdit])
@@ -89,14 +92,14 @@ export default function TrainingSessionForm() {
 
   const validate = (): boolean => {
     const errs: Record<string, string> = {}
-    if (!form.course_id) errs.course_id = 'Course is required.'
-    if (!form.title.trim()) errs.title = 'Title is required.'
-    if (!form.starts_at) errs.starts_at = 'Start time is required.'
-    if (!form.ends_at) errs.ends_at = 'End time is required.'
+    if (!form.course_id) errs.course_id = t('session_form.err_course')
+    if (!form.title.trim()) errs.title = t('session_form.err_title')
+    if (!form.starts_at) errs.starts_at = t('session_form.err_starts_at')
+    if (!form.ends_at) errs.ends_at = t('session_form.err_ends_at')
     else if (form.starts_at && form.ends_at <= form.starts_at)
-      errs.ends_at = 'End time must be after start time.'
+      errs.ends_at = t('session_form.err_ends_after')
     if (form.max_attendees && Number(form.max_attendees) < 1)
-      errs.max_attendees = 'Must be at least 1.'
+      errs.max_attendees = t('session_form.err_max_attendees')
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -121,10 +124,10 @@ export default function TrainingSessionForm() {
     try {
       if (isEdit) {
         await updateTrainingSession(Number(id), payload)
-        showToast('Training session updated successfully.')
+        showToast(t('session_form.updated'))
       } else {
         await createTrainingSession(payload)
-        showToast('Training session added successfully.')
+        showToast(t('session_form.created'))
       }
       navigate('/training-sessions')
     } catch (err) {
@@ -159,11 +162,11 @@ export default function TrainingSessionForm() {
         <div className="container-fluid">
           <div className="row mb-2">
             <div className="col-sm-6">
-              <h1 className="m-0">{isEdit ? 'Edit Session' : 'Add Session'}</h1>
+              <h1 className="m-0">{isEdit ? t('session_form.edit_title') : t('session_form.new_title')}</h1>
             </div>
             <div className="col-sm-6 text-right">
               <Link to="/training-sessions" className="btn btn-default btn-sm">
-                <i className="fas fa-arrow-left mr-1" /> Back
+                <i className="fas fa-arrow-left mr-1" /> {t('common.back')}
               </Link>
             </div>
           </div>
@@ -177,24 +180,24 @@ export default function TrainingSessionForm() {
               <div className="card card-primary">
                 <div className="card-header">
                   <h3 className="card-title">
-                    {isEdit ? 'Edit Training Session' : 'New Training Session'}
+                    {isEdit ? t('session_form.card_edit') : t('session_form.card_new')}
                   </h3>
                 </div>
                 <form onSubmit={handleSubmit}>
                   <div className="card-body">
                     {serverError && (
-                      <div className="alert alert-danger">{serverError}</div>
+                      <div className="alert alert-danger">{t(serverError)}</div>
                     )}
 
                     <div className="form-group">
-                      <label>Course <span className="text-danger">*</span></label>
+                      <label>{t('session_form.course')} <span className="text-danger">*</span></label>
                       <select
                         name="course_id"
                         className={`form-control${errors.course_id ? ' is-invalid' : ''}`}
                         value={form.course_id}
                         onChange={handleChange}
                       >
-                        <option value="">— Select a course —</option>
+                        <option value="">{t('session_form.select_course')}</option>
                         {courses.map(c => (
                           <option key={c.id} value={c.id}>{c.title}</option>
                         ))}
@@ -203,12 +206,12 @@ export default function TrainingSessionForm() {
                     </div>
 
                     <div className="form-group">
-                      <label>Session Title <span className="text-danger">*</span></label>
+                      <label>{t('session_form.title')} <span className="text-danger">*</span></label>
                       <input
                         name="title"
                         type="text"
                         className={`form-control${errors.title ? ' is-invalid' : ''}`}
-                        placeholder="e.g. Introduction to Routing"
+                        placeholder={t('session_form.title_placeholder')}
                         value={form.title}
                         onChange={handleChange}
                       />
@@ -216,12 +219,12 @@ export default function TrainingSessionForm() {
                     </div>
 
                     <div className="form-group">
-                      <label>Description</label>
+                      <label>{t('session_form.description')}</label>
                       <textarea
                         name="description"
                         rows={3}
                         className="form-control"
-                        placeholder="Optional description"
+                        placeholder={t('session_form.description_placeholder')}
                         value={form.description}
                         onChange={handleChange}
                       />
@@ -230,7 +233,7 @@ export default function TrainingSessionForm() {
                     <div className="row">
                       <div className="col-md-6">
                         <div className="form-group">
-                          <label>Starts At <span className="text-danger">*</span></label>
+                          <label>{t('session_form.starts_at')} <span className="text-danger">*</span></label>
                           <input
                             name="starts_at"
                             type="datetime-local"
@@ -243,7 +246,7 @@ export default function TrainingSessionForm() {
                       </div>
                       <div className="col-md-6">
                         <div className="form-group">
-                          <label>Ends At <span className="text-danger">*</span></label>
+                          <label>{t('session_form.ends_at')} <span className="text-danger">*</span></label>
                           <input
                             name="ends_at"
                             type="datetime-local"
@@ -257,12 +260,12 @@ export default function TrainingSessionForm() {
                     </div>
 
                     <div className="form-group">
-                      <label>Location</label>
+                      <label>{t('session_form.location')}</label>
                       <input
                         name="location"
                         type="text"
                         className="form-control"
-                        placeholder="e.g. Room 101 / Online"
+                        placeholder={t('session_form.location_placeholder')}
                         value={form.location}
                         onChange={handleChange}
                       />
@@ -271,13 +274,13 @@ export default function TrainingSessionForm() {
                     <div className="row">
                       <div className="col-md-6">
                         <div className="form-group">
-                          <label>Max Attendees</label>
+                          <label>{t('session_form.max_attendees')}</label>
                           <input
                             name="max_attendees"
                             type="number"
                             min={1}
                             className={`form-control${errors.max_attendees ? ' is-invalid' : ''}`}
-                            placeholder="Leave blank for unlimited"
+                            placeholder={t('session_form.max_attendees_placeholder')}
                             value={form.max_attendees}
                             onChange={handleChange}
                           />
@@ -286,17 +289,17 @@ export default function TrainingSessionForm() {
                       </div>
                       <div className="col-md-6">
                         <div className="form-group">
-                          <label>Status <span className="text-danger">*</span></label>
+                          <label>{t('session_form.status')} <span className="text-danger">*</span></label>
                           <select
                             name="status"
                             className="form-control"
                             value={form.status}
                             onChange={handleChange}
                           >
-                            <option value="scheduled">Scheduled</option>
-                            <option value="ongoing">Ongoing</option>
-                            <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
+                            <option value="scheduled">{t('status.scheduled')}</option>
+                            <option value="ongoing">{t('status.ongoing')}</option>
+                            <option value="completed">{t('status.completed')}</option>
+                            <option value="cancelled">{t('status.cancelled')}</option>
                           </select>
                         </div>
                       </div>
@@ -306,11 +309,11 @@ export default function TrainingSessionForm() {
                   <div className="card-footer">
                     <button type="submit" className="btn btn-primary" disabled={saving}>
                       {saving
-                        ? <><i className="fas fa-spinner fa-spin mr-1" /> Saving...</>
-                        : <><i className="fas fa-save mr-1" /> {isEdit ? 'Update Session' : 'Add Session'}</>
+                        ? <><i className="fas fa-spinner fa-spin mr-1" /> {t('common.saving')}</>
+                        : <><i className="fas fa-save mr-1" /> {isEdit ? t('session_form.submit_edit') : t('session_form.submit_new')}</>
                       }
                     </button>
-                    <Link to="/training-sessions" className="btn btn-default ml-2">Cancel</Link>
+                    <Link to="/training-sessions" className="btn btn-default ml-2">{t('common.cancel')}</Link>
                   </div>
                 </form>
               </div>
