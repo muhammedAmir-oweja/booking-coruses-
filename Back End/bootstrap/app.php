@@ -6,6 +6,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\HandleCors;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -17,6 +18,11 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
+
+        // Without this line the 'api' limiter in AppServiceProvider is never
+        // consulted - the api group has no throttle entry at all by default.
+        $middleware->throttleApi();
+
         $middleware->prepend(HandleCors::class);
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
@@ -27,6 +33,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // cookie source would silently return nothing while the header source
         // kept working. Task 26 relies on this same line.
         $middleware->appendToGroup('api', [SetLocale::class]);
+
+        // ...but group order alone is not enough. ThrottleRequests sits in the
+        // framework's middleware priority list, which reorders the combined
+        // stack and pulls it ahead of anything unprioritized - so a 429 body was
+        // being built before the locale was resolved, and came out English for
+        // an Arabic request. Naming SetLocale just before it in that list fixes
+        // the ordering without touching the group.
+        $middleware->prependToPriorityList(ThrottleRequests::class, SetLocale::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

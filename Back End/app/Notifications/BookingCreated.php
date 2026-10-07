@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Booking;
+use App\Models\Student;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -16,11 +17,19 @@ class BookingCreated extends Notification
     /**
      * Get the notification's delivery channels.
      *
+     * The student's email is the BookingConfirmed mailable's job (dispatched by
+     * SendBookingConfirmationMail on the same event). Adding 'mail' here for
+     * them too would put two near-identical messages in one inbox - that is the
+     * duplicate this split avoids. Admins have no mailable, so they get this
+     * one by mail as well as in the bell.
+     *
      * @return array<int, string>
      */
     public function via(object $notifiable): array
     {
-        return ['database', 'mail'];
+        return $notifiable instanceof Student
+            ? ['database']
+            : ['database', 'mail'];
     }
 
     /**

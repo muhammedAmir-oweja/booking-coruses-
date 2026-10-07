@@ -23,20 +23,22 @@ use Illuminate\Support\Facades\Route;
 | This file is that table expressed in routes, so a page the sidebar shows
 | never 403s.
 |
-| Three later tasks add to this file:
-|   - task 24 attaches throttle:login / throttle:bookings / throttle:uploads
-|   - task 25 adds the CourseFileController routes (admin + instructor)
+| The named limiters behind throttle:login / throttle:bookings /
+| throttle:uploads are defined in AppServiceProvider::boot().
+|
+| Two later tasks still add to this file:
+|   - task 25 adds the CourseFileController routes (admin + instructor),
+|     with the upload behind throttle:uploads
 |   - task 26 adds GET|PUT /preferences (any role)
-| They are left out rather than stubbed: an undefined limiter name throws
-| MissingRateLimiterException, and a missing controller class breaks
-| `route:list` outright.
+| They are left out rather than stubbed, because a missing controller class
+| breaks `route:list` outright.
 |
 */
 
 // ---------------------------------------------------------------- public
 Route::prefix('auth')->group(function () {
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:login');
 });
 
 // Dev only: DEV_NO_AUTH=true signs every request in as an admin, which defeats
@@ -82,7 +84,8 @@ Route::middleware([...$authed, 'role:admin,instructor'])->group(function () {
 Route::middleware([...$authed, 'role:admin,student'])->group(function () {
     Route::get('/bookings', [BookingController::class, 'index']);
     Route::get('/bookings/{booking}', [BookingController::class, 'show']);
-    Route::post('/bookings', [BookingController::class, 'store']);
+    Route::post('/bookings', [BookingController::class, 'store'])
+        ->middleware('throttle:bookings');
 });
 
 // ------------------------------------------------------------ admin only
@@ -94,6 +97,7 @@ Route::middleware([...$authed, 'role:admin'])->group(function () {
     Route::delete('/bookings/{booking}', [BookingController::class, 'destroy']);
 
     Route::get('/students/{student}/documents', [StudentDocumentController::class, 'index']);
-    Route::post('/students/{student}/documents', [StudentDocumentController::class, 'store']);
+    Route::post('/students/{student}/documents', [StudentDocumentController::class, 'store'])
+        ->middleware('throttle:uploads');
     Route::delete('/students/{student}/documents/{document}', [StudentDocumentController::class, 'destroy']);
 });
