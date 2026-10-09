@@ -3,7 +3,7 @@ import LanguageDetector from 'i18next-browser-languagedetector'
 import { initReactI18next } from 'react-i18next'
 import ar from './ar.json'
 import en from './en.json'
-import { applyLocaleToDocument, readPrefs, writePrefsCookie, type Locale } from '../prefs'
+import { applyLocaleToDocument, readPrefs, type Locale } from '../prefs'
 
 /**
  * The initial language comes from the same prefs cookie the backend reads, so
@@ -29,16 +29,14 @@ void i18n
   })
 
 /**
- * Task 26's PreferencesProvider will own <html lang>/<html dir>. Until it
- * exists, i18n owns them - index.html ships `lang="en"`, so something has to
- * overwrite it at runtime either way.
+ * Set <html lang>/<html dir> for the very first paint: index.html ships
+ * `lang="en"`, and this module runs before React mounts.
+ *
+ * From then on PreferencesProvider owns lang, dir, data-theme AND the cookie -
+ * it is the single writer, and it calls i18n.changeLanguage() itself. i18n
+ * deliberately does not persist on languageChanged any more; two writers meant
+ * the provider's React state could drift from the cookie.
  */
 applyLocaleToDocument((i18n.resolvedLanguage ?? 'en') as Locale)
-
-i18n.on('languageChanged', (lng) => {
-  const locale = (lng === 'ar' ? 'ar' : 'en') as Locale
-  applyLocaleToDocument(locale)
-  writePrefsCookie({ locale })
-})
 
 export default i18n

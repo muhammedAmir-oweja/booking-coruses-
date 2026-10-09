@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { logout } from '../../api/auth'
 import { getNotifications, markAllRead, markRead } from '../../api/notifications'
 import { DEV_NO_AUTH } from '../../devAuth'
+import { usePreferences } from '../../context/PreferencesContext'
 import type { AppNotification, User } from '../../types'
 
 interface NavbarProps {
@@ -66,6 +67,7 @@ const isApplePlatform = () =>
 export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
+  const { update: updatePrefs } = usePreferences()
 
   const [menuOpen, setMenuOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
@@ -307,7 +309,7 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
       <button
         type="button"
         className="lmsnav-lang"
-        onClick={() => void i18n.changeLanguage(isArabic ? 'en' : 'ar')}
+        onClick={() => void updatePrefs({ locale: isArabic ? 'en' : 'ar' })}
         aria-label={isArabic ? t('navbar.switch_to_english') : t('navbar.switch_to_arabic')}
         title={isArabic ? t('navbar.switch_to_english') : t('navbar.switch_to_arabic')}
       >

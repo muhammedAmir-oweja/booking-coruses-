@@ -24,6 +24,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->throttleApi();
 
         $middleware->prepend(HandleCors::class);
+        // Cookies are encrypted by default, so document.cookie would see
+        // ciphertext. Exempt this one - it holds no secrets, only display
+        // settings. Never exempt the session or XSRF cookie.
+        $middleware->encryptCookies(except: ['prefs']);
+
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
         ]);

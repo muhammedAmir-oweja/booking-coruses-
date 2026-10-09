@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthProvider'
+import { PreferencesProvider } from './context/PreferencesProvider'
 import { DEV_NO_AUTH } from './devAuth'
 import Layout from './components/layout/Layout'
 import Dashboard from './pages/Dashboard'
@@ -26,6 +27,9 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <BrowserRouter>
+    {/* Outside AuthProvider on purpose: the login page needs the stored
+        theme and language too, and a logged-out visitor still has a cookie. */}
+    <PreferencesProvider>
     <AuthProvider>
       <Routes>
         <Route path="/login" element={DEV_NO_AUTH ? <Navigate to="/" replace /> : <Login />} />
@@ -58,6 +62,7 @@ export default function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AuthProvider>
+    </PreferencesProvider>
     </BrowserRouter>
   )
 }

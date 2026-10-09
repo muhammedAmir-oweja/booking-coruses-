@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\CourseFileController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\EnrollmentController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\PreferenceController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\StudentDocumentController;
 use App\Http\Controllers\Api\TrainingSessionController;
@@ -27,10 +28,6 @@ use Illuminate\Support\Facades\Route;
 | The named limiters behind throttle:login / throttle:bookings /
 | throttle:uploads are defined in AppServiceProvider::boot().
 |
-| One later task still adds to this file:
-|   - task 26 adds GET|PUT /preferences (any role)
-| It is left out rather than stubbed, because a missing controller class
-| breaks `route:list` outright.
 |
 */
 
@@ -67,6 +64,10 @@ Route::middleware($authed)->group(function () {
     Route::get('/courses', [CourseController::class, 'index']);
     Route::get('/courses/{course}', [CourseController::class, 'show']);
     Route::get('/enrollments', [EnrollmentController::class, 'index']);
+
+    // Display preferences (task 26). Any signed-in user, their own settings.
+    Route::get('/preferences', [PreferenceController::class, 'show']);
+    Route::put('/preferences', [PreferenceController::class, 'update']);
 });
 
 // ----------------------------------------------------- admin + instructor
