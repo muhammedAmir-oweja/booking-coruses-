@@ -14,6 +14,7 @@ class StudentDocument extends Model
         'student_id',
         'original_name',
         'path',
+        'disk',
         'mime_type',
         'size',
     ];
@@ -23,8 +24,17 @@ class StudentDocument extends Model
         return $this->belongsTo(Student::class);
     }
 
-    public function getUrlAttribute(): string
+    /**
+     * Replaces the old getUrlAttribute(), which returned asset('storage/'.$path)
+     * and therefore only ever worked for the world-readable public disk. These
+     * now live on a private disk, so the only way out is the authorized
+     * download route - same shape as CourseFile::downloadUrl().
+     *
+     * Rows written before this change carry disk='public' and keep streaming
+     * correctly, because download() reads the disk off the row.
+     */
+    public function downloadUrl(): string
     {
-        return asset('storage/'.$this->path);
+        return url("/api/students/{$this->student_id}/documents/{$this->id}");
     }
 }

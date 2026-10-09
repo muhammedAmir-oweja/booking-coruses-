@@ -66,10 +66,25 @@ export interface StudentDocument {
   id: number
   student_id: number
   original_name: string
-  url: string
+  /**
+   * The authorized API route, not a public asset path: task 25 moved these onto
+   * a private disk, so `asset('storage/...')` no longer resolves.
+   */
+  download_url: string
   mime_type?: string
   size?: number
   created_at: string
+}
+
+export interface CourseFile {
+  id: number
+  course_id: number
+  original_name: string
+  category: 'syllabus' | 'material' | 'recording' | 'other'
+  mime_type?: string
+  size?: number
+  download_url: string
+  uploaded_at: string
 }
 
 export interface Booking {

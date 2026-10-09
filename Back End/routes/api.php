@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\CourseController;
+use App\Http\Controllers\Api\CourseFileController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\EnrollmentController;
 use App\Http\Controllers\Api\NotificationController;
@@ -26,11 +27,9 @@ use Illuminate\Support\Facades\Route;
 | The named limiters behind throttle:login / throttle:bookings /
 | throttle:uploads are defined in AppServiceProvider::boot().
 |
-| Two later tasks still add to this file:
-|   - task 25 adds the CourseFileController routes (admin + instructor),
-|     with the upload behind throttle:uploads
+| One later task still adds to this file:
 |   - task 26 adds GET|PUT /preferences (any role)
-| They are left out rather than stubbed, because a missing controller class
+| It is left out rather than stubbed, because a missing controller class
 | breaks `route:list` outright.
 |
 */
@@ -78,6 +77,15 @@ Route::middleware([...$authed, 'role:admin,instructor'])->group(function () {
 
     Route::apiResource('training-sessions', TrainingSessionController::class);
     Route::apiResource('enrollments', EnrollmentController::class)->except(['index']);
+
+    // Course files (task 25). Every one of the four authorizes against
+    // CoursePolicy inside the controller, because the role group cannot tell
+    // whose course this is.
+    Route::get('/courses/{course}/files', [CourseFileController::class, 'index']);
+    Route::post('/courses/{course}/files', [CourseFileController::class, 'store'])
+        ->middleware('throttle:uploads');
+    Route::get('/courses/{course}/files/{file}', [CourseFileController::class, 'download']);
+    Route::delete('/courses/{course}/files/{file}', [CourseFileController::class, 'destroy']);
 });
 
 // -------------------------------------------------------- admin + student
@@ -99,5 +107,8 @@ Route::middleware([...$authed, 'role:admin'])->group(function () {
     Route::get('/students/{student}/documents', [StudentDocumentController::class, 'index']);
     Route::post('/students/{student}/documents', [StudentDocumentController::class, 'store'])
         ->middleware('throttle:uploads');
+    // Task 25 moved these onto a private disk, so a download needs a route of
+    // its own - asset('storage/...') no longer resolves.
+    Route::get('/students/{student}/documents/{document}', [StudentDocumentController::class, 'download']);
     Route::delete('/students/{student}/documents/{document}', [StudentDocumentController::class, 'destroy']);
 });

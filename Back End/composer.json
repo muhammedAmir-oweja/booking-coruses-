@@ -72,7 +72,8 @@
         ],
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
-        ]
+        ],
+        "serve": "PHP_INI_SCAN_DIR=\"$(php -i | sed -n 's/^Scan this dir for additional .ini files => //p'):$PWD/.php-ini\" php artisan serve"
     },
     "extra": {
         "laravel": {

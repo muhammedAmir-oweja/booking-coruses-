@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { getStudent, createStudent, updateStudent, getStudentDocuments, uploadStudentDocument, deleteStudentDocument } from '../api/students'
+import { getStudent, createStudent, updateStudent, getStudentDocuments, uploadStudentDocument, deleteStudentDocument, downloadStudentDocument } from '../api/students'
 import type { Student, StudentDocument } from '../types'
 import type { AxiosError } from 'axios'
 import { useToast } from '../context/ToastContext'
@@ -145,6 +145,15 @@ export default function StudentForm() {
     } finally {
       setUploadingDoc(false)
       if (docRef.current) docRef.current.value = ''
+    }
+  }
+
+  const handleDocumentDownload = async (doc: StudentDocument) => {
+    if (!id) return
+    try {
+      await downloadStudentDocument(Number(id), doc.id, doc.original_name)
+    } catch {
+      showToast(t('student_form.doc_download_failed'), 'error')
     }
   }
 
@@ -379,7 +388,13 @@ export default function StudentForm() {
                             <tr key={doc.id}>
                               <td>
                                 <i className={`${fileIcon(doc.mime_type)} mr-2`} />
-                                <a href={doc.url} target="_blank" rel="noreferrer">{doc.original_name}</a>
+                                <button
+                                  type="button"
+                                  className="btn btn-link p-0 align-baseline"
+                                  onClick={() => handleDocumentDownload(doc)}
+                                >
+                                  {doc.original_name}
+                                </button>
                               </td>
                               <td className="text-muted small text-ltr">{formatFileSize(doc.size)}</td>
                               <td className="text-muted small text-ltr">{new Date(doc.created_at).toLocaleDateString()}</td>

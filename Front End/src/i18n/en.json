@@ -5,7 +5,6 @@
     "rights": "All rights reserved.",
     "version": "Version"
   },
-
   "common": {
     "home": "Home",
     "actions": "Actions",
@@ -34,7 +33,6 @@
     "next": "Next",
     "page_of": "Page {{page}} of {{last}}"
   },
-
   "status": {
     "draft": "Draft",
     "active": "Active",
@@ -49,13 +47,11 @@
     "paid": "Paid",
     "refunded": "Refunded"
   },
-
   "roles": {
     "admin": "Administrator",
     "instructor": "Instructor",
     "student": "Student"
   },
-
   "nav": {
     "dashboard": "Dashboard",
     "dashboard_keywords": "home overview stats revenue",
@@ -92,7 +88,6 @@
     "profile": "My profile",
     "profile_keywords": "account password settings"
   },
-
   "navbar": {
     "toggle_sidebar": "Toggle sidebar",
     "jump_to_page": "Jump to a page",
@@ -117,7 +112,6 @@
     "switch_to_arabic": "Switch to Arabic",
     "switch_to_english": "Switch to English"
   },
-
   "dashboard": {
     "title": "Dashboard",
     "load_failed": "Failed to load dashboard data.",
@@ -144,7 +138,6 @@
     "welcome_instructor": "Welcome back, {{name}}. You are viewing your instructor dashboard.",
     "welcome_student": "Welcome back, {{name}}. Here is your learning overview."
   },
-
   "courses": {
     "title": "Courses",
     "all": "All Courses",
@@ -166,7 +159,6 @@
       "start_date": "Start Date"
     }
   },
-
   "course_form": {
     "new_title": "New Course",
     "edit_title": "Edit Course",
@@ -200,7 +192,6 @@
     "err_price": "Price must be zero or more.",
     "err_capacity": "Capacity must be at least 1."
   },
-
   "students": {
     "title": "Students",
     "all": "All Students",
@@ -218,7 +209,6 @@
       "date_of_birth": "Date of Birth"
     }
   },
-
   "student_form": {
     "new_title": "Add Student",
     "edit_title": "Edit Student",
@@ -246,6 +236,7 @@
     "doc_delete_failed": "Failed to delete document.",
     "doc_uploaded": "Document uploaded successfully.",
     "doc_upload_failed": "Failed to upload document.",
+    "doc_download_failed": "Failed to download the document.",
     "doc_delete_confirm": "Delete this document?",
     "doc_col": {
       "file": "File",
@@ -260,7 +251,6 @@
     "err_email_invalid": "Enter a valid email.",
     "err_phone": "Enter a valid phone number."
   },
-
   "bookings": {
     "title": "Bookings",
     "all": "All Bookings",
@@ -287,7 +277,6 @@
       "date": "Date"
     }
   },
-
   "enrollments": {
     "title": "Enrollments",
     "all": "All Enrollments",
@@ -305,7 +294,6 @@
       "status": "Status"
     }
   },
-
   "enrollment_form": {
     "title": "Enroll Student",
     "card": "New Enrollment",
@@ -323,7 +311,6 @@
     "err_student": "Student is required.",
     "err_course": "Course is required."
   },
-
   "sessions": {
     "title": "Training Sessions",
     "all": "All Training Sessions",
@@ -343,7 +330,6 @@
       "status": "Status"
     }
   },
-
   "session_form": {
     "new_title": "Add Session",
     "edit_title": "Edit Session",
@@ -375,7 +361,6 @@
     "err_ends_after": "End time must be after start time.",
     "err_max_attendees": "Must be at least 1."
   },
-
   "auth": {
     "brand_tagline": "Manage courses, students, and sessions all in one place.",
     "login_title": "Welcome back",
@@ -417,7 +402,6 @@
     "err_password_match": "The passwords do not match.",
     "err_name": "Name is required."
   },
-
   "profile": {
     "title": "My Profile",
     "breadcrumb": "Profile",
@@ -441,14 +425,12 @@
     "err_new_short": "The new password must be at least 8 characters.",
     "err_match": "The passwords do not match."
   },
-
   "not_found": {
     "title": "Page Not Found",
     "heading": "Oops! Page not found.",
     "body": "We could not find the page you were looking for. Meanwhile, you may return to the dashboard.",
     "back": "Return to Dashboard"
   },
-
   "errors": {
     "generic": "Something went wrong. Please try again.",
     "network": "Could not reach the server.",

@@ -38,6 +38,29 @@ return [
             'report' => false,
         ],
 
+        // Private by design: no 'url' and no 'serve', so there is deliberately
+        // no way to fetch these except through CourseFileController::download(),
+        // which authorizes against CoursePolicy first. Note the 'local' disk has
+        // 'serve' => true - reaching for Storage::disk('local')->url() as a
+        // shortcut would undo the whole point.
+        'course_files' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/course-files'),
+            'visibility' => 'private',
+            'throw' => false,
+            'report' => false,
+        ],
+
+        // Same treatment for student documents, which used to share one flat,
+        // world-readable folder on the public disk.
+        'student_documents' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/student-documents'),
+            'visibility' => 'private',
+            'throw' => false,
+            'report' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
