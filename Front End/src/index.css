@@ -97,6 +97,33 @@ html[dir='rtl'] td.num { direction: ltr; unicode-bidi: embed; }
 /* Bootstrap 4 float utilities are physical and AdminLTE leans on them. */
 html[dir='rtl'] .float-right { float: left !important; }
 html[dir='rtl'] .float-left { float: right !important; }
+
+/* The RESPONSIVE float utilities need mirroring too, and mirroring only the
+   unqualified pair is what made every breadcrumb look wrong in Arabic: all four
+   of them use `float-sm-right`, so they kept floating to the physical right -
+   the INNER edge of their column in RTL - while the LTR layout hugs the outer
+   edge. The crumb ended up stranded mid-header with a gap beside it.
+
+   These have to sit inside the same media queries Bootstrap declares them in.
+   Unconditionally they would force a float below the breakpoint, where
+   Bootstrap sets none at all. md/lg/xl are unused today and included anyway:
+   mirroring half a utility set is the trap that produced this bug. */
+@media (min-width: 576px) {
+  html[dir='rtl'] .float-sm-right { float: left !important; }
+  html[dir='rtl'] .float-sm-left  { float: right !important; }
+}
+@media (min-width: 768px) {
+  html[dir='rtl'] .float-md-right { float: left !important; }
+  html[dir='rtl'] .float-md-left  { float: right !important; }
+}
+@media (min-width: 992px) {
+  html[dir='rtl'] .float-lg-right { float: left !important; }
+  html[dir='rtl'] .float-lg-left  { float: right !important; }
+}
+@media (min-width: 1200px) {
+  html[dir='rtl'] .float-xl-right { float: left !important; }
+  html[dir='rtl'] .float-xl-left  { float: right !important; }
+}
 html[dir='rtl'] .text-right { text-align: left !important; }
 html[dir='rtl'] .text-left { text-align: right !important; }
 html[dir='rtl'] .ml-1 { margin-left: 0 !important; margin-right: .25rem !important; }
