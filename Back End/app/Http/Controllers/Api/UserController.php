@@ -8,7 +8,6 @@ use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -37,11 +36,15 @@ class UserController extends Controller
     {
         $data = $request->validated();
 
+        // Do NOT call Hash::make() here. User::$casts declares password as
+        // 'hashed', so Eloquent hashes it automatically on fill/create.
+        // Calling Hash::make() first would double-hash the value and make the
+        // password impossible to verify at login.
         $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-            'role' => $data['role'],
+            'name'     => $data['name'],
+            'email'    => $data['email'],
+            'password' => $data['password'],
+            'role'     => $data['role'],
         ]);
 
         return response()->json([

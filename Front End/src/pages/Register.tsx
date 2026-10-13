@@ -77,7 +77,7 @@ export default function Register() {
   }
 
   return (
-    <div style={styles.page}>
+    <div style={styles.page} className="lms-auth-page">
       <div style={styles.left}>
         <div style={styles.leftInner}>
           <i className="fas fa-graduation-cap" style={styles.leftIcon} />
@@ -93,7 +93,7 @@ export default function Register() {
 
           {apiError && (
             <div style={styles.errorBox}>
-              <i className="fas fa-exclamation-circle" style={{ marginRight: 8 }} />
+              <i className="fas fa-exclamation-circle" style={{ marginInlineEnd: 8 }} />
               {t(apiError)}
             </div>
           )}
@@ -255,7 +255,7 @@ const styles: Record<string, React.CSSProperties> = {
     margin: 0,
   },
   right: {
-    width: '500px',
+    width: 'clamp(320px, 42vw, 500px)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',

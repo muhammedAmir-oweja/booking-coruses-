@@ -39,7 +39,7 @@ export default function Login() {
   }
 
   return (
-    <div style={styles.page}>
+    <div style={styles.page} className="lms-auth-page">
       <div style={styles.left}>
         <div style={styles.leftInner}>
           <i className="fas fa-graduation-cap" style={styles.leftIcon} />
@@ -55,7 +55,7 @@ export default function Login() {
 
           {error && (
             <div style={styles.errorBox}>
-              <i className="fas fa-exclamation-circle" style={{ marginRight: 8 }} />
+              <i className="fas fa-exclamation-circle" style={{ marginInlineEnd: 8 }} />
               {t(error)}
             </div>
           )}
@@ -104,7 +104,7 @@ export default function Login() {
                   type="checkbox"
                   checked={remember}
                   onChange={(e) => setRemember(e.target.checked)}
-                  style={{ marginRight: 6 }}
+                  style={{ marginInlineEnd: 6 }}
                 />
                 {t('auth.remember_me')}
               </label>
@@ -112,7 +112,7 @@ export default function Login() {
 
             <button type="submit" style={loading ? { ...styles.btn, opacity: 0.75 } : styles.btn} disabled={loading}>
               {loading
-                ? <><i className="fas fa-spinner fa-spin" style={{ marginRight: 8 }} />{t('auth.signing_in')}</>
+                ? <><i className="fas fa-spinner fa-spin" style={{ marginInlineEnd: 8 }} />{t('auth.signing_in')}</>
                 : t('auth.sign_in')}
             </button>
           </form>
@@ -167,7 +167,7 @@ const styles: Record<string, React.CSSProperties> = {
     margin: 0,
   },
   right: {
-    width: '460px',
+    width: 'clamp(320px, 38vw, 460px)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',

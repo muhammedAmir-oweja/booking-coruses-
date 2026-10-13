@@ -15,6 +15,12 @@ class TrainingSessionController extends Controller
     {
         $query = TrainingSession::with('course');
 
+        // Instructors see only sessions that belong to their own courses.
+        // Admins see everything; students never reach this route (role gate).
+        if ($request->user()->isInstructor()) {
+            $query->whereHas('course', fn ($q) => $q->where('instructor_id', $request->user()->id));
+        }
+
         if ($request->filled('course_id')) {
             $query->where('course_id', $request->course_id);
         }
@@ -46,6 +52,7 @@ class TrainingSessionController extends Controller
     {
         $data = $request->validated();
 
+        // Ownership already enforced in StoreTrainingSessionRequest::authorize().
         $session = TrainingSession::create($data);
         $session->load('course');
 
@@ -64,6 +71,12 @@ class TrainingSessionController extends Controller
 
     public function destroy(TrainingSession $trainingSession): JsonResponse
     {
+        // Instructors may only delete sessions on their own courses.
+        if (request()->user()->isInstructor()
+            && $trainingSession->course?->instructor_id !== request()->user()->id) {
+            abort(403);
+        }
+
         $trainingSession->delete();
 
         return response()->json(['message' => __('messages.deleted', [

@@ -8,7 +8,21 @@ class UpdateTrainingSessionRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;   // admin + instructor group
+        $user = $this->user();
+
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        // An instructor may only update sessions on courses they own.
+        if ($user->isInstructor()) {
+            /** @var \App\Models\TrainingSession $session */
+            $session = $this->route('training_session');
+
+            return $session->course?->instructor_id === $user->id;
+        }
+
+        return false;
     }
 
     /**

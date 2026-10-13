@@ -105,7 +105,7 @@ export default function Courses() {
             <div className="card-header">
               <h3 className="card-title">{t('courses.all')}</h3>
               <div className="card-tools d-flex align-items-center gap-2">
-                <form onSubmit={handleSearch} className="input-group input-group-sm mr-2" style={{ width: 250 }}>
+                <form onSubmit={handleSearch} className="input-group input-group-sm" style={{ width: 250 }}>
                   <input
                     type="text"
                     className="form-control"

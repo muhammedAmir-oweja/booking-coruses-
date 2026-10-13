@@ -14,7 +14,7 @@ const STATUS_BADGES: Record<string, string> = {
 
 export default function Enrollments() {
   const { t } = useTranslation()
-  const { isAdmin } = useAuth()
+  const { isAdmin, isInstructor } = useAuth()
   const { showToast } = useToast()
   const [enrollments, setEnrollments] = useState<Enrollment[]>([])
   const [statusFilter, setStatusFilter] = useState('')
@@ -94,7 +94,7 @@ export default function Enrollments() {
               <h1 className="m-0">{t('enrollments.title')}</h1>
             </div>
             <div className="col-sm-6 text-right">
-              {isAdmin && (
+              {(isAdmin || isInstructor) && (
                 <Link to="/enrollments/new" className="btn btn-primary btn-sm">
                   <i className="fas fa-plus mr-1" /> {t('nav.enroll_student')}
                 </Link>

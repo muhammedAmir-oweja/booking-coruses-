@@ -2,13 +2,29 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Course;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreTrainingSessionRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;   // admin + instructor group
+        $user = $this->user();
+
+        // Admins can create sessions on any course.
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        // Instructors may only add sessions to courses they own.
+        $courseId = (int) $this->input('course_id');
+        if ($courseId && $user->isInstructor()) {
+            return Course::where('id', $courseId)
+                ->where('instructor_id', $user->id)
+                ->exists();
+        }
+
+        return false;
     }
 
     /**

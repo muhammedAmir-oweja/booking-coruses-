@@ -667,7 +667,7 @@ const NAVBAR_CSS = `
 .lmsnav-opt > i { width: 16px; text-align: center; color: rgba(255,255,255,.42); font-size: 12.5px; }
 .lmsnav-opt[aria-selected="true"] { background: rgba(90,169,245,.18); color: #fff; }
 .lmsnav-opt[aria-selected="true"] > i { color: #7cbcf7; }
-.lmsnav-path { margin-left: auto; font-size: 10.5px; color: rgba(255,255,255,.34); background: none; padding: 0; }
+.lmsnav-path { margin-inline-start: auto; font-size: 10.5px; color: rgba(255,255,255,.34); background: none; padding: 0; }
 .lmsnav-opt[aria-selected="true"] .lmsnav-path { color: rgba(255,255,255,.55); }
 .lmsnav-pal-empty { margin: 0; padding: 26px 16px; text-align: center; color: rgba(255,255,255,.46); font-size: 13px; }
 .lmsnav-pal-foot {

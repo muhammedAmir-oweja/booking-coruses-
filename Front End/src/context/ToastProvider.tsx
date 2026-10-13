@@ -30,20 +30,22 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const dismiss = (id: number) => setToasts(prev => prev.filter(t => t.id !== id))
 
+  const isRtl = document.documentElement.dir === 'rtl'
+
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
       <div style={{
         position: 'fixed',
         top: 70,
-        right: 20,
+        insetInlineEnd: 20,
         zIndex: 9999,
         display: 'flex',
         flexDirection: 'column',
         gap: 10,
         minWidth: 300,
         maxWidth: 400,
-      }}>
+      } as React.CSSProperties}>
         {toasts.map(toast => (
           <div
             key={toast.id}
@@ -52,12 +54,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               alignItems: 'center',
               gap: 12,
               background: '#fff',
-              borderLeft: `5px solid ${COLORS[toast.type]}`,
+              borderInlineStart: `5px solid ${COLORS[toast.type]}`,
               borderRadius: 4,
               boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
               padding: '12px 16px',
-              animation: 'slideIn 0.25s ease',
-            }}
+              animation: 'lmsToastIn 0.25s ease',
+            } as React.CSSProperties}
           >
             <i className={ICONS[toast.type]} style={{ color: COLORS[toast.type], fontSize: 18, flexShrink: 0 }} />
             <span style={{ flex: 1, fontSize: 14, color: '#333' }}>{toast.message}</span>
@@ -70,7 +72,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           </div>
         ))}
       </div>
-      <style>{`@keyframes slideIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }`}</style>
+      <style>{`
+        @keyframes lmsToastIn {
+          from { opacity: 0; transform: translateX(${isRtl ? '-' : ''}40px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+      `}</style>
     </ToastContext.Provider>
   )
 }

@@ -35,7 +35,16 @@ html[dir='rtl'] .main-header,
 html[dir='rtl'] .main-footer { margin-right: 250px; margin-left: 0; }
 html[dir='rtl'] .sidebar-collapse .content-wrapper,
 html[dir='rtl'] .sidebar-collapse .main-header,
-html[dir='rtl'] .sidebar-collapse .main-footer { margin-right: 4.6rem; }
+html[dir='rtl'] .sidebar-collapse .main-footer { margin-right: 4.6rem; margin-left: 0; }
+
+/* AdminLTE sidebar internal layout — physical padding and margins */
+html[dir='rtl'] .brand-link { padding-right: .825rem; padding-left: 0; }
+html[dir='rtl'] .brand-link .brand-image { margin-left: .8rem; margin-right: 0; float: right; }
+html[dir='rtl'] .sidebar .user-panel .image { padding-right: .8rem; padding-left: 0; }
+html[dir='rtl'] .sidebar .user-panel .info  { padding-right: .5rem; padding-left: 0; }
+html[dir='rtl'] .nav-sidebar .nav-link      { padding-right: .75rem; padding-left: .75rem; }
+html[dir='rtl'] .nav-sidebar .nav-icon      { margin-left: .2rem; margin-right: 0; }
+html[dir='rtl'] .nav-sidebar .nav-treeview  { padding-right: 1rem; padding-left: 0; }
 
 /* #root resets text-align: left for LTR; mirror it rather than overriding
    every child. */
@@ -46,6 +55,8 @@ html[dir='rtl'] .fa-chevron-right,
 html[dir='rtl'] .fa-chevron-left,
 html[dir='rtl'] .fa-arrow-right,
 html[dir='rtl'] .fa-arrow-left,
+html[dir='rtl'] .fa-arrow-circle-right,
+html[dir='rtl'] .fa-arrow-circle-left,
 html[dir='rtl'] .fa-sign-out-alt,
 html[dir='rtl'] .fa-long-arrow-alt-right,
 html[dir='rtl'] .fa-long-arrow-alt-left { transform: scaleX(-1); }
@@ -65,3 +76,71 @@ html[dir='rtl'] .ml-1 { margin-left: 0 !important; margin-right: .25rem !importa
 html[dir='rtl'] .mr-1 { margin-right: 0 !important; margin-left: .25rem !important; }
 html[dir='rtl'] .ml-2 { margin-left: 0 !important; margin-right: .5rem !important; }
 html[dir='rtl'] .mr-2 { margin-right: 0 !important; margin-left: .5rem !important; }
+html[dir='rtl'] .ml-3 { margin-left: 0 !important; margin-right: 1rem !important; }
+html[dir='rtl'] .mr-3 { margin-right: 0 !important; margin-left: 1rem !important; }
+html[dir='rtl'] .ml-4 { margin-left: 0 !important; margin-right: 1.5rem !important; }
+html[dir='rtl'] .mr-4 { margin-right: 0 !important; margin-left: 1.5rem !important; }
+html[dir='rtl'] .ml-5 { margin-left: 0 !important; margin-right: 3rem !important; }
+html[dir='rtl'] .mr-5 { margin-right: 0 !important; margin-left: 3rem !important; }
+html[dir='rtl'] .ml-auto { margin-left: 0 !important; margin-right: auto !important; }
+html[dir='rtl'] .mr-auto { margin-right: 0 !important; margin-left: auto !important; }
+
+/* Padding physical utilities */
+html[dir='rtl'] .pl-1 { padding-left: 0 !important; padding-right: .25rem !important; }
+html[dir='rtl'] .pr-1 { padding-right: 0 !important; padding-left: .25rem !important; }
+html[dir='rtl'] .pl-2 { padding-left: 0 !important; padding-right: .5rem !important; }
+html[dir='rtl'] .pr-2 { padding-right: 0 !important; padding-left: .5rem !important; }
+html[dir='rtl'] .pl-3 { padding-left: 0 !important; padding-right: 1rem !important; }
+html[dir='rtl'] .pr-3 { padding-right: 0 !important; padding-left: 1rem !important; }
+html[dir='rtl'] .pl-4 { padding-left: 0 !important; padding-right: 1.5rem !important; }
+html[dir='rtl'] .pr-4 { padding-right: 0 !important; padding-left: 1.5rem !important; }
+html[dir='rtl'] .pl-5 { padding-left: 0 !important; padding-right: 3rem !important; }
+html[dir='rtl'] .pr-5 { padding-right: 0 !important; padding-left: 3rem !important; }
+
+/* Border-radius corners — flip rounded sides */
+html[dir='rtl'] .rounded-left  { border-radius: 0 .25rem .25rem 0 !important; }
+html[dir='rtl'] .rounded-right { border-radius: .25rem 0 0 .25rem !important; }
+
+/* AdminLTE treeview expand arrow — points left in LTR; must point right in RTL */
+html[dir='rtl'] .nav-sidebar .fa-angle-left { transform: scaleX(-1); }
+
+/* Breadcrumb divider */
+html[dir='rtl'] .breadcrumb-item + .breadcrumb-item::before { content: '\005C'; }
+
+/* Bootstrap 4 input-group: append/prepend swap sides visually in RTL.
+   The border-radius on the button must mirror too. */
+html[dir='rtl'] .input-group > .input-group-append:last-child > .btn,
+html[dir='rtl'] .input-group > .input-group-append:last-child > .input-group-text {
+  border-radius: .25rem 0 0 .25rem;
+}
+html[dir='rtl'] .input-group > .form-control:first-child,
+html[dir='rtl'] .input-group > .form-control:not(:last-child) {
+  border-radius: 0 .25rem .25rem 0;
+  border-left: 0;
+  border-right: 1px solid #ced4da;
+}
+html[dir='rtl'] .input-group > .input-group-append > .btn,
+html[dir='rtl'] .input-group > .input-group-append > .input-group-text {
+  border-right: 1px solid #ced4da;
+  border-left: 0;
+}
+
+/* AdminLTE .border-right used in description-blocks (monthly revenue) */
+html[dir='rtl'] .border-right { border-right: 0 !important; border-left: 1px solid #dee2e6 !important; }
+html[dir='rtl'] .border-left  { border-left: 0 !important; border-right: 1px solid #dee2e6 !important; }
+
+/* Page-header right column — col-sm-6 text-right holds breadcrumbs and
+   action buttons. In LTR these sit on the trailing edge; they must still
+   sit on the trailing edge in RTL, but the trailing edge is now the LEFT.
+   .text-right is already flipped to text-align:left above. */
+html[dir='rtl'] .content-header .col-sm-6.text-right { text-align: left !important; }
+
+/* Login / Register split layout: brand panel is always the first flex child
+   in markup, which means it stays on the LEFT in both directions unless we
+   swap the order. Reversing the row direction achieves the mirror without
+   touching the JSX. */
+html[dir='rtl'] .lms-auth-page { flex-direction: row-reverse; }
+
+/* Toast notifications sit in a fixed corner — ensure they stack from the
+   correct end in RTL. */
+html[dir='rtl'] .lms-toast-container { right: auto; left: 1rem; }

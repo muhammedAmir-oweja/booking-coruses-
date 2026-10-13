@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\Booking;
 use App\Models\Course;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class StoreBookingRequest extends FormRequest
@@ -21,7 +22,17 @@ class StoreBookingRequest extends FormRequest
     {
         return [
             'student_id' => ['required', 'exists:students,id'],
-            'course_id' => ['required', 'exists:courses,id'],
+            'course_id' => [
+                'required',
+                'exists:courses,id',
+                // A student may not have two active bookings for the same course.
+                // Soft-deleted bookings are excluded from the unique check, so a
+                // cancelled-and-deleted booking does not block a re-booking.
+                Rule::unique('bookings')->where(
+                    fn ($q) => $q->where('student_id', $this->student_id)
+                              ->whereNull('deleted_at')
+                ),
+            ],
             'amount' => ['required', 'numeric', 'min:0'],
             'status' => ['sometimes', 'in:pending,confirmed,cancelled'],
             'payment_status' => ['sometimes', 'in:unpaid,paid,refunded'],
