@@ -520,6 +520,12 @@ const NAVBAR_CSS = `
   background: #343a40;
   border-bottom: 1px solid #4b545c;
 }
+/* No [dir='rtl'] flip belongs here. A plain 'flex-direction: row' already
+   follows the writing mode - main-start IS inline-start, which under dir="rtl"
+   is the right edge - so the bar mirrors itself and the hamburger lands beside
+   the sidebar. Adding 'row-reverse' swaps main-start back to the left and
+   un-mirrors the row into physical LTR order, which put the hamburger at the
+   opposite end of the screen from the sidebar it opens. */
 /* Logical properties throughout this block, not left/right: they mirror
    themselves under dir="rtl" and need no [dir='rtl'] override in index.css. */
 .lmsnav-spacer { margin-inline-start: auto; }
@@ -587,7 +593,7 @@ const NAVBAR_CSS = `
 .lmsnav-user { position: relative; flex: none; }
 .lmsnav-trigger {
   display: flex; align-items: center; gap: 9px;
-  height: 42px; padding: 0 7px 0 5px;
+  height: 42px; padding-block: 0; padding-inline: 5px 7px;
   border: 0; border-radius: 8px; background: transparent; cursor: pointer;
   transition: background .15s ease;
 }

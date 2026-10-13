@@ -130,7 +130,7 @@ export default function Courses() {
               </div>
             </div>
 
-            <div className="card-body p-0">
+            <div className="card-body table-responsive p-0">
               <table className="table table-striped table-hover">
                 <thead>
                   <tr>
@@ -171,9 +171,17 @@ export default function Courses() {
                       <td className="text-ltr">{course.hours ?? 0}</td>
                       <td>
                         <span className="text-ltr">{course.taken_seats} / {course.capacity}</span>
+                      {/* is_available folds three different refusals together -
+                          not active, already ended, and no seats left - so it
+                          cannot be the whole story on its own. Only an actually
+                          full course gets "Full"; a draft or finished one with
+                          seats to spare is "Unavailable", not a lie about
+                          capacity. */}
                       {course.is_available
                         ? <span className="badge badge-success ml-1">{t('courses.seats_left', { count: course.remaining_seats })}</span>
-                        : <span className="badge badge-danger ml-1">{t('courses.full')}</span>}
+                        : course.remaining_seats === 0
+                          ? <span className="badge badge-danger ml-1">{t('courses.full')}</span>
+                          : <span className="badge badge-secondary ml-1">{t('courses.unavailable')}</span>}
                       </td>
                       <td>{statusBadge(course.status)}</td>
                       <td className="text-ltr">{course.start_date ? new Date(course.start_date).toLocaleDateString() : t('common.none')}</td>

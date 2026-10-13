@@ -6,6 +6,12 @@ import { useMemo, useState } from 'react'
 
 interface SidebarProps {
   user: User | null
+  /**
+   * Closes the mobile drawer once a destination is chosen. Layout owns that
+   * state; the sidebar only reports that navigation happened. Fired on the
+   * links, never on a group header - expanding a group is not navigating.
+   */
+  onNavigate?: () => void
 }
 
 interface NavItem {
@@ -117,7 +123,7 @@ const GROUPS: {
   },
 ]
 
-export default function Sidebar({ user }: SidebarProps) {
+export default function Sidebar({ user, onNavigate }: SidebarProps) {
   const location = useLocation()
   const { t } = useTranslation()
   const { isAdmin, isInstructor, isStudent } = useAuth()
@@ -163,7 +169,7 @@ export default function Sidebar({ user }: SidebarProps) {
 
   return (
     <aside className="main-sidebar sidebar-dark-primary elevation-4">
-      <NavLink to="/" className="brand-link">
+      <NavLink to="/" className="brand-link" onClick={onNavigate}>
         <i className="fas fa-graduation-cap brand-image img-circle elevation-3" style={{ fontSize: 22, lineHeight: '33px', opacity: 0.8 }} />
         <span className="brand-text font-weight-light">{t('app.name')}</span>
       </NavLink>
@@ -174,7 +180,7 @@ export default function Sidebar({ user }: SidebarProps) {
             <i className="fas fa-user-circle" style={{ fontSize: 34, color: '#c2c7d0' }} />
           </div>
           <div className="info">
-            <NavLink to="/profile" className="d-block" style={{ fontWeight: 600, color: '#c2c7d0' }}>
+            <NavLink to="/profile" className="d-block" onClick={onNavigate} style={{ fontWeight: 600, color: '#c2c7d0' }}>
               {user?.name ?? '...'}
             </NavLink>
             <small style={{ color: '#6c757d', fontSize: 11 }}>
@@ -211,6 +217,7 @@ export default function Sidebar({ user }: SidebarProps) {
                         <NavLink
                           to={item.to}
                           end={item.to === '/'}
+                          onClick={onNavigate}
                           className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
                         >
                           <i className={`${item.icon} nav-icon`} />

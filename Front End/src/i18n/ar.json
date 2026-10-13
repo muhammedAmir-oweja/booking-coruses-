@@ -133,7 +133,7 @@
     "no_enrollments_yet": "لا توجد تسجيلات بعد",
     "no_revenue_yet": "لا توجد بيانات إيرادات بعد",
     "revenue_axis": "الإيرادات",
-    "enrolled_of": "{{taken}} / {{capacity}} مسجل",
+    "enrolled_of": "{{fraction}} مسجل",
     "more_info": "المزيد",
     "welcome_instructor": "مرحبًا بعودتك، {{name}}. أنت تشاهد لوحة تحكم المدرب.",
     "welcome_student": "مرحبًا بعودتك، {{name}}. هذه نظرة عامة على تعلّمك."
@@ -149,6 +149,7 @@
     "delete_failed": "فشل حذف الدورة.",
     "seats_left": "متبقٍ {{count}}",
     "full": "مكتملة",
+    "unavailable": "غير متاحة",
     "col": {
       "title": "العنوان",
       "instructor": "المدرب",

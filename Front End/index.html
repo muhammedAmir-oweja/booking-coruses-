@@ -1,10 +1,28 @@
 <!doctype html>
-<!-- lang/dir are set at runtime from the prefs cookie; see src/prefs.ts -->
 <html lang="en" dir="ltr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Course Booking System</title>
+    <!--
+      lang/dir are finalised below by a synchronous inline script that reads
+      the prefs cookie before the first paint, eliminating any RTL flash.
+      src/prefs.ts / src/i18n/index.ts then take over for all subsequent
+      changes.  The static attributes above are only the parse-time fallback.
+    -->
+    <script>
+      (function () {
+        try {
+          var raw = document.cookie.split('; ').find(function (c) { return c.startsWith('prefs='); });
+          if (raw) {
+            var prefs = JSON.parse(decodeURIComponent(raw.slice('prefs='.length)));
+            var locale = prefs && (prefs.locale === 'en' || prefs.locale === 'ar') ? prefs.locale : 'en';
+            document.documentElement.lang = locale;
+            document.documentElement.dir  = locale === 'ar' ? 'rtl' : 'ltr';
+          }
+        } catch (e) { /* malformed cookie — keep the static defaults */ }
+      })();
+    </script>
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
@@ -18,7 +36,18 @@
       rel="stylesheet"
     />
   </head>
-  <body class="hold-transition sidebar-mini layout-fixed">
+  <!--
+    `sidebar-mini-md`, not `sidebar-mini`: both give the 4.6rem collapsed rail,
+    but AdminLTE gates sidebar-mini's collapse rules behind
+    `@media (min-width: 992px)` while sidebar-mini-md's are complete from 768px.
+    With sidebar-mini, a tablet between 768px and 991px applied the
+    unconditional `.sidebar-collapse .main-sidebar{margin-left:-250px}` and none
+    of the rules that shrink it back, so a collapsed sidebar went fully
+    off-canvas while the content kept its 250px offset - a 250px empty gutter
+    and no sidebar. The collapsed state is remembered in the prefs cookie, so
+    collapsing on a desktop was enough to hit it on the next tablet visit.
+  -->
+  <body class="hold-transition sidebar-mini-md layout-fixed">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

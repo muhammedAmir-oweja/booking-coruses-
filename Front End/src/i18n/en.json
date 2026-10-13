@@ -133,7 +133,7 @@
     "no_enrollments_yet": "No enrollments yet",
     "no_revenue_yet": "No revenue data yet",
     "revenue_axis": "Revenue",
-    "enrolled_of": "{{taken}} / {{capacity}} enrolled",
+    "enrolled_of": "{{fraction}} enrolled",
     "more_info": "More info",
     "welcome_instructor": "Welcome back, {{name}}. You are viewing your instructor dashboard.",
     "welcome_student": "Welcome back, {{name}}. Here is your learning overview."
@@ -149,6 +149,7 @@
     "delete_failed": "Failed to delete course.",
     "seats_left": "{{count}} left",
     "full": "Full",
+    "unavailable": "Unavailable",
     "col": {
       "title": "Title",
       "instructor": "Instructor",

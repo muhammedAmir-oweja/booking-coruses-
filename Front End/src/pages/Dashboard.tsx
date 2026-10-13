@@ -73,7 +73,7 @@ function AdminDashboard() {
               <h3 className="card-title"><i className="fas fa-calendar-check mr-1" />{t('dashboard.recent_bookings')}</h3>
               <div className="card-tools"><Link to="/bookings" className="btn btn-tool btn-sm">{t('common.view_all')}</Link></div>
             </div>
-            <div className="card-body p-0">
+            <div className="card-body table-responsive p-0">
               <table className="table table-striped table-hover">
                 <thead><tr><th>#</th><th>{t('bookings.col.student')}</th><th>{t('bookings.col.course')}</th><th>{t('bookings.col.amount')}</th><th>{t('bookings.col.status')}</th><th>{t('bookings.col.date')}</th></tr></thead>
                 <tbody>
@@ -113,7 +113,15 @@ function AdminDashboard() {
                         <span className={`badge float-right badge-${c.status === 'active' ? 'success' : 'secondary'}`}>{t(`status.${c.status}`)}</span>
                       </Link>
                       <span className="product-description">
-                        {t('dashboard.enrolled_of', { taken: c.enrolled_count, capacity: c.capacity })}
+                        {/* One isolated run, not two loose numbers: inside an
+                            Arabic sentence the spaces and the slash are neutral,
+                            so "4 / 35" resolved to the paragraph direction and
+                            displayed as "35 / 4". U+2068/U+2069 (FSI...PDI) is
+                            the standard fix for interpolating data of unknown
+                            direction into a localized string. */}
+                        {t('dashboard.enrolled_of', {
+                          fraction: `\u2068${c.enrolled_count} / ${c.capacity}\u2069`,
+                        })}
                         {' '}&mdash; <span className="text-ltr">${c.price}</span>
                       </span>
                     </div>
@@ -179,7 +187,7 @@ function InstructorDashboard() {
               <h3 className="card-title"><i className="fas fa-user-plus mr-1" />{t('dashboard.recent_enrollments_mine')}</h3>
               <div className="card-tools"><Link to="/enrollments" className="btn btn-tool btn-sm">{t('common.view_all')}</Link></div>
             </div>
-            <div className="card-body p-0">
+            <div className="card-body table-responsive p-0">
               <table className="table table-striped table-hover">
                 <thead><tr><th>#</th><th>{t('enrollments.col.student')}</th><th>{t('enrollments.col.course')}</th><th>{t('enrollments.col.enrolled_at')}</th><th>{t('enrollments.col.status')}</th></tr></thead>
                 <tbody>
@@ -241,7 +249,7 @@ function StudentDashboard() {
               <h3 className="card-title"><i className="fas fa-calendar-check mr-1" />{t('dashboard.my_bookings')}</h3>
               <div className="card-tools"><Link to="/bookings" className="btn btn-tool btn-sm">{t('common.view_all')}</Link></div>
             </div>
-            <div className="card-body p-0">
+            <div className="card-body table-responsive p-0">
               <table className="table table-striped table-hover">
                 <thead><tr><th>{t('bookings.col.course')}</th><th>{t('bookings.col.amount')}</th><th>{t('bookings.col.status')}</th><th>{t('bookings.col.payment')}</th></tr></thead>
                 <tbody>
@@ -267,7 +275,7 @@ function StudentDashboard() {
               <h3 className="card-title"><i className="fas fa-book-open mr-1" />{t('dashboard.my_enrollments')}</h3>
               <div className="card-tools"><Link to="/enrollments" className="btn btn-tool btn-sm">{t('common.view_all')}</Link></div>
             </div>
-            <div className="card-body p-0">
+            <div className="card-body table-responsive p-0">
               <table className="table table-striped table-hover">
                 <thead><tr><th>{t('enrollments.col.course')}</th><th>{t('enrollments.col.enrolled_at')}</th><th>{t('enrollments.col.status')}</th></tr></thead>
                 <tbody>

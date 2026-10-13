@@ -367,7 +367,7 @@ export default function StudentForm() {
                       onChange={handleDocumentUpload}
                     />
                   </div>
-                  <div className="card-body p-0">
+                  <div className="card-body table-responsive p-0">
                     {documents.length === 0 ? (
                       <div className="text-center text-muted p-4">
                         <i className="fas fa-folder-open fa-2x mb-2 d-block" />

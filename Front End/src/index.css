@@ -30,12 +30,39 @@ html[lang='ar'] body {
 
 /* AdminLTE's fixed sidebar is positioned left in px, so mirror the shell. */
 html[dir='rtl'] .main-sidebar { right: 0; left: auto; }
-html[dir='rtl'] .content-wrapper,
-html[dir='rtl'] .main-header,
-html[dir='rtl'] .main-footer { margin-right: 250px; margin-left: 0; }
-html[dir='rtl'] .sidebar-collapse .content-wrapper,
-html[dir='rtl'] .sidebar-collapse .main-header,
-html[dir='rtl'] .sidebar-collapse .main-footer { margin-right: 4.6rem; margin-left: 0; }
+
+/* These offsets have to be gated exactly like the LTR rules they mirror.
+   AdminLTE only applies the 250px shell offset from 768px up; ungated, RTL
+   pushed the content 250px on every viewport, so Arabic on a 375px phone had
+   125px of usable width - a gutter LTR never had. */
+@media (min-width: 768px) {
+  html[dir='rtl'] .content-wrapper,
+  html[dir='rtl'] .main-header,
+  html[dir='rtl'] .main-footer { margin-right: 250px; margin-left: 0; }
+
+  /* AdminLTE's mini offset is `margin-left: 4.6rem !important`, and !important
+     beats this rule's higher specificity, so the mirror needs !important too -
+     otherwise the collapsed RTL shell keeps a 4.6rem gutter on the left as
+     well as the intended one on the right. */
+  html[dir='rtl'] .sidebar-collapse .content-wrapper,
+  html[dir='rtl'] .sidebar-collapse .main-header,
+  html[dir='rtl'] .sidebar-collapse .main-footer { margin-right: 4.6rem; margin-left: 0 !important; }
+}
+
+/* The off-canvas drawer, mirrored. AdminLTE parks the sidebar with
+   `margin-left: -250px`, which is inert once the sidebar is pinned with
+   `right: 0; left: auto`: with `left` auto and `right` fixed, margin-left only
+   changes the computed left and the right edge stays flush, so the box never
+   moves. RTL therefore needs the same move expressed on the other side - without
+   this the drawer is simply always open on an Arabic phone, sitting on top of
+   the content. */
+@media (max-width: 767.98px) {
+  html[dir='rtl'] .main-sidebar {
+    margin-right: -250px;
+    transition: margin-right .3s ease-in-out, width .3s ease-in-out;
+  }
+  html[dir='rtl'] .sidebar-open .main-sidebar { margin-right: 0; }
+}
 
 /* AdminLTE sidebar internal layout — physical padding and margins */
 html[dir='rtl'] .brand-link { padding-right: .825rem; padding-left: 0; }
@@ -104,8 +131,22 @@ html[dir='rtl'] .rounded-right { border-radius: .25rem 0 0 .25rem !important; }
 /* AdminLTE treeview expand arrow — points left in LTR; must point right in RTL */
 html[dir='rtl'] .nav-sidebar .fa-angle-left { transform: scaleX(-1); }
 
-/* Breadcrumb divider */
-html[dir='rtl'] .breadcrumb-item + .breadcrumb-item::before { content: '\005C'; }
+/* Breadcrumb divider. Bootstrap 4 builds this out of three physical
+   properties - `float: left`, `padding-left` on the item and `padding-right`
+   on the ::before - and flips none of them for RTL, so the separator floated to
+   the wrong side of its own item and jammed against the text with the padding
+   landing on the outside. All three have to mirror together.
+
+   The character stays '/'. It was '\005C' (a literal backslash), presumably an
+   attempt to mirror the glyph, but a reversed slash is not an RTL convention -
+   Bootstrap's own RTL build keeps the forward slash - and it read as a typo. */
+html[dir='rtl'] .breadcrumb-item + .breadcrumb-item { padding-left: 0; padding-right: .5rem; }
+html[dir='rtl'] .breadcrumb-item + .breadcrumb-item::before {
+  float: right;
+  padding-right: 0;
+  padding-left: .5rem;
+  content: '/';
+}
 
 /* Bootstrap 4 input-group: append/prepend swap sides visually in RTL.
    The border-radius on the button must mirror too. */

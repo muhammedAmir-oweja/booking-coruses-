@@ -121,7 +121,7 @@ export default function Students() {
               </div>
             </div>
 
-            <div className="card-body p-0">
+            <div className="card-body table-responsive p-0">
               {loading ? (
                 <div className="text-center p-4">
                   <i className="fas fa-spinner fa-spin mr-2" /> {t('common.loading')}
