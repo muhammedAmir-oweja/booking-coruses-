@@ -31,7 +31,10 @@
     "showing_range": "Showing {{from}} to {{to}} of {{total}}",
     "previous": "Previous",
     "next": "Next",
-    "page_of": "Page {{page}} of {{last}}"
+    "page_of": "Page {{page}} of {{last}}",
+    "per_page": "Per page",
+    "previous_page": "Previous page",
+    "next_page": "Next page"
   },
   "status": {
     "draft": "Draft",
@@ -86,7 +89,11 @@
     "bookings_keywords": "payments paid unpaid",
     "all_bookings": "All Bookings",
     "profile": "My profile",
-    "profile_keywords": "account password settings"
+    "profile_keywords": "account password settings",
+    "section_overview": "Overview",
+    "section_learning": "Learning",
+    "section_people": "People",
+    "section_commerce": "Commerce"
   },
   "navbar": {
     "toggle_sidebar": "Toggle sidebar",
@@ -136,7 +143,28 @@
     "enrolled_of": "{{fraction}} enrolled",
     "more_info": "More info",
     "welcome_instructor": "Welcome back, {{name}}. You are viewing your instructor dashboard.",
-    "welcome_student": "Welcome back, {{name}}. Here is your learning overview."
+    "welcome_student": "Welcome back, {{name}}. Here is your learning overview.",
+    "greeting": "Here is what is happening across your courses, {{name}}.",
+    "all_time": "all time",
+    "no_change": "no change",
+    "month_on_month": "this month vs last",
+    "manage_courses": "Manage courses",
+    "view_bookings": "View bookings",
+    "manage_students": "Manage students",
+    "view_payments": "View payments",
+    "revenue_trend": "Revenue trend",
+    "bookings_trend": "Bookings per month",
+    "bookings_axis": "Bookings",
+    "window_months": "last {{months}} months",
+    "window_none": "no data yet",
+    "latest_n": "latest {{n}}",
+    "by_enrolment": "by enrolment",
+    "col_seats": "Seats",
+    "col_month": "Month",
+    "booking_ref": "Booking #{{id}}",
+    "view_table": "Table",
+    "view_chart": "Chart",
+    "chart_summary": "{{series}} over {{months}} months, {{first}} to {{last}}. Highest value {{peak}}. Use the arrow keys to read each month, or switch to the table view."
   },
   "courses": {
     "title": "Courses",
@@ -431,6 +459,12 @@
     "heading": "Oops! Page not found.",
     "body": "We could not find the page you were looking for. Meanwhile, you may return to the dashboard.",
     "back": "Return to Dashboard"
+  },
+  "forbidden": {
+    "title": "Access denied",
+    "heading": "You do not have access to this page.",
+    "body": "Your account does not have permission to view it.",
+    "back": "Return to the dashboard"
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",

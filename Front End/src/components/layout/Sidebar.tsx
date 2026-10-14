@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import type { User } from '../../types'
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 
 interface SidebarProps {
   user: User | null
@@ -22,11 +22,25 @@ interface NavItem {
 
 interface NavGroup {
   key: string
+  section: string
   label: string
   icon: string
   children: NavItem[]
   roles: ('admin' | 'instructor' | 'student')[]
 }
+
+/**
+ * The four bands the navigation is grouped into. A flat list of eight
+ * collapsibles gives the eye nothing to aim at; these are the headings that
+ * break it up. Order here is the order on screen, and a band with nothing in
+ * it for the current role renders no heading at all.
+ */
+const SECTIONS: { key: string; labelKey: string }[] = [
+  { key: 'overview', labelKey: 'nav.section_overview' },
+  { key: 'learning', labelKey: 'nav.section_learning' },
+  { key: 'people', labelKey: 'nav.section_people' },
+  { key: 'commerce', labelKey: 'nav.section_commerce' },
+]
 
 /**
  * Route, icon and roles only - no translatable text at module level, for the
@@ -41,6 +55,7 @@ interface NavGroup {
  */
 const GROUPS: {
   key: string
+  section: string
   labelKey: string
   icon: string
   roles: ('admin' | 'instructor' | 'student')[]
@@ -48,6 +63,7 @@ const GROUPS: {
 }[] = [
   {
     key: 'dashboard',
+    section: 'overview',
     labelKey: 'nav.dashboard',
     icon: 'fas fa-tachometer-alt',
     roles: ['admin', 'instructor', 'student'],
@@ -55,6 +71,7 @@ const GROUPS: {
   },
   {
     key: 'courses',
+    section: 'learning',
     labelKey: 'nav.courses',
     icon: 'fas fa-book',
     roles: ['admin'],
@@ -65,6 +82,7 @@ const GROUPS: {
   },
   {
     key: 'my_courses',
+    section: 'learning',
     labelKey: 'nav.my_courses',
     icon: 'fas fa-book-open',
     roles: ['instructor'],
@@ -75,6 +93,7 @@ const GROUPS: {
   },
   {
     key: 'browse_courses',
+    section: 'learning',
     labelKey: 'nav.browse_courses',
     icon: 'fas fa-search',
     roles: ['student'],
@@ -84,6 +103,7 @@ const GROUPS: {
   },
   {
     key: 'students',
+    section: 'people',
     labelKey: 'nav.students',
     icon: 'fas fa-user-graduate',
     roles: ['admin'],
@@ -94,6 +114,7 @@ const GROUPS: {
   },
   {
     key: 'sessions',
+    section: 'learning',
     labelKey: 'nav.sessions',
     icon: 'fas fa-chalkboard-teacher',
     roles: ['admin', 'instructor'],
@@ -104,6 +125,7 @@ const GROUPS: {
   },
   {
     key: 'enrollments',
+    section: 'people',
     labelKey: 'nav.enrollments',
     icon: 'fas fa-user-plus',
     roles: ['admin', 'instructor', 'student'],
@@ -114,6 +136,7 @@ const GROUPS: {
   },
   {
     key: 'bookings',
+    section: 'commerce',
     labelKey: 'nav.bookings',
     icon: 'fas fa-calendar-check',
     roles: ['admin', 'student'],
@@ -137,6 +160,7 @@ export default function Sidebar({ user, onNavigate }: SidebarProps) {
   const navGroups = useMemo<NavGroup[]>(
     () => GROUPS.map(g => ({
       key: g.key,
+      section: g.section,
       label: t(g.labelKey),
       icon: g.icon,
       roles: g.roles,
@@ -170,63 +194,117 @@ export default function Sidebar({ user, onNavigate }: SidebarProps) {
   return (
     <aside className="main-sidebar sidebar-dark-primary elevation-4">
       <NavLink to="/" className="brand-link" onClick={onNavigate}>
-        <i className="fas fa-graduation-cap brand-image img-circle elevation-3" style={{ fontSize: 22, lineHeight: '33px', opacity: 0.8 }} />
+        {/* Sizing, shape and colour all live in chrome.css. They were inline
+            here, which meant the brand mark could not be restyled without
+            editing a component, and inline values quietly outrank a
+            stylesheet. `img-circle` is gone with them: the mark is a rounded
+            tile now, matching the card radius used across the app. */}
+        <i className="fas fa-graduation-cap brand-image" />
         <span className="brand-text font-weight-light">{t('app.name')}</span>
       </NavLink>
 
       <div className="sidebar">
         <div className="user-panel mt-3 pb-3 mb-3 d-flex">
           <div className="image">
-            <i className="fas fa-user-circle" style={{ fontSize: 34, color: '#c2c7d0' }} />
+            <i className="fas fa-user-circle" />
           </div>
           <div className="info">
-            <NavLink to="/profile" className="d-block" onClick={onNavigate} style={{ fontWeight: 600, color: '#c2c7d0' }}>
+            <NavLink to="/profile" className="d-block" onClick={onNavigate}>
               {user?.name ?? '...'}
             </NavLink>
-            <small style={{ color: '#6c757d', fontSize: 11 }}>
+            <small>
               {user ? t(`roles.${user.role}`, { defaultValue: user.role }) : ''}
             </small>
           </div>
         </div>
 
         <nav className="mt-2">
+          {/* One flat list, with AdminLTE's own `nav-header` items as the
+              section dividers. The groups deliberately stay DIRECT children
+              of `.nav-sidebar`: AdminLTE's collapsed-rail rules are written
+              as `.nav-sidebar > .nav-item > .nav-link > p`, so wrapping each
+              section in its own <ul> stops the mini rail from hiding the
+              labels and leaves clipped text in a 4.6rem gutter. */}
           <ul
             className="nav nav-pills nav-sidebar flex-column"
             data-widget="treeview"
             role="menu"
             data-accordion="false"
           >
-            {filteredGroups.map((group) => {
-              const active = isGroupActive(group)
-              const open = isGroupOpen(group)
-              return (
-                <li key={group.key} className={`nav-item has-treeview${open ? ' menu-open' : ''}`}>
-                  <a href="#" className={`nav-link${active ? ' active' : ''}`}
-                    onClick={(e) => { e.preventDefault(); toggleGroup(group.key, open) }}
-                  >
+            {SECTIONS.map((section) => {
+              const groups = filteredGroups.filter((g) => g.section === section.key)
+              // A band this role has nothing in must not leave its heading
+              // behind - that is how you get a "Commerce" label with nothing
+              // under it.
+              if (!groups.length) return null
 
-                    <i className={`nav-icon ${group.icon}`} />
-                    <p>
-                      {group.label}
-                      <i className="right fas fa-angle-left" />
-                    </p>
-                  </a>
-                  <ul className="nav nav-treeview">
-                    {group.children.map((item) => (
-                      <li key={item.to + item.label} className="nav-item">
-                        <NavLink
-                          to={item.to}
-                          end={item.to === '/'}
-                          onClick={onNavigate}
-                          className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+              return (
+                <Fragment key={section.key}>
+                  <li className="nav-header lmsnav-section">{t(section.labelKey)}</li>
+
+                  {groups.map((group) => {
+                    /* A group with one destination is not a group. Four of
+                       these were a collapsible wrapper around a single link -
+                       two clicks and an animation to reach something that was
+                       never hidden - so a lone child is promoted to a direct
+                       link and the parent disappears. */
+                    if (group.children.length === 1) {
+                      const only = group.children[0]
+                      return (
+                        <li key={group.key} className="nav-item">
+                          <NavLink
+                            to={only.to}
+                            end={only.to === '/'}
+                            onClick={onNavigate}
+                            title={group.label}
+                            className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+                          >
+                            <i className={`nav-icon ${group.icon}`} />
+                            <p><span>{group.label}</span></p>
+                          </NavLink>
+                        </li>
+                      )
+                    }
+
+                    const active = isGroupActive(group)
+                    const open = isGroupOpen(group)
+                    return (
+                      <li key={group.key} className={`nav-item has-treeview${open ? ' menu-open' : ''}`}>
+                        <a
+                          href="#"
+                          /* Lit rather than filled when a child is the current
+                             page: a filled parent would compete with the real
+                             selection underneath it. */
+                          className={`nav-link${active ? ' lmsnav-open-parent' : ''}`}
+                          title={group.label}
+                          aria-expanded={open}
+                          onClick={(e) => { e.preventDefault(); toggleGroup(group.key, open) }}
                         >
-                          <i className={`${item.icon} nav-icon`} />
-                          <p>{item.label}</p>
-                        </NavLink>
+                          <i className={`nav-icon ${group.icon}`} />
+                          <p>
+                            <span>{group.label}</span>
+                            <i className="right fas fa-angle-left" />
+                          </p>
+                        </a>
+                        <ul className="nav nav-treeview">
+                          {group.children.map((item) => (
+                            <li key={item.to + item.label} className="nav-item">
+                              <NavLink
+                                to={item.to}
+                                end={item.to === '/'}
+                                onClick={onNavigate}
+                                className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+                              >
+                                <i className={`${item.icon} nav-icon`} />
+                                <p><span>{item.label}</span></p>
+                              </NavLink>
+                            </li>
+                          ))}
+                        </ul>
                       </li>
-                    ))}
-                  </ul>
-                </li>
+                    )
+                  })}
+                </Fragment>
               )
             })}
           </ul>

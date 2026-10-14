@@ -38,7 +38,10 @@ export const DEFAULT_PREFS: Prefs = {
 const COOKIE = 'prefs'
 const LOCALES: Locale[] = ['en', 'ar']
 const THEMES: Theme[] = ['light', 'dark']
-const PER_PAGES: PerPage[] = [10, 25, 50, 100]
+/** The allowed page sizes, shared with the Pagination selector so the
+ *  control can never offer a value readPrefs() would reject. */
+export const PER_PAGE_OPTIONS: readonly PerPage[] = [10, 25, 50, 100]
+const PER_PAGES: readonly PerPage[] = PER_PAGE_OPTIONS
 
 export function readPrefs(): Prefs {
   try {

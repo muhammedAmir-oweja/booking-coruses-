@@ -3,6 +3,7 @@ import type { TrainingSession, PaginatedResponse } from '../types'
 
 export interface TrainingSessionsParams {
   page?: number
+  per_page?: number
   search?: string
   course_id?: number
   status?: string

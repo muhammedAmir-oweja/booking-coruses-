@@ -180,8 +180,8 @@ export default function CourseForm() {
                     )}
 
                     <div className="form-group">
-                      <label>{t('course_form.instructor')} <span className="text-danger">*</span></label>
-                      <select
+                      <label htmlFor="course-instructor">{t('course_form.instructor')} <span className="text-danger">*</span></label>
+                      <select id="course-instructor"
                         name="instructor_id"
                         className={`form-control${errors.instructor_id ? ' is-invalid' : ''}`}
                         value={form.instructor_id}
@@ -198,8 +198,8 @@ export default function CourseForm() {
                     </div>
 
                     <div className="form-group">
-                      <label>{t('course_form.course_title')} <span className="text-danger">*</span></label>
-                      <input
+                      <label htmlFor="course-title">{t('course_form.course_title')} <span className="text-danger">*</span></label>
+                      <input id="course-title"
                         name="title"
                         type="text"
                         className={`form-control${errors.title ? ' is-invalid' : ''}`}
@@ -211,8 +211,8 @@ export default function CourseForm() {
                     </div>
 
                     <div className="form-group">
-                      <label>{t('course_form.description')}</label>
-                      <textarea
+                      <label htmlFor="course-description">{t('course_form.description')}</label>
+                      <textarea id="course-description"
                         name="description"
                         className="form-control"
                         rows={4}
@@ -225,8 +225,8 @@ export default function CourseForm() {
                     <div className="row">
                       <div className="col-md-3">
                         <div className="form-group">
-                          <label>{t('course_form.price')}</label>
-                          <input
+                          <label htmlFor="course-price">{t('course_form.price')}</label>
+                          <input id="course-price"
                             name="price"
                             type="number"
                             min={0}
@@ -240,8 +240,8 @@ export default function CourseForm() {
                       </div>
                       <div className="col-md-3">
                         <div className="form-group">
-                          <label>{t('course_form.capacity')}</label>
-                          <input
+                          <label htmlFor="course-capacity">{t('course_form.capacity')}</label>
+                          <input id="course-capacity"
                             name="capacity"
                             type="number"
                             min={1}
@@ -254,8 +254,8 @@ export default function CourseForm() {
                       </div>
                       <div className="col-md-3">
                         <div className="form-group">
-                          <label>{t('course_form.hours')}</label>
-                          <input
+                          <label htmlFor="course-hours">{t('course_form.hours')}</label>
+                          <input id="course-hours"
                             name="hours"
                             type="number"
                             min={0}
@@ -267,8 +267,8 @@ export default function CourseForm() {
                       </div>
                       <div className="col-md-3">
                         <div className="form-group">
-                          <label>{t('course_form.status')}</label>
-                          <select
+                          <label htmlFor="course-status">{t('course_form.status')}</label>
+                          <select id="course-status"
                             name="status"
                             className="form-control"
                             value={form.status}
@@ -285,8 +285,8 @@ export default function CourseForm() {
                     <div className="row">
                       <div className="col-md-6">
                         <div className="form-group">
-                          <label>{t('course_form.start_date')} <span className="text-danger">*</span></label>
-                          <input
+                          <label htmlFor="course-start-date">{t('course_form.start_date')} <span className="text-danger">*</span></label>
+                          <input id="course-start-date"
                             name="start_date"
                             type="date"
                             className={`form-control${errors.start_date ? ' is-invalid' : ''}`}
@@ -298,8 +298,8 @@ export default function CourseForm() {
                       </div>
                       <div className="col-md-6">
                         <div className="form-group">
-                          <label>{t('course_form.end_date')}</label>
-                          <input
+                          <label htmlFor="course-end-date">{t('course_form.end_date')}</label>
+                          <input id="course-end-date"
                             name="end_date"
                             type="date"
                             className="form-control"

@@ -134,8 +134,8 @@ export default function EnrollmentForm() {
                     )}
 
                     <div className="form-group">
-                      <label>{t('enrollment_form.student')} <span className="text-danger">*</span></label>
-                      <select
+                      <label htmlFor="enrollment-student">{t('enrollment_form.student')} <span className="text-danger">*</span></label>
+                      <select id="enrollment-student"
                         name="student_id"
                         className={`form-control${errors.student_id ? ' is-invalid' : ''}`}
                         value={form.student_id}
@@ -150,8 +150,8 @@ export default function EnrollmentForm() {
                     </div>
 
                     <div className="form-group">
-                      <label>{t('enrollment_form.course')} <span className="text-danger">*</span></label>
-                      <select
+                      <label htmlFor="enrollment-course">{t('enrollment_form.course')} <span className="text-danger">*</span></label>
+                      <select id="enrollment-course"
                         name="course_id"
                         className={`form-control${errors.course_id ? ' is-invalid' : ''}`}
                         value={form.course_id}
@@ -170,8 +170,8 @@ export default function EnrollmentForm() {
                     </div>
 
                     <div className="form-group">
-                      <label>{t('enrollment_form.enrollment_date')}</label>
-                      <input
+                      <label htmlFor="enrollment-date">{t('enrollment_form.enrollment_date')}</label>
+                      <input id="enrollment-date"
                         name="enrolled_at"
                         type="date"
                         className="form-control"
@@ -181,8 +181,8 @@ export default function EnrollmentForm() {
                     </div>
 
                     <div className="form-group">
-                      <label>{t('enrollment_form.status')}</label>
-                      <select
+                      <label htmlFor="enrollment-status">{t('enrollment_form.status')}</label>
+                      <select id="enrollment-status"
                         name="status"
                         className="form-control"
                         value={form.status}

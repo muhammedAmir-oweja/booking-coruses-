@@ -50,8 +50,6 @@ Route::middleware($authed)->group(function () {
         Route::post('/change-password', [AuthController::class, 'changePassword']);
     });
 
-    Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
-
     // The bell belongs to every signed-in user (task 22).
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
@@ -99,6 +97,14 @@ Route::middleware([...$authed, 'role:admin,student'])->group(function () {
 
 // ------------------------------------------------------------ admin only
 Route::middleware([...$authed, 'role:admin'])->group(function () {
+    // Admin only, and it has to be: stats() is entirely unscoped. It returns
+    // business-wide totals, six months of revenue history, and the ten most
+    // recent bookings WITH the student names and the amounts they paid. Only
+    // AdminDashboard calls it, so sitting in the any-role group was invisible
+    // in the UI - but any signed-in student could read the lot with one
+    // request. Hiding a caller is not authorization.
+    Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
+
     Route::apiResource('users', UserController::class);
     Route::apiResource('students', StudentController::class);
 

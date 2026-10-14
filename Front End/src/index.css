@@ -212,3 +212,8 @@ html[dir='rtl'] .lms-auth-page { flex-direction: row-reverse; }
 /* Toast notifications sit in a fixed corner — ensure they stack from the
    correct end in RTL. */
 html[dir='rtl'] .lms-toast-container { right: auto; left: 1rem; }
+
+/* The register page's role radios are visually replaced by the labels wrapping
+   them, so the input carries the focus but paints nothing. Draw the ring on the
+   label standing in for it, or keyboard users get no focus indication at all. */
+.lms-role-option:focus-within { outline: 2px solid #1a6fc4; outline-offset: 2px; }

@@ -62,8 +62,8 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} noValidate>
             <div style={styles.field}>
-              <label style={styles.label}>{t('auth.email')}</label>
-              <input
+              <label htmlFor="login-email" style={styles.label}>{t('auth.email')}</label>
+              <input id="login-email"
                 type="email"
                 style={styles.input}
                 placeholder={t('auth.email_placeholder')}
@@ -75,9 +75,9 @@ export default function Login() {
             </div>
 
             <div style={styles.field}>
-              <label style={styles.label}>{t('auth.password')}</label>
+              <label htmlFor="login-password" style={styles.label}>{t('auth.password')}</label>
               <div style={styles.inputWrap}>
-                <input
+                <input id="login-password"
                   type={showPassword ? 'text' : 'password'}
                   style={{ ...styles.input, paddingInlineEnd: 44 }}
                   placeholder={t('auth.password_placeholder')}

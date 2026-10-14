@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useFormat } from '../format'
+import Pagination from '../components/ui/Pagination'
 import { getBookings, updateBookingStatus, cancelBooking } from '../api/bookings'
 import type { Booking } from '../types'
 import { useToast } from '../context/ToastContext'
+import { usePreferences } from '../context/PreferencesContext'
 import { useAuth } from '../context/AuthContext'
 
 const STATUS_BADGES: Record<string, string> = {
@@ -19,6 +22,8 @@ const PAYMENT_BADGES: Record<string, string> = {
 
 export default function Bookings() {
   const { t } = useTranslation()
+  const fmt = useFormat()
+  const { prefs } = usePreferences()
   const { isAdmin } = useAuth()
   const { showToast } = useToast()
   const [bookings, setBookings] = useState<Booking[]>([])
@@ -44,6 +49,7 @@ export default function Bookings() {
       try {
         const { data } = await getBookings({
           page,
+          per_page: prefs.per_page,
           status: statusFilter || undefined,
           payment_status: paymentFilter || undefined,
         })
@@ -63,7 +69,7 @@ export default function Bookings() {
     // A newer request supersedes this one - drop its response on the floor
     // so fast pagination clicks cannot land out of order.
     return () => { cancelled = true }
-  }, [page, statusFilter, paymentFilter, reloadKey])
+  }, [page, prefs.per_page, statusFilter, paymentFilter, reloadKey])
 
   const handleConfirm = async (id: number) => {
     setActionId(id)
@@ -182,7 +188,7 @@ export default function Bookings() {
                           <small className="text-muted text-ltr">{b.student?.email}</small>
                         </td>
                         <td>{b.course?.title ?? `#${b.course_id}`}</td>
-                        <td className="text-ltr">${b.amount.toFixed(2)}</td>
+                        <td className="text-ltr">{fmt.money(b.amount)}</td>
                         <td>
                           <span className={`badge ${STATUS_BADGES[b.status] ?? 'badge-secondary'}`}>
                             {t(`status.${b.status}`)}
@@ -194,9 +200,7 @@ export default function Bookings() {
                           </span>
                         </td>
                         <td className="text-ltr" style={{ whiteSpace: 'nowrap' }}>
-                          {new Date(b.booked_at).toLocaleDateString('en-GB', {
-                            day: '2-digit', month: 'short', year: 'numeric'
-                          })}
+                          {fmt.date(b.booked_at)}
                         </td>
                         <td style={{ whiteSpace: 'nowrap' }}>
                           {isAdmin && b.status === 'pending' && (
@@ -240,22 +244,14 @@ export default function Bookings() {
               )}
             </div>
 
-            {lastPage > 1 && (
-              <div className="card-footer clearfix">
-                <ul className="pagination pagination-sm m-0 float-right">
-                  <li className={`page-item${page === 1 ? ' disabled' : ''}`}>
-                    <button className="page-link" onClick={() => goToPage(page - 1)}>«</button>
-                  </li>
-                  {Array.from({ length: lastPage }, (_, i) => i + 1).map((p) => (
-                    <li key={p} className={`page-item${p === page ? ' active' : ''}`}>
-                      <button className="page-link" onClick={() => goToPage(p)}>{p}</button>
-                    </li>
-                  ))}
-                  <li className={`page-item${page === lastPage ? ' disabled' : ''}`}>
-                    <button className="page-link" onClick={() => goToPage(page + 1)}>»</button>
-                  </li>
-                </ul>
-              </div>
+            {(lastPage) > 0 && (
+              <Pagination
+                page={page}
+                lastPage={lastPage}
+                total={total}
+                onPage={goToPage}
+                onPageSizeChange={() => goToPage(1)}
+              />
             )}
           </div>
         </div>

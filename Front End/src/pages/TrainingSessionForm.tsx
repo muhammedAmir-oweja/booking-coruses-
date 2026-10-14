@@ -190,8 +190,8 @@ export default function TrainingSessionForm() {
                     )}
 
                     <div className="form-group">
-                      <label>{t('session_form.course')} <span className="text-danger">*</span></label>
-                      <select
+                      <label htmlFor="session-course">{t('session_form.course')} <span className="text-danger">*</span></label>
+                      <select id="session-course"
                         name="course_id"
                         className={`form-control${errors.course_id ? ' is-invalid' : ''}`}
                         value={form.course_id}
@@ -206,8 +206,8 @@ export default function TrainingSessionForm() {
                     </div>
 
                     <div className="form-group">
-                      <label>{t('session_form.title')} <span className="text-danger">*</span></label>
-                      <input
+                      <label htmlFor="session-title">{t('session_form.title')} <span className="text-danger">*</span></label>
+                      <input id="session-title"
                         name="title"
                         type="text"
                         className={`form-control${errors.title ? ' is-invalid' : ''}`}
@@ -219,8 +219,8 @@ export default function TrainingSessionForm() {
                     </div>
 
                     <div className="form-group">
-                      <label>{t('session_form.description')}</label>
-                      <textarea
+                      <label htmlFor="session-description">{t('session_form.description')}</label>
+                      <textarea id="session-description"
                         name="description"
                         rows={3}
                         className="form-control"
@@ -233,8 +233,8 @@ export default function TrainingSessionForm() {
                     <div className="row">
                       <div className="col-md-6">
                         <div className="form-group">
-                          <label>{t('session_form.starts_at')} <span className="text-danger">*</span></label>
-                          <input
+                          <label htmlFor="session-starts-at">{t('session_form.starts_at')} <span className="text-danger">*</span></label>
+                          <input id="session-starts-at"
                             name="starts_at"
                             type="datetime-local"
                             className={`form-control${errors.starts_at ? ' is-invalid' : ''}`}
@@ -246,8 +246,8 @@ export default function TrainingSessionForm() {
                       </div>
                       <div className="col-md-6">
                         <div className="form-group">
-                          <label>{t('session_form.ends_at')} <span className="text-danger">*</span></label>
-                          <input
+                          <label htmlFor="session-ends-at">{t('session_form.ends_at')} <span className="text-danger">*</span></label>
+                          <input id="session-ends-at"
                             name="ends_at"
                             type="datetime-local"
                             className={`form-control${errors.ends_at ? ' is-invalid' : ''}`}
@@ -260,8 +260,8 @@ export default function TrainingSessionForm() {
                     </div>
 
                     <div className="form-group">
-                      <label>{t('session_form.location')}</label>
-                      <input
+                      <label htmlFor="session-location">{t('session_form.location')}</label>
+                      <input id="session-location"
                         name="location"
                         type="text"
                         className="form-control"
@@ -274,8 +274,8 @@ export default function TrainingSessionForm() {
                     <div className="row">
                       <div className="col-md-6">
                         <div className="form-group">
-                          <label>{t('session_form.max_attendees')}</label>
-                          <input
+                          <label htmlFor="session-max-attendees">{t('session_form.max_attendees')}</label>
+                          <input id="session-max-attendees"
                             name="max_attendees"
                             type="number"
                             min={1}
@@ -289,8 +289,8 @@ export default function TrainingSessionForm() {
                       </div>
                       <div className="col-md-6">
                         <div className="form-group">
-                          <label>{t('session_form.status')} <span className="text-danger">*</span></label>
-                          <select
+                          <label htmlFor="session-status">{t('session_form.status')} <span className="text-danger">*</span></label>
+                          <select id="session-status"
                             name="status"
                             className="form-control"
                             value={form.status}

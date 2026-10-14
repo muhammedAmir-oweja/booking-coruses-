@@ -50,7 +50,8 @@ const ROUTES: { key: string; to: string; icon: string; roles: Role[] }[] = [
   { key: 'profile',           to: '/profile',               icon: 'fas fa-user',               roles: ['admin', 'instructor', 'student'] },
 ]
 
-// Saturated enough to hold their own against the #343a40 bar.
+// Saturated enough to hold their own against the dark bar, and each one
+// clears 4.5:1 against the white initials it carries (5.4 / 5.0 / 5.3 / 6.0).
 const ROLE_FILLS: Record<string, string> = {
   admin:      '#b4463c',
   instructor: '#16798f',
@@ -503,11 +504,16 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
 
 /**
  * The navbar is part of the app's dark chrome, not a light bar sitting on top
- * of it. Two numbers are load-bearing and both come from AdminLTE:
- *   #343a40  the sidebar background
- *   #4b545c  the sidebar brand's bottom border
- * Matching them, at exactly 57px tall, turns the navbar's bottom edge and the
- * sidebar's brand divider into one unbroken line across the top of the app.
+ * of it. The bar's surface and its bottom edge are load-bearing: at exactly
+ * 57px tall and sharing the sidebar brand's background and divider, the
+ * navbar's bottom edge and the sidebar's become one unbroken line across the
+ * top of the app.
+ *
+ * Those two values used to be AdminLTE's own #343a40 and #4b545c, written in
+ * by hand here and matched by hand in the sidebar. They are now
+ * --chrome-800 and --chrome-hair from tokens.css, which is what keeps the two
+ * files from drifting apart the next time the chrome is retoned - the line
+ * only stays unbroken if both sides read the same number.
  *
  * Everything is scoped `lmsnav-*` so none of it collides with Bootstrap.
  * `.main-header` stays on the <nav> because AdminLTE's collapse rule keys off it.
@@ -517,8 +523,8 @@ const NAVBAR_CSS = `
   position: relative; z-index: 1000;
   display: flex; align-items: center; gap: 8px;
   height: 57px; padding: 0 14px;
-  background: #343a40;
-  border-bottom: 1px solid #4b545c;
+  background: var(--chrome-800);
+  border-bottom: 1px solid var(--chrome-hair);
 }
 /* No [dir='rtl'] flip belongs here. A plain 'flex-direction: row' already
    follows the writing mode - main-start IS inline-start, which under dir="rtl"
@@ -579,15 +585,15 @@ const NAVBAR_CSS = `
   position: absolute; top: 1px; inset-inline-end: 1px;
   min-width: 15px; height: 15px; padding: 0 3px;
   display: grid; place-items: center;
-  border-radius: 99px; background: #dc3545; color: #fff;
+  border-radius: 99px; background: var(--critical); color: #fff;
   font: 700 9.5px/1 inherit; letter-spacing: 0;
-  box-shadow: 0 0 0 2px #343a40;
+  box-shadow: 0 0 0 2px var(--chrome-800);
 }
 .lmsnav-empty { padding: 14px 10px; text-align: center; font-size: 12px; color: rgba(255,255,255,.44); }
 .lmsnav-dot {
   display: inline-block; vertical-align: middle;
   width: 6px; height: 6px; margin-inline-start: 6px;
-  border-radius: 50%; background: #4a9fd8;
+  border-radius: 50%; background: var(--brand-250);
 }
 
 .lmsnav-user { position: relative; flex: none; }
@@ -614,7 +620,7 @@ const NAVBAR_CSS = `
 
 .lmsnav-menu {
   position: absolute; top: calc(100% + 5px); inset-inline-end: 0; width: 272px; padding: 6px;
-  background: #3c4349; border: 1px solid rgba(255,255,255,.11); border-radius: 10px;
+  background: var(--chrome-700); border: 1px solid rgba(255,255,255,.11); border-radius: 10px;
   box-shadow: 0 16px 40px rgba(0,0,0,.42), 0 2px 6px rgba(0,0,0,.28);
   animation: lmsnav-pop .15s ease;
 }
@@ -651,7 +657,7 @@ const NAVBAR_CSS = `
 @keyframes lmsnav-fade { from { opacity: 0 } to { opacity: 1 } }
 .lmsnav-pal {
   display: flex; flex-direction: column; width: 100%; max-width: 520px; max-height: 62vh;
-  background: #32383e; border: 1px solid rgba(255,255,255,.11); border-radius: 12px;
+  background: var(--chrome-700); border: 1px solid rgba(255,255,255,.11); border-radius: 12px;
   overflow: hidden; box-shadow: 0 28px 70px rgba(0,0,0,.55);
   animation: lmsnav-rise .17s ease;
 }
@@ -672,7 +678,7 @@ const NAVBAR_CSS = `
 }
 .lmsnav-opt > i { width: 16px; text-align: center; color: rgba(255,255,255,.42); font-size: 12.5px; }
 .lmsnav-opt[aria-selected="true"] { background: rgba(90,169,245,.18); color: #fff; }
-.lmsnav-opt[aria-selected="true"] > i { color: #7cbcf7; }
+.lmsnav-opt[aria-selected="true"] > i { color: var(--brand-250); }
 .lmsnav-path { margin-inline-start: auto; font-size: 10.5px; color: rgba(255,255,255,.34); background: none; padding: 0; }
 .lmsnav-opt[aria-selected="true"] .lmsnav-path { color: rgba(255,255,255,.55); }
 .lmsnav-pal-empty { margin: 0; padding: 26px 16px; text-align: center; color: rgba(255,255,255,.46); font-size: 13px; }
@@ -683,7 +689,7 @@ const NAVBAR_CSS = `
 }
 .lmsnav-pal-foot span { display: flex; align-items: center; gap: 5px; }
 
-.lmsnav :focus-visible, .lmsnav-pal :focus-visible { outline: 2px solid #5aa9f5; outline-offset: 2px; }
+.lmsnav :focus-visible, .lmsnav-pal :focus-visible { outline: 2px solid var(--brand-250); outline-offset: 2px; }
 
 @media (max-width: 767px) {
   .lmsnav { padding: 0 8px; gap: 4px; }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useFormat } from '../format'
 import { Link } from 'react-router-dom'
 import { getMe, changePassword } from '../api/auth'
 import type { User } from '../types'
@@ -13,6 +14,7 @@ const ROLE_BADGES: Record<string, string> = {
 
 export default function Profile() {
   const { t } = useTranslation()
+  const fmt = useFormat()
   const { showToast } = useToast()
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -123,30 +125,28 @@ export default function Profile() {
                   </div>
                   <div className="card-body">
                     <div className="form-group row">
-                      <label className="col-sm-3 col-form-label font-weight-bold">{t('profile.name')}</label>
+                      <span className="col-sm-3 col-form-label font-weight-bold">{t('profile.name')}</span>
                       <div className="col-sm-9">
                         <p className="form-control-plaintext">{user.name}</p>
                       </div>
                     </div>
                     <div className="form-group row">
-                      <label className="col-sm-3 col-form-label font-weight-bold">{t('profile.email')}</label>
+                      <span className="col-sm-3 col-form-label font-weight-bold">{t('profile.email')}</span>
                       <div className="col-sm-9">
                         <p className="form-control-plaintext text-ltr">{user.email}</p>
                       </div>
                     </div>
                     <div className="form-group row">
-                      <label className="col-sm-3 col-form-label font-weight-bold">{t('profile.role')}</label>
+                      <span className="col-sm-3 col-form-label font-weight-bold">{t('profile.role')}</span>
                       <div className="col-sm-9">
                         <p className="form-control-plaintext">{t(`roles.${user.role}`, { defaultValue: user.role })}</p>
                       </div>
                     </div>
                     <div className="form-group row">
-                      <label className="col-sm-3 col-form-label font-weight-bold">{t('profile.member_since')}</label>
+                      <span className="col-sm-3 col-form-label font-weight-bold">{t('profile.member_since')}</span>
                       <div className="col-sm-9">
                         <p className="form-control-plaintext text-ltr">
-                          {new Date(user.created_at).toLocaleDateString('en-GB', {
-                            day: '2-digit', month: 'long', year: 'numeric',
-                          })}
+                          {fmt.date(user.created_at)}
                         </p>
                       </div>
                     </div>
@@ -160,8 +160,8 @@ export default function Profile() {
                   <form onSubmit={handlePwSubmit}>
                     <div className="card-body">
                       <div className="form-group">
-                        <label>{t('profile.current_password')}</label>
-                        <input
+                        <label htmlFor="profile-current-password">{t('profile.current_password')}</label>
+                        <input id="profile-current-password"
                           name="current_password"
                           type="password"
                           className={`form-control${pwErrors.current_password ? ' is-invalid' : ''}`}
@@ -172,8 +172,8 @@ export default function Profile() {
                         {pwErrors.current_password && <div className="invalid-feedback">{pwErrors.current_password}</div>}
                       </div>
                       <div className="form-group">
-                        <label>{t('profile.new_password')}</label>
-                        <input
+                        <label htmlFor="profile-new-password">{t('profile.new_password')}</label>
+                        <input id="profile-new-password"
                           name="password"
                           type="password"
                           className={`form-control${pwErrors.password ? ' is-invalid' : ''}`}
@@ -184,8 +184,8 @@ export default function Profile() {
                         {pwErrors.password && <div className="invalid-feedback">{pwErrors.password}</div>}
                       </div>
                       <div className="form-group">
-                        <label>{t('profile.confirm_new_password')}</label>
-                        <input
+                        <label htmlFor="profile-confirm-password">{t('profile.confirm_new_password')}</label>
+                        <input id="profile-confirm-password"
                           name="password_confirmation"
                           type="password"
                           className={`form-control${pwErrors.password_confirmation ? ' is-invalid' : ''}`}

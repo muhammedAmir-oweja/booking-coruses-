@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useFormat } from '../format'
+import Pagination from '../components/ui/Pagination'
 import { Link } from 'react-router-dom'
 import { getTrainingSessions, deleteTrainingSession } from '../api/trainingSessions'
 import type { TrainingSession } from '../types'
 import { useToast } from '../context/ToastContext'
+import { usePreferences } from '../context/PreferencesContext'
 import { useAuth } from '../context/AuthContext'
 
 const STATUS_BADGES: Record<string, string> = {
@@ -13,15 +16,12 @@ const STATUS_BADGES: Record<string, string> = {
   cancelled:  'badge-danger',
 }
 
-function formatDateTime(dt: string) {
-  return new Date(dt).toLocaleString('en-GB', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit',
-  })
-}
+
 
 export default function TrainingSessions() {
   const { t } = useTranslation()
+  const fmt = useFormat()
+  const { prefs } = usePreferences()
   const { isAdmin, isInstructor } = useAuth()
   const { showToast } = useToast()
   const [sessions, setSessions] = useState<TrainingSession[]>([])
@@ -48,6 +48,7 @@ export default function TrainingSessions() {
       try {
         const { data } = await getTrainingSessions({
           page,
+          per_page: prefs.per_page,
           search: search || undefined,
           status: statusFilter || undefined,
         })
@@ -67,7 +68,7 @@ export default function TrainingSessions() {
     // A newer request supersedes this one - drop its response on the floor
     // so fast pagination clicks cannot land out of order.
     return () => { cancelled = true }
-  }, [page, search, statusFilter, reloadKey])
+  }, [page, prefs.per_page, search, statusFilter, reloadKey])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -180,7 +181,7 @@ export default function TrainingSessions() {
                         <td>{s.id}</td>
                         <td>{s.title}</td>
                         <td>{s.course?.title ?? t('common.none')}</td>
-                        <td className="text-ltr" style={{ whiteSpace: 'nowrap' }}>{formatDateTime(s.starts_at)}</td>
+                        <td className="text-ltr" style={{ whiteSpace: 'nowrap' }}>{fmt.dateTime(s.starts_at)}</td>
                         <td>{s.duration_minutes != null ? t('sessions.minutes', { count: s.duration_minutes }) : t('common.none')}</td>
                         <td>{s.location || t('common.none')}</td>
                         <td>
@@ -219,22 +220,14 @@ export default function TrainingSessions() {
               )}
             </div>
 
-            {lastPage > 1 && (
-              <div className="card-footer clearfix">
-                <ul className="pagination pagination-sm m-0 float-right">
-                  <li className={`page-item${page === 1 ? ' disabled' : ''}`}>
-                    <button className="page-link" onClick={() => goToPage(page - 1)}>«</button>
-                  </li>
-                  {Array.from({ length: lastPage }, (_, i) => i + 1).map((p) => (
-                    <li key={p} className={`page-item${p === page ? ' active' : ''}`}>
-                      <button className="page-link" onClick={() => goToPage(p)}>{p}</button>
-                    </li>
-                  ))}
-                  <li className={`page-item${page === lastPage ? ' disabled' : ''}`}>
-                    <button className="page-link" onClick={() => goToPage(page + 1)}>»</button>
-                  </li>
-                </ul>
-              </div>
+            {(lastPage) > 0 && (
+              <Pagination
+                page={page}
+                lastPage={lastPage}
+                total={total}
+                onPage={goToPage}
+                onPageSizeChange={() => goToPage(1)}
+              />
             )}
           </div>
         </div>

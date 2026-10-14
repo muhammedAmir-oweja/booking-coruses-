@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import Pagination from '../components/ui/Pagination'
 import { Link } from 'react-router-dom'
 import { getStudents, deleteStudent } from '../api/students'
 import type { Student } from '../types'
 import { useToast } from '../context/ToastContext'
+import { usePreferences } from '../context/PreferencesContext'
 import { useAuth } from '../context/AuthContext'
 
 export default function Students() {
   const { t } = useTranslation()
+  const { prefs } = usePreferences()
   const { showToast } = useToast()
   const { isAdmin } = useAuth()
   const [students, setStudents] = useState<Student[]>([])
@@ -31,7 +34,7 @@ export default function Students() {
 
     void (async () => {
       try {
-        const { data } = await getStudents({ page, search: search || undefined })
+        const { data } = await getStudents({ page, per_page: prefs.per_page, search: search || undefined })
         if (cancelled) return
         setStudents(data.data)
         setLastPage(data.last_page)
@@ -48,7 +51,7 @@ export default function Students() {
     // A newer request supersedes this one - drop its response on the floor
     // so fast pagination clicks cannot land out of order.
     return () => { cancelled = true }
-  }, [page, search, reloadKey])
+  }, [page, prefs.per_page, search, reloadKey])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -197,22 +200,14 @@ export default function Students() {
               )}
             </div>
 
-            {lastPage > 1 && (
-              <div className="card-footer clearfix">
-                <ul className="pagination pagination-sm m-0 float-right">
-                  <li className={`page-item${page === 1 ? ' disabled' : ''}`}>
-                    <button className="page-link" onClick={() => goToPage(page - 1)}>«</button>
-                  </li>
-                  {Array.from({ length: lastPage }, (_, i) => i + 1).map((p) => (
-                    <li key={p} className={`page-item${p === page ? ' active' : ''}`}>
-                      <button className="page-link" onClick={() => goToPage(p)}>{p}</button>
-                    </li>
-                  ))}
-                  <li className={`page-item${page === lastPage ? ' disabled' : ''}`}>
-                    <button className="page-link" onClick={() => goToPage(page + 1)}>»</button>
-                  </li>
-                </ul>
-              </div>
+            {(lastPage) > 0 && (
+              <Pagination
+                page={page}
+                lastPage={lastPage}
+                total={total}
+                onPage={goToPage}
+                onPageSizeChange={() => goToPage(1)}
+              />
             )}
           </div>
         </div>

@@ -1,14 +1,19 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useFormat } from '../format'
+import Pagination from '../components/ui/Pagination'
 import { Link, useNavigate } from 'react-router-dom'
 import { getCourses, deleteCourse } from '../api/courses'
 import type { Course, PaginatedResponse } from '../types'
 import { useToast } from '../context/ToastContext'
+import { usePreferences } from '../context/PreferencesContext'
 import { useAuth } from '../context/AuthContext'
 
 export default function Courses() {
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const fmt = useFormat()
+  const { prefs } = usePreferences()
   const { showToast } = useToast()
   const { isAdmin, isInstructor } = useAuth()
   const [data, setData] = useState<PaginatedResponse<Course> | null>(null)
@@ -30,7 +35,7 @@ export default function Courses() {
 
     void (async () => {
       try {
-        const { data } = await getCourses({ page, search: search || undefined })
+        const { data } = await getCourses({ page, per_page: prefs.per_page, search: search || undefined })
         if (cancelled) return
         setData(data)
         setError(null)
@@ -47,7 +52,7 @@ export default function Courses() {
     // A newer request supersedes this one - drop its response on the floor
     // so fast pagination clicks cannot land out of order.
     return () => { cancelled = true }
-  }, [page, search, reloadKey])
+  }, [page, prefs.per_page, search, reloadKey])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -167,7 +172,7 @@ export default function Courses() {
                         <Link to={`/courses/${course.id}/edit`}>{course.title}</Link>
                       </td>
                       <td>{course.instructor?.name ?? `#${course.instructor_id}`}</td>
-                      <td className="text-ltr">${course.price}</td>
+                      <td className="text-ltr">{fmt.money(course.price)}</td>
                       <td className="text-ltr">{course.hours ?? 0}</td>
                       <td>
                         <span className="text-ltr">{course.taken_seats} / {course.capacity}</span>
@@ -184,7 +189,7 @@ export default function Courses() {
                           : <span className="badge badge-secondary ml-1">{t('courses.unavailable')}</span>}
                       </td>
                       <td>{statusBadge(course.status)}</td>
-                      <td className="text-ltr">{course.start_date ? new Date(course.start_date).toLocaleDateString() : t('common.none')}</td>
+                      <td className="text-ltr">{fmt.date(course.start_date, t('common.none'))}</td>
                       <td>
                         {(isAdmin || isInstructor) && (
                           <Link
@@ -214,26 +219,14 @@ export default function Courses() {
               </table>
             </div>
 
-            {data && data.last_page > 1 && (
-              <div className="card-footer clearfix">
-                <ul className="pagination pagination-sm m-0 float-right">
-                  <li className={`page-item ${page <= 1 ? 'disabled' : ''}`}>
-                    <button className="page-link" onClick={() => goToPage(page - 1)}>
-                      &laquo;
-                    </button>
-                  </li>
-                  {Array.from({ length: data.last_page }, (_, i) => i + 1).map((p) => (
-                    <li key={p} className={`page-item ${p === page ? 'active' : ''}`}>
-                      <button className="page-link" onClick={() => goToPage(p)}>{p}</button>
-                    </li>
-                  ))}
-                  <li className={`page-item ${page >= data.last_page ? 'disabled' : ''}`}>
-                    <button className="page-link" onClick={() => goToPage(page + 1)}>
-                      &raquo;
-                    </button>
-                  </li>
-                </ul>
-              </div>
+            {(data?.last_page ?? 1) > 0 && (
+              <Pagination
+                page={page}
+                lastPage={data?.last_page ?? 1}
+                total={data?.total}
+                onPage={goToPage}
+                onPageSizeChange={() => goToPage(1)}
+              />
             )}
           </div>
         </div>

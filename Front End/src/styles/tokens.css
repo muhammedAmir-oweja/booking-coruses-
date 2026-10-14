@@ -1,0 +1,127 @@
+/* ===========================================================================
+   Design tokens — the single source of truth for colour and type.
+   ===========================================================================
+
+   Every value here was measured, not chosen by eye. Two rules drove the set:
+
+   1. ONE data hue. The dashboard plots revenue in one panel and bookings in
+      another, each a single series, so exactly one categorical hue is needed.
+      Four decorative hues were tried first and dropped: no four-hue set drawn
+      from a sane, restrained range clears the colour-vision separation gates
+      for marks that appear together (the search needed near-neon red/teal/
+      blue/magenta at full chroma before all pairs passed). Identity on the
+      metric cards is carried by an icon and a written label instead, which is
+      stronger than hue anyway, and the result reads calmer.
+
+   2. Everything that holds text clears WCAG AA (4.5:1), every data mark and
+      icon clears 3:1, against the surface it is actually painted on. The
+      measured ratio is in the comment beside each token. Four candidates were
+      replaced for failing by a hair - white on --brand-450 is 4.42:1, so the
+      filled card and the active nav pill use --brand-550 (6.63:1); the muted
+      ink was darkened from #8a94a6 to #7f8a9d because 2.78:1 on the page
+      plane is not 3:1.
+
+   Changing a value here means re-checking it against its background. */
+
+:root {
+  /* --- chrome: the dark navigation shell -------------------------------- */
+  /* Was AdminLTE's #343a40, a neutral graphite. These are the same
+     lightnesses pulled toward the brand blue so the navigation and the
+     content read as one product rather than two. */
+  --chrome-900: #141b2b;   /* sidebar body */
+  --chrome-800: #1b2435;   /* navbar, sidebar header */
+  --chrome-700: #27334a;   /* hover wash, dividers */
+  --chrome-ink:     #e7ecf5;   /* 13.1:1 on 800 */
+  --chrome-ink-2:   #9aa7bd;   /*  6.4:1 on 800 */
+  --chrome-ink-3:   #70809b;   /*  3.9:1 on 800 - icons and meta only */
+  --chrome-hair:    rgba(255, 255, 255, .07);
+
+  /* --- planes ----------------------------------------------------------- */
+  --plane:     #f2f4f8;    /* the page behind the cards */
+  --surface:   #ffffff;    /* card and chart surface */
+  --surface-2: #f8fafc;    /* table head, inset rows */
+  --hair:      rgba(16, 24, 40, .08);   /* hairline borders */
+  --hair-firm: rgba(16, 24, 40, .14);
+
+  /* --- ink -------------------------------------------------------------- */
+  --ink:   #101828;        /* 17.8:1 on surface */
+  --ink-2: #475467;        /*  7.7:1 on surface, 7.0:1 on plane */
+  --ink-3: #7f8a9d;        /*  3.5:1 on surface, 3.2:1 on plane — axis
+                                labels, captions, disabled text */
+
+  /* --- brand / the one data hue, light -> dark -------------------------- */
+  --brand-100: #cde2fb;    /* meter track, area-fill top stop */
+  --brand-150: #b7d3f6;
+  --brand-250: #86b6ef;    /* sparkline de-emphasis stroke */
+  --brand-450: #2a78d6;    /* THE series mark — 4.4:1 on surface */
+  --brand-550: #1c5cab;    /* brand as TEXT, active pill — 6.6:1 */
+  --brand-700: #0d366b;    /* deep end of the filled card's gradient */
+  --brand-wash:  rgba(42, 120, 214, .07);
+  --brand-wash-2: rgba(42, 120, 214, .13);
+
+  /* --- chart chrome ----------------------------------------------------- */
+  --grid:     #e7eaf0;     /* hairline gridlines, solid, never dashed */
+  --baseline: #d6dbe4;
+
+  /* --- status: reserved, never reused as a series colour ---------------- */
+  /* Each pill pairs a dot in the status hue with an icon and the translated
+     word, so colour alone never carries the state. The -ink steps are what
+     the text actually uses; the raw hue is for the dot. */
+  --good: #0ca30c;      --good-tint: #e3f6e4;      --good-ink: #05660f;      /* 6.4:1 */
+  --warn: #fab219;      --warn-tint: #fdf1d7;      --warn-ink: #7a4e00;      /* 6.4:1 */
+  --serious: #ec835a;   --serious-tint: #fceee6;   --serious-ink: #8a3d14;   /* 6.7:1 */
+  --critical: #d03b3b;  --critical-tint: #fbe9e9;  --critical-ink: #9c1f1f;  /* 6.8:1 */
+  --neutral-tint: #eef1f6;  --neutral-ink: #475467;                          /* 6.8:1 */
+
+  /* Direction cues on a delta. Colour is doubled by an arrow glyph and the
+     sign, so "up" is never conveyed by green alone. */
+  --up-good:   #006300;    /* 7.5:1 */
+  --down-bad:  #b42318;    /* 6.6:1 */
+
+  /* --- elevation -------------------------------------------------------- */
+  /* Two very soft layers rather than one dark one: a tight contact shadow
+     plus a wide ambient one is what keeps a white card from looking like it
+     was cut out and pasted on. */
+  --lift-1: 0 1px 2px rgba(16, 24, 40, .04), 0 1px 3px rgba(16, 24, 40, .06);
+  --lift-2: 0 2px 4px rgba(16, 24, 40, .04), 0 8px 20px rgba(16, 24, 40, .07);
+  --lift-3: 0 4px 8px rgba(16, 24, 40, .05), 0 16px 32px rgba(16, 24, 40, .09);
+
+  /* --- shape ------------------------------------------------------------ */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-pill: 999px;
+
+  /* --- type ------------------------------------------------------------- */
+  /* Families stay as the app already loads them: Source Sans Pro has no
+     Arabic glyphs, so IBM Plex Sans Arabic carries RTL. Only the scale is
+     new - before this, sizes came from whatever Bootstrap heading happened
+     to be nearest. */
+  --font: 'Source Sans Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-ar: 'IBM Plex Sans Arabic', 'Source Sans Pro', system-ui, sans-serif;
+  --font-num: var(--font);
+
+  --fs-display: 30px;   /* metric card value */
+  --fs-h1:      21px;   /* page title */
+  --fs-h2:      15px;   /* card title */
+  --fs-body:    14px;
+  --fs-sm:      13px;
+  --fs-xs:      11.5px; /* eyebrow labels, axis ticks, meta */
+
+  --lh-tight: 1.15;
+  --lh-snug:  1.35;
+  --lh-body:  1.55;
+
+  /* One uppercase eyebrow treatment, used for every small label so they all
+     match: card eyebrows, table headers, legend keys. */
+  --eyebrow-tracking: .06em;
+
+  --ease: cubic-bezier(.4, 0, .2, 1);
+  --dur: .18s;
+}
+
+/* Arabic runs taller and needs its own family; mirrors the existing rule in
+   index.css so the token and the override cannot drift apart. */
+html[dir='rtl'] {
+  --font: var(--font-ar);
+}

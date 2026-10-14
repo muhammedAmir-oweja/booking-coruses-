@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useFormat } from '../format'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getStudent, createStudent, updateStudent, getStudentDocuments, uploadStudentDocument, deleteStudentDocument, downloadStudentDocument } from '../api/students'
 import type { Student, StudentDocument } from '../types'
@@ -27,6 +28,7 @@ export default function StudentForm() {
   const isEdit = Boolean(id)
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const fmt = useFormat()
   const { showToast } = useToast()
 
   const [form, setForm] = useState<FormState>(empty)
@@ -266,8 +268,8 @@ export default function StudentForm() {
                     </div>
 
                     <div className="form-group">
-                      <label>{t('student_form.name')} <span className="text-danger">*</span></label>
-                      <input
+                      <label htmlFor="student-name">{t('student_form.name')} <span className="text-danger">*</span></label>
+                      <input id="student-name"
                         name="name"
                         type="text"
                         className={`form-control${errors.name ? ' is-invalid' : ''}`}
@@ -279,8 +281,8 @@ export default function StudentForm() {
                     </div>
 
                     <div className="form-group">
-                      <label>{t('student_form.email')} <span className="text-danger">*</span></label>
-                      <input
+                      <label htmlFor="student-email">{t('student_form.email')} <span className="text-danger">*</span></label>
+                      <input id="student-email"
                         name="email"
                         type="email"
                         className={`form-control${errors.email ? ' is-invalid' : ''}`}
@@ -292,8 +294,8 @@ export default function StudentForm() {
                     </div>
 
                     <div className="form-group">
-                      <label>{t('student_form.phone')}</label>
-                      <input
+                      <label htmlFor="student-phone">{t('student_form.phone')}</label>
+                      <input id="student-phone"
                         name="phone"
                         type="text"
                         className={`form-control${errors.phone ? ' is-invalid' : ''}`}
@@ -305,8 +307,8 @@ export default function StudentForm() {
                     </div>
 
                     <div className="form-group">
-                      <label>{t('student_form.date_of_birth')}</label>
-                      <input
+                      <label htmlFor="student-dob">{t('student_form.date_of_birth')}</label>
+                      <input id="student-dob"
                         name="date_of_birth"
                         type="date"
                         className={`form-control${errors.date_of_birth ? ' is-invalid' : ''}`}
@@ -317,8 +319,8 @@ export default function StudentForm() {
                     </div>
 
                     <div className="form-group">
-                      <label>{t('student_form.address')}</label>
-                      <textarea
+                      <label htmlFor="student-address">{t('student_form.address')}</label>
+                      <textarea id="student-address"
                         name="address"
                         rows={3}
                         className={`form-control${errors.address ? ' is-invalid' : ''}`}
@@ -397,7 +399,7 @@ export default function StudentForm() {
                                 </button>
                               </td>
                               <td className="text-muted small text-ltr">{formatFileSize(doc.size)}</td>
-                              <td className="text-muted small text-ltr">{new Date(doc.created_at).toLocaleDateString()}</td>
+                              <td className="text-muted small text-ltr">{fmt.date(doc.created_at)}</td>
                               <td>
                                 <button
                                   type="button"

@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useFormat } from '../format'
+import Pagination from '../components/ui/Pagination'
 import { Link } from 'react-router-dom'
 import { getEnrollments, deleteEnrollment, updateEnrollment } from '../api/enrollments'
 import type { Enrollment } from '../types'
 import { useToast } from '../context/ToastContext'
+import { usePreferences } from '../context/PreferencesContext'
 import { useAuth } from '../context/AuthContext'
 
 const STATUS_BADGES: Record<string, string> = {
@@ -14,6 +17,8 @@ const STATUS_BADGES: Record<string, string> = {
 
 export default function Enrollments() {
   const { t } = useTranslation()
+  const fmt = useFormat()
+  const { prefs } = usePreferences()
   const { isAdmin, isInstructor } = useAuth()
   const { showToast } = useToast()
   const [enrollments, setEnrollments] = useState<Enrollment[]>([])
@@ -36,7 +41,7 @@ export default function Enrollments() {
 
     void (async () => {
       try {
-        const { data } = await getEnrollments({ page, status: statusFilter || undefined })
+        const { data } = await getEnrollments({ page, per_page: prefs.per_page, status: statusFilter || undefined })
         if (cancelled) return
         setEnrollments(data.data)
         setLastPage(data.last_page)
@@ -53,7 +58,7 @@ export default function Enrollments() {
     // A newer request supersedes this one - drop its response on the floor
     // so fast pagination clicks cannot land out of order.
     return () => { cancelled = true }
-  }, [page, statusFilter, reloadKey])
+  }, [page, prefs.per_page, statusFilter, reloadKey])
 
   const handleStatusChange = async (enrollment: Enrollment, status: Enrollment['status']) => {
     setActionId(enrollment.id)
@@ -156,7 +161,7 @@ export default function Enrollments() {
                           <small className="text-muted text-ltr">{e.student?.email}</small>
                         </td>
                         <td>{e.course?.title ?? `#${e.course_id}`}</td>
-                        <td className="text-ltr">{e.enrolled_at ?? t('common.none')}</td>
+                        <td className="text-ltr">{fmt.date(e.enrolled_at, t('common.none'))}</td>
                         <td>
                           <span className={`badge ${STATUS_BADGES[e.status] ?? 'badge-secondary'}`}>
                             {t(`status.${e.status}`)}
@@ -204,22 +209,14 @@ export default function Enrollments() {
               )}
             </div>
 
-            {lastPage > 1 && (
-              <div className="card-footer clearfix">
-                <ul className="pagination pagination-sm m-0 float-right">
-                  <li className={`page-item${page === 1 ? ' disabled' : ''}`}>
-                    <button className="page-link" onClick={() => goToPage(page - 1)}>«</button>
-                  </li>
-                  {Array.from({ length: lastPage }, (_, i) => i + 1).map((p) => (
-                    <li key={p} className={`page-item${p === page ? ' active' : ''}`}>
-                      <button className="page-link" onClick={() => goToPage(p)}>{p}</button>
-                    </li>
-                  ))}
-                  <li className={`page-item${page === lastPage ? ' disabled' : ''}`}>
-                    <button className="page-link" onClick={() => goToPage(page + 1)}>»</button>
-                  </li>
-                </ul>
-              </div>
+            {(lastPage) > 0 && (
+              <Pagination
+                page={page}
+                lastPage={lastPage}
+                total={total}
+                onPage={goToPage}
+                onPageSizeChange={() => goToPage(1)}
+              />
             )}
           </div>
         </div>

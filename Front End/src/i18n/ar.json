@@ -31,7 +31,10 @@
     "showing_range": "عرض {{from}} إلى {{to}} من {{total}}",
     "previous": "السابق",
     "next": "التالي",
-    "page_of": "صفحة {{page}} من {{last}}"
+    "page_of": "صفحة {{page}} من {{last}}",
+    "per_page": "لكل صفحة",
+    "previous_page": "الصفحة السابقة",
+    "next_page": "الصفحة التالية"
   },
   "status": {
     "draft": "مسودة",
@@ -86,7 +89,11 @@
     "bookings_keywords": "مدفوعات مدفوع غير مدفوع",
     "all_bookings": "كل الحجوزات",
     "profile": "ملفي الشخصي",
-    "profile_keywords": "حساب كلمة المرور إعدادات"
+    "profile_keywords": "حساب كلمة المرور إعدادات",
+    "section_overview": "نظرة عامة",
+    "section_learning": "التعلّم",
+    "section_people": "الأشخاص",
+    "section_commerce": "المبيعات"
   },
   "navbar": {
     "toggle_sidebar": "إظهار/إخفاء القائمة",
@@ -136,7 +143,28 @@
     "enrolled_of": "{{fraction}} مسجل",
     "more_info": "المزيد",
     "welcome_instructor": "مرحبًا بعودتك، {{name}}. أنت تشاهد لوحة تحكم المدرب.",
-    "welcome_student": "مرحبًا بعودتك، {{name}}. هذه نظرة عامة على تعلّمك."
+    "welcome_student": "مرحبًا بعودتك، {{name}}. هذه نظرة عامة على تعلّمك.",
+    "greeting": "هذه نظرة على ما يجري في دوراتك، {{name}}.",
+    "all_time": "الإجمالي الكلي",
+    "no_change": "لا تغيير",
+    "month_on_month": "هذا الشهر مقارنة بالسابق",
+    "manage_courses": "إدارة الدورات",
+    "view_bookings": "عرض الحجوزات",
+    "manage_students": "إدارة الطلاب",
+    "view_payments": "عرض المدفوعات",
+    "revenue_trend": "اتجاه الإيرادات",
+    "bookings_trend": "الحجوزات شهريًا",
+    "bookings_axis": "الحجوزات",
+    "window_months": "آخر {{months}} أشهر",
+    "window_none": "لا توجد بيانات بعد",
+    "latest_n": "أحدث {{n}}",
+    "by_enrolment": "حسب التسجيل",
+    "col_seats": "المقاعد",
+    "col_month": "الشهر",
+    "booking_ref": "حجز رقم {{id}}",
+    "view_table": "جدول",
+    "view_chart": "رسم",
+    "chart_summary": "{{series}} على مدى {{months}} أشهر، من {{first}} إلى {{last}}. أعلى قيمة {{peak}}. استخدم مفاتيح الأسهم لقراءة كل شهر، أو انتقل إلى عرض الجدول."
   },
   "courses": {
     "title": "الدورات",
@@ -430,6 +458,12 @@
     "title": "الصفحة غير موجودة",
     "heading": "عذرًا! الصفحة غير موجودة.",
     "body": "لم نتمكن من العثور على الصفحة التي تبحث عنها. يمكنك العودة إلى لوحة التحكم.",
+    "back": "العودة إلى لوحة التحكم"
+  },
+  "forbidden": {
+    "title": "تم رفض الوصول",
+    "heading": "ليس لديك حق الوصول إلى هذه الصفحة.",
+    "body": "حسابك لا يملك صلاحية عرضها.",
     "back": "العودة إلى لوحة التحكم"
   },
   "errors": {

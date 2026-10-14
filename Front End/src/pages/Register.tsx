@@ -100,8 +100,8 @@ export default function Register() {
 
           <form onSubmit={handleSubmit} noValidate>
             <div style={styles.field}>
-              <label style={styles.label}>{t('auth.name')}</label>
-              <input
+              <label htmlFor="register-name" style={styles.label}>{t('auth.name')}</label>
+              <input id="register-name"
                 type="text"
                 style={errors.name ? { ...styles.input, ...styles.inputError } : styles.input}
                 placeholder={t('auth.name_placeholder')}
@@ -113,8 +113,8 @@ export default function Register() {
             </div>
 
             <div style={styles.field}>
-              <label style={styles.label}>{t('auth.email')}</label>
-              <input
+              <label htmlFor="register-email" style={styles.label}>{t('auth.email')}</label>
+              <input id="register-email"
                 type="email"
                 style={errors.email ? { ...styles.input, ...styles.inputError } : styles.input}
                 placeholder={t('auth.email_placeholder')}
@@ -126,20 +126,30 @@ export default function Register() {
             </div>
 
             <div style={styles.field}>
-              <label style={styles.label}>{t('auth.role')}</label>
-              <div style={styles.roleRow}>
+              {/* A group label, not a field label: it names the radio set rather
+                  than any one control, so it is a <span> referenced by
+                  aria-labelledby instead of a <label> pointing nowhere. */}
+              <span id="register-role-label" style={styles.label}>{t('auth.role')}</span>
+              <div style={styles.roleRow} role="radiogroup" aria-labelledby="register-role-label">
                 {(['student', 'instructor'] as const).map(r => (
                   <label
                     key={r}
+                    className="lms-role-option"
                     style={form.role === r ? { ...styles.roleOption, ...styles.roleOptionActive } : styles.roleOption}
                   >
+                    {/* sr-only, NOT display:none. display:none drops the radio out
+                        of the accessibility tree entirely, so keyboard and screen
+                        reader users could not pick a role at all - it silently
+                        stayed on the "student" default with no way to change it.
+                        Bootstrap's .sr-only hides it visually while keeping it
+                        focusable and announced. */}
                     <input
                       type="radio"
                       name="role"
                       value={r}
                       checked={form.role === r}
                       onChange={set('role')}
-                      style={{ display: 'none' }}
+                      className="sr-only"
                     />
                     <i className={r === 'student' ? 'fas fa-user-graduate' : 'fas fa-chalkboard-teacher'} style={{ marginInlineEnd: 8 }} />
                     {t(`roles.${r}`)}
@@ -149,9 +159,9 @@ export default function Register() {
             </div>
 
             <div style={styles.field}>
-              <label style={styles.label}>{t('auth.password')}</label>
+              <label htmlFor="register-password" style={styles.label}>{t('auth.password')}</label>
               <div style={styles.inputWrap}>
-                <input
+                <input id="register-password"
                   type={showPassword ? 'text' : 'password'}
                   style={errors.password
                     ? { ...styles.input, ...styles.inputError, paddingInlineEnd: 44 }
@@ -175,9 +185,9 @@ export default function Register() {
             </div>
 
             <div style={styles.field}>
-              <label style={styles.label}>{t('auth.confirm_password')}</label>
+              <label htmlFor="register-password-confirmation" style={styles.label}>{t('auth.confirm_password')}</label>
               <div style={styles.inputWrap}>
-                <input
+                <input id="register-password-confirmation"
                   type={showConfirm ? 'text' : 'password'}
                   style={errors.password_confirmation
                     ? { ...styles.input, ...styles.inputError, paddingInlineEnd: 44 }
