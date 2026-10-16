@@ -8,14 +8,11 @@ import { getBookings } from '../api/bookings'
 import { useAuth } from '../context/AuthContext'
 import MetricCard from '../components/ui/MetricCard'
 import StatusPill from '../components/ui/StatusPill'
+import { initialsOf } from '../components/ui/identity'
 import { ChartPanel } from '../components/ui/Charts'
 import { alignSeries, monthAxis, periodDelta } from '../components/ui/scale'
 import type { DashboardStats, DashboardBooking, TopCourse, Enrollment, Booking } from '../types'
 import '../styles/dashboard.css'
-
-/** Initials for the table's avatar tiles. Same rule as the navbar's. */
-const initialsOf = (name: string) =>
-  name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('') || '?'
 
 /** Reads the writing direction for the charts, which have to lay their time
  *  axis out by hand - SVG has no `dir`. */

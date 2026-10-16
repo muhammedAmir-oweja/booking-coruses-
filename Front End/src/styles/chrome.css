@@ -29,6 +29,39 @@ body {
   background: var(--plane);
 }
 
+/* The 768-991.98px band.
+   -----------------------------------------------------------------------
+   `sidebar-mini-md` drops the shell offset to the 4.6rem rail across this
+   whole band, unconditionally:
+
+     @media (max-width: 991.98px) { .sidebar-mini-md .main-header,
+                                    .sidebar-mini-md .content-wrapper
+                                      { margin-left: 4.6rem } }
+
+   It assumes the sidebar IS the rail at tablet widths - but it only shrinks
+   the sidebar itself under `.sidebar-collapse`:
+
+     @media (min-width: 768px) { .sidebar-mini-md.sidebar-collapse .main-sidebar
+                                   { width: 4.6rem } }
+
+   So with the sidebar expanded on a tablet, the shell sat 73.6px from the
+   edge while the sidebar still occupied 250px, and the sidebar - z-index
+   1038 against the navbar's 1000 - painted straight over the difference. The
+   hamburger and the first third of the search box vanished underneath it, and
+   the page below was clipped on its leading edge by the same 176px.
+
+   The RTL mirror in index.css already offsets 250px across the whole >=768px
+   range, so restoring it here is also what makes the two directions agree.
+   Scoped to LTR for exactly that reason: unscoped, `margin-left` would be
+   added on top of the mirror's `margin-right` and break Arabic instead. */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  html:not([dir='rtl']) body:not(.sidebar-collapse) .content-wrapper,
+  html:not([dir='rtl']) body:not(.sidebar-collapse) .main-header,
+  html:not([dir='rtl']) body:not(.sidebar-collapse) .main-footer {
+    margin-left: 250px;
+  }
+}
+
 /* The page title block. AdminLTE ships it as an h1 at Bootstrap's jumbo
    heading size, which fought the card titles below it for attention. */
 .content-header {
@@ -59,6 +92,35 @@ body {
   color: var(--ink-3);
   font-size: var(--fs-sm);
   padding: 14px 1rem;
+}
+
+/* --- the account avatar -------------------------------------------------- */
+
+/* Shared by the navbar trigger, the account dropdown and the sidebar's user
+   panel, so the signed-in person looks the same everywhere. Lives here rather
+   than in the navbar's injected stylesheet because the sidebar needs it too,
+   and a component should not depend on a sibling being mounted for its styling. */
+.lms-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  border-radius: 50%;
+  background: var(--chrome-700);
+  color: #fff;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: .02em;
+}
+.lms-avatar--loading {
+  background: rgba(255, 255, 255, .13);
+  animation: lms-avatar-pulse 1.5s ease-in-out infinite;
+}
+@keyframes lms-avatar-pulse {
+  0%, 100% { opacity: .45; }
+  50%      { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lms-avatar--loading { animation: none; }
 }
 
 /* --- sidebar ------------------------------------------------------------- */
@@ -133,12 +195,7 @@ html[dir='rtl'] .main-sidebar .brand-link .brand-image {
 .main-sidebar .user-panel:hover { background: rgba(255, 255, 255, .06); }
 .main-sidebar .user-panel .image { padding: 0; }
 html[dir='rtl'] .main-sidebar .user-panel .image { padding: 0; }
-.main-sidebar .user-panel .image i {
-  display: block;
-  font-size: 32px;
-  line-height: 1;
-  color: var(--chrome-ink-2);
-}
+.main-sidebar .user-panel .image { display: flex; align-items: center; }
 .main-sidebar .user-panel .info {
   padding-block: 0;
   padding-inline: 10px 0;
@@ -312,15 +369,22 @@ html[dir='rtl'] .main-sidebar .nav-sidebar .nav-treeview {
 
 /* Collapsed rail: AdminLTE hides the text and shrinks the sidebar to 4.6rem.
    The section eyebrows and the user card's text go with it, and the icons
-   centre themselves in what is left. */
-.sidebar-collapse .main-sidebar:not(:hover) .nav-header.lmsnav-section {
+   centre themselves in what is left.
+
+   These were written `:not(:hover)`, back when hovering the rail expanded it
+   and the full-width layout had to come back. The sidebar now carries
+   `sidebar-no-expand`, so the collapsed state is the only state and the
+   qualifier would have done the opposite of its job: it let a hover shove the
+   icons back off-centre inside a rail that no longer widens to hold them. */
+.sidebar-collapse .main-sidebar .nav-header.lmsnav-section {
   visibility: hidden;
   height: 13px;
   margin: 8px 0 0;
   padding: 0;
 }
-.sidebar-collapse .main-sidebar:not(:hover) .nav-sidebar .nav-link { justify-content: center; }
-.sidebar-collapse .main-sidebar:not(:hover) .user-panel { padding: 9px 0 !important; justify-content: center; }
+.sidebar-collapse .main-sidebar .nav-sidebar .nav-link { justify-content: center; }
+.sidebar-collapse .main-sidebar .user-panel { padding: 9px 0 !important; justify-content: center; }
+
 
 .main-sidebar :focus-visible,
 .main-footer :focus-visible {

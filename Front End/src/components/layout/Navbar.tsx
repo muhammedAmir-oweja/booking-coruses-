@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { logout } from '../../api/auth'
@@ -6,6 +7,7 @@ import { getNotifications, markAllRead, markRead } from '../../api/notifications
 import { DEV_NO_AUTH } from '../../devAuth'
 import { usePreferences } from '../../context/PreferencesContext'
 import type { AppNotification, User } from '../../types'
+import Avatar from '../ui/Avatar'
 
 interface NavbarProps {
   onToggleSidebar: () => void
@@ -13,6 +15,8 @@ interface NavbarProps {
 }
 
 type Role = 'admin' | 'instructor' | 'student'
+
+const ALL_ROLES: Role[] = ['admin', 'instructor', 'student']
 
 interface Destination {
   label: string
@@ -50,18 +54,6 @@ const ROUTES: { key: string; to: string; icon: string; roles: Role[] }[] = [
   { key: 'profile',           to: '/profile',               icon: 'fas fa-user',               roles: ['admin', 'instructor', 'student'] },
 ]
 
-// Saturated enough to hold their own against the dark bar, and each one
-// clears 4.5:1 against the white initials it carries (5.4 / 5.0 / 5.3 / 6.0).
-const ROLE_FILLS: Record<string, string> = {
-  admin:      '#b4463c',
-  instructor: '#16798f',
-  student:    '#1e7a4b',
-}
-const NEUTRAL_FILL = '#5a6470'
-
-const initialsOf = (name: string) =>
-  name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('') || '?'
-
 const isApplePlatform = () =>
   typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.userAgent)
 
@@ -84,7 +76,6 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
   const menuTriggerRef = useRef<HTMLButtonElement>(null)
   const jumpTriggerRef = useRef<HTMLButtonElement>(null)
 
-  const fill = user ? (ROLE_FILLS[user.role] ?? NEUTRAL_FILL) : NEUTRAL_FILL
   const roleLabel = user ? t(`roles.${user.role}`, { defaultValue: user.role }) : ''
   const modKey = isApplePlatform() ? '⌘' : 'Ctrl'
   const isArabic = i18n.resolvedLanguage === 'ar'
@@ -104,8 +95,14 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
     [t]
   )
 
+  // Until /auth/me answers, the role is unknown. Offering the whole list in
+  // the meantime hands a student the admin pages this filter exists to hide,
+  // so the unknown case falls back to the destinations EVERY role can reach -
+  // still useful, and never a link to a 403.
   const reachable = useMemo(
-    () => (user ? destinations.filter((d) => d.roles.includes(user.role)) : destinations),
+    () => destinations.filter((d) => (
+      user ? d.roles.includes(user.role) : ALL_ROLES.every((r) => d.roles.includes(r))
+    )),
     [user, destinations]
   )
 
@@ -116,7 +113,10 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
       (d) =>
         d.label.toLowerCase().includes(q) ||
         d.to.toLowerCase().includes(q) ||
-        d.keywords.includes(q)
+        // Lower-cased like the other two. It was compared raw, so any keyword
+        // a translator capitalised - "Courses, Catalog" - could not be found
+        // by a query that is always lower-cased before the comparison.
+        d.keywords.toLowerCase().includes(q)
     )
   }, [query, reachable])
 
@@ -179,8 +179,31 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
     document.getElementById(`lmsnav-opt-${activeIndex}`)?.scrollIntoView({ block: 'nearest' })
   }, [paletteOpen, activeIndex])
 
-  // Load on mount, and again whenever the panel is opened, so the list is not
+  // Load on mount, and again whenever the panel is OPENED, so the list is not
   // stale the one time someone actually looks at it.
+  //
+  // Keyed on `bellOpen` this also refetched on close, which is both a wasted
+  // request and a way to lose state: "mark all read" updates the list
+  // optimistically and fires its PATCH without awaiting it, so closing the
+  // panel straight afterwards could land a response that still had the old
+  // unread count and put the badge back.
+  useEffect(() => {
+    if (!user || !bellOpen) return
+    let cancelled = false
+
+    void getNotifications()
+      .then((r) => {
+        if (cancelled) return
+        setItems(r.data)
+        setUnread(r.unread_count)
+      })
+      .catch(() => { /* a dead bell must not break the navbar */ })
+
+    return () => { cancelled = true }
+  }, [user, bellOpen])
+
+  // The badge has to be right before anyone opens anything, so the first load
+  // is separate and runs once the user is known.
   useEffect(() => {
     if (!user) return
     let cancelled = false
@@ -194,7 +217,7 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
       .catch(() => { /* a dead bell must not break the navbar */ })
 
     return () => { cancelled = true }
-  }, [user, bellOpen])
+  }, [user])
 
   // Close the account menu and the bell on an outside click, and on Escape -
   // handing focus back to the trigger so keyboard users are not dropped at the
@@ -262,23 +285,6 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
     sessionStorage.removeItem('auth_token')
     window.location.href = '/login'
   }
-
-  const avatar = (size: number, fontSize: number) =>
-    user ? (
-      <span
-        className="lmsnav-avatar"
-        style={{ width: size, height: size, fontSize, background: fill }}
-        aria-hidden="true"
-      >
-        {initialsOf(user.name)}
-      </span>
-    ) : (
-      <span
-        className="lmsnav-avatar lmsnav-pulse"
-        style={{ width: size, height: size, background: 'rgba(255,255,255,.13)' }}
-        aria-hidden="true"
-      />
-    )
 
   return (
     <nav className="main-header lmsnav">
@@ -349,9 +355,11 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
                   >
                     <i className="fas fa-calendar-check" />
                     <span>
+                      {/* Both are `string | null` in the API type, and an
+                          interpolated null renders as the word "null". */}
                       {t('navbar.booked', {
-                        student: n.data.student_name,
-                        course: n.data.course_title,
+                        student: n.data.student_name ?? t('common.none'),
+                        course: n.data.course_title ?? t('common.none'),
                       })}
                       {!n.read_at && <span className="lmsnav-dot" />}
                     </span>
@@ -360,7 +368,7 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
             {unread > 0 && (
               <>
                 <div className="lmsnav-sep" />
-                <button type="button" className="lmsnav-item" onClick={readAll}>
+                <button type="button" role="menuitem" className="lmsnav-item" onClick={readAll}>
                   <i className="fas fa-check-double" />
                   {t('navbar.mark_all_read')}
                 </button>
@@ -379,7 +387,7 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((open) => !open)}
         >
-          {avatar(30, 11)}
+          <Avatar user={user} size={30} fontSize={11} />
           {user ? (
             <span className="lmsnav-meta">
               <span className="lmsnav-name">{user.name}</span>
@@ -397,7 +405,7 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
         {menuOpen && (
           <div className="lmsnav-menu" role="menu">
             <div className="lmsnav-id">
-              {avatar(38, 13)}
+              <Avatar user={user} size={38} fontSize={13} />
               <div className="lmsnav-id-text">
                 <div className="lmsnav-id-name">{user?.name ?? t('navbar.loading_account')}</div>
                 {user?.email && <div className="lmsnav-id-mail">{user.email}</div>}
@@ -435,7 +443,15 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
         )}
       </div>
 
-      {paletteOpen && (
+      {/* Portalled to <body>, and that is load-bearing rather than tidiness.
+          `.lmsnav` is `position: relative; z-index: 1000`, which makes it a
+          stacking context, and a z-index inside one cannot escape it: the
+          scrim asked for 2000 and still got painted at 1000, underneath
+          AdminLTE's sidebar at 1038. The palette opened with its left edge
+          hidden behind the sidebar and the dim never reaching it. Rendering at
+          body level puts the modal in the root stacking context, where its
+          2000 means what it says. */}
+      {paletteOpen && createPortal(
         <div
           className="lmsnav-scrim"
           onMouseDown={(e) => { if (e.target === e.currentTarget) closePalette() }}
@@ -453,8 +469,12 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
                 onKeyDown={onPaletteKeyDown}
                 aria-label={t('navbar.search_pages')}
                 role="combobox"
-                aria-expanded="true"
-                aria-controls="lmsnav-pal-list"
+                /* Tied to whether the listbox is actually in the DOM. These
+                   were hardcoded open, so with no matches the input still
+                   announced an expanded popup and pointed `aria-controls` at
+                   an id that had been unmounted. */
+                aria-expanded={matches.length > 0}
+                aria-controls={matches.length > 0 ? 'lmsnav-pal-list' : undefined}
                 aria-activedescendant={activeIndex >= 0 ? `lmsnav-opt-${activeIndex}` : undefined}
               />
               <button
@@ -496,7 +516,8 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
               <span><kbd className="lmsnav-kbd lmsnav-kbd-sm">esc</kbd> {t('navbar.hint_close')}</span>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </nav>
   )
@@ -514,6 +535,15 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
  * --chrome-800 and --chrome-hair from tokens.css, which is what keeps the two
  * files from drifting apart the next time the chrome is retoned - the line
  * only stays unbroken if both sides read the same number.
+ *
+ * Sizes are set with font longhands, never the `font:` shorthand. `inherit`
+ * is a CSS-wide keyword and is only valid as a declaration's entire value, so
+ * `font: 700 9.5px/1 inherit` - the shorthand's only way to say "keep the
+ * inherited family" - is invalid and throws the WHOLE declaration away. Five
+ * rules here were written that way and silently rendered at the inherited
+ * 14px/400; the unread badge was the visible one, its digit spilling out of a
+ * 15px pill. Form controls do not inherit the family on their own, hence the
+ * explicit `font-family: inherit` on the buttons and the palette input.
  *
  * Everything is scoped `lmsnav-*` so none of it collides with Bootstrap.
  * `.main-header` stays on the <nav> because AdminLTE's collapse rule keys off it.
@@ -548,20 +578,34 @@ const NAVBAR_CSS = `
 }
 .lmsnav-icon:hover { background: rgba(255,255,255,.09); color: #fff; }
 
+/* min-width: 0 is load-bearing on every item below that is allowed to give
+   way. A flex item defaults to min-width: auto, which floors it at its own
+   min-content width - so "flex: 0 1 400px" here never actually shrank, because
+   the label and the shortcut hint held the button open. Between 768px, where
+   the sidebar takes 250px off the bar, and roughly 1000px, the row's
+   min-content width was wider than the space left for it and the bar
+   overflowed: the hamburger was pushed off the leading edge and the account
+   block ran past the trailing one. Items that must stay square keep
+   "flex: none"; the ones that may shrink now truncate instead of pushing. */
 .lmsnav-jump {
   display: flex; align-items: center; gap: 9px;
-  flex: 0 1 400px; height: 34px; padding-block: 0;
+  flex: 0 1 400px; min-width: 0; height: 34px; padding-block: 0;
   padding-inline: 11px 7px;
   border: 1px solid rgba(255,255,255,.10); border-radius: 8px;
   background: rgba(0,0,0,.20); color: rgba(255,255,255,.42);
-  font: 400 13px/1 inherit; cursor: pointer;
+  font-family: inherit; font-weight: 400; font-size: 13px; line-height: 1;
+  cursor: pointer;
   transition: background .15s ease, border-color .15s ease, color .15s ease;
 }
 .lmsnav-jump:hover {
   background: rgba(0,0,0,.30); border-color: rgba(255,255,255,.20); color: rgba(255,255,255,.68);
 }
 .lmsnav-jump > i { font-size: 12px; }
-.lmsnav-jump-label { flex: 1; text-align: start; }
+.lmsnav-jump-label {
+  flex: 1 1 auto; min-width: 0; text-align: start;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.lmsnav-jump > .lmsnav-kbd { flex: none; }
 
 .lmsnav-kbd {
   font-size: 10px; font-weight: 500; line-height: 1; color: rgba(255,255,255,.46);
@@ -574,7 +618,8 @@ const NAVBAR_CSS = `
   flex: none; min-width: 34px; height: 34px; padding: 0 9px;
   border: 1px solid rgba(255,255,255,.13); border-radius: 8px;
   background: transparent; color: rgba(255,255,255,.66);
-  font: 600 12px/1 inherit; letter-spacing: .03em; cursor: pointer;
+  font-family: inherit; font-weight: 600; font-size: 12px; line-height: 1;
+  letter-spacing: .03em; cursor: pointer;
   transition: background .15s ease, color .15s ease, border-color .15s ease;
 }
 .lmsnav-lang:hover { background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.26); color: #fff; }
@@ -586,7 +631,7 @@ const NAVBAR_CSS = `
   min-width: 15px; height: 15px; padding: 0 3px;
   display: grid; place-items: center;
   border-radius: 99px; background: var(--critical); color: #fff;
-  font: 700 9.5px/1 inherit; letter-spacing: 0;
+  font-weight: 700; font-size: 9.5px; line-height: 1; letter-spacing: 0;
   box-shadow: 0 0 0 2px var(--chrome-800);
 }
 .lmsnav-empty { padding: 14px 10px; text-align: center; font-size: 12px; color: rgba(255,255,255,.44); }
@@ -596,21 +641,19 @@ const NAVBAR_CSS = `
   border-radius: 50%; background: var(--brand-250);
 }
 
-.lmsnav-user { position: relative; flex: none; }
+.lmsnav-user { position: relative; flex: 0 1 auto; min-width: 0; }
 .lmsnav-trigger {
   display: flex; align-items: center; gap: 9px;
-  height: 42px; padding-block: 0; padding-inline: 5px 7px;
+  height: 42px; min-width: 0; padding-block: 0; padding-inline: 5px 7px;
   border: 0; border-radius: 8px; background: transparent; cursor: pointer;
   transition: background .15s ease;
 }
 .lmsnav-trigger:hover { background: rgba(255,255,255,.09); }
-.lmsnav-avatar {
-  display: grid; place-items: center; flex: none;
-  border-radius: 50%; color: #fff; font-weight: 700; letter-spacing: .02em;
-}
-.lmsnav-meta { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
-.lmsnav-name { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.92); line-height: 1.2; }
-.lmsnav-role { font-size: 10.5px; color: rgba(255,255,255,.48); line-height: 1.2; }
+.lmsnav-meta { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; max-width: 150px; }
+.lmsnav-name { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.92); line-height: 1.2;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lmsnav-role { font-size: 10.5px; color: rgba(255,255,255,.48); line-height: 1.2;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lmsnav-chev { font-size: 9px; color: rgba(255,255,255,.38); transition: transform .18s ease; }
 .lmsnav-trigger[aria-expanded="true"] .lmsnav-chev { transform: rotate(180deg); }
 
@@ -634,7 +677,8 @@ const NAVBAR_CSS = `
   display: flex; align-items: center; gap: 10px; width: 100%;
   padding: 8px 10px; border: 0; border-radius: 7px;
   background: transparent; color: rgba(255,255,255,.80);
-  font: 400 13px/1.3 inherit; text-align: start; text-decoration: none; cursor: pointer;
+  font-family: inherit; font-weight: 400; font-size: 13px; line-height: 1.3;
+  text-align: start; text-decoration: none; cursor: pointer;
   transition: background .12s ease, color .12s ease;
 }
 .lmsnav-item > i { width: 15px; text-align: center; color: rgba(255,255,255,.45); font-size: 12.5px; }
@@ -666,7 +710,8 @@ const NAVBAR_CSS = `
 .lmsnav-pal-search > i { color: rgba(255,255,255,.40); font-size: 13px; }
 .lmsnav-pal-input {
   flex: 1; min-width: 0; border: 0; outline: 0; background: transparent;
-  font: 400 14.5px/1.4 inherit; color: rgba(255,255,255,.94);
+  font-family: inherit; font-weight: 400; font-size: 14.5px; line-height: 1.4;
+  color: rgba(255,255,255,.94);
 }
 .lmsnav-pal-input::placeholder { color: rgba(255,255,255,.36); }
 .lmsnav-pal-close { flex: none; border: 0; background: transparent; color: rgba(255,255,255,.38); font-size: 12px; cursor: pointer; padding: 4px 6px; border-radius: 5px; }
@@ -691,12 +736,20 @@ const NAVBAR_CSS = `
 
 .lmsnav :focus-visible, .lmsnav-pal :focus-visible { outline: 2px solid var(--brand-250); outline-offset: 2px; }
 
+/* The tablet band. The sidebar still occupies 250px here while the bar has
+   only the rest of a <=991px viewport to work with, so the two things that
+   are nice-to-have rather than content step aside: the keyboard hint, and the
+   name and role beside the avatar. The avatar and the chevron still say whose
+   account it is and that the menu opens. */
+@media (max-width: 991.98px) {
+  .lmsnav-jump .lmsnav-kbd { display: none; }
+  .lmsnav-meta { display: none; }
+}
 @media (max-width: 767px) {
   .lmsnav { padding: 0 8px; gap: 4px; }
   .lmsnav-rule { display: none; }
   .lmsnav-jump { flex: none; width: 34px; padding: 0; justify-content: center; }
   .lmsnav-jump-label, .lmsnav-jump .lmsnav-kbd { display: none; }
-  .lmsnav-meta { display: none; }
   .lmsnav-scrim { padding-top: 7vh; }
 }
 @media (prefers-reduced-motion: reduce) {

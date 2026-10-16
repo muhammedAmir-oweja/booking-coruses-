@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import Avatar from '../ui/Avatar'
 import type { User } from '../../types'
 import { Fragment, useMemo, useState } from 'react'
 
@@ -192,7 +193,17 @@ export default function Sidebar({ user, onNavigate }: SidebarProps) {
     overrides[group.key] ?? isGroupActive(group)
 
   return (
-    <aside className="main-sidebar sidebar-dark-primary elevation-4">
+    /* `sidebar-no-expand` and `hide-nav-header-on-hover` are AdminLTE's own
+       opt-outs. Collapsed, the sidebar used to balloon back to full width
+       whenever the pointer crossed it - the rail is a deliberate choice, and
+       having it undo itself on the way to the content below is not a feature.
+       Every expand rule is gated on `:not(.sidebar-no-expand)`, so the one
+       class disables the lot, and AdminLTE then pins both the sidebar and the
+       brand header back to 4.6rem on hover. The second class settles
+       `.nav-header`, where AdminLTE's reveal rule and its no-expand rule are
+       otherwise the same specificity and the winner would come down to their
+       order inside a CDN file. No CSS override is needed for any of this. */
+    <aside className="main-sidebar sidebar-dark-primary elevation-4 sidebar-no-expand hide-nav-header-on-hover">
       <NavLink to="/" className="brand-link" onClick={onNavigate}>
         {/* Sizing, shape and colour all live in chrome.css. They were inline
             here, which meant the brand mark could not be restyled without
@@ -206,7 +217,10 @@ export default function Sidebar({ user, onNavigate }: SidebarProps) {
       <div className="sidebar">
         <div className="user-panel mt-3 pb-3 mb-3 d-flex">
           <div className="image">
-            <i className="fas fa-user-circle" />
+            {/* The same avatar the navbar shows. This was a generic grey
+                silhouette, so the signed-in admin appeared one way here and
+                another way in the bar directly above it. */}
+            <Avatar user={user} size={32} />
           </div>
           <div className="info">
             <NavLink to="/profile" className="d-block" onClick={onNavigate}>
