@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { logout } from '../../api/auth'
 import { getNotifications, markAllRead, markRead } from '../../api/notifications'
 import { DEV_NO_AUTH } from '../../devAuth'
+import { clearTokens } from '../../auth/tokens'
 import { usePreferences } from '../../context/PreferencesContext'
 import type { AppNotification, User } from '../../types'
 import Avatar from '../ui/Avatar'
@@ -281,8 +282,8 @@ export default function Navbar({ onToggleSidebar, user }: NavbarProps) {
 
   const handleLogout = async () => {
     await logout().catch(() => null)
-    localStorage.removeItem('auth_token')
-    sessionStorage.removeItem('auth_token')
+    // Both tokens: a refresh token surviving a logout is a live session.
+    clearTokens()
     window.location.href = '/login'
   }
 

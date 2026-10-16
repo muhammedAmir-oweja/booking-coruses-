@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getMe } from '../api/auth'
 import { DEV_NO_AUTH, DEV_USER } from '../devAuth'
+import { readAccess } from '../auth/tokens'
 import { AuthContext } from './AuthContext'
 import type { User } from '../types'
 
-const readToken = () =>
-  localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
+const readToken = () => readAccess()
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)

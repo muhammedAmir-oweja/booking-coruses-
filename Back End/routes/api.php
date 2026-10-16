@@ -37,9 +37,20 @@ Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:login');
 });
 
+// Authenticated, but by the REFRESH token rather than the access token - so it
+// keeps working in the window where the access token has already expired,
+// which is the only moment it is ever called.
+Route::post('/auth/refresh', [AuthController::class, 'refresh'])
+    ->middleware(['auth:sanctum', 'abilities:refresh', 'throttle:login']);
+
 // Dev only: DEV_NO_AUTH=true signs every request in as an admin, which defeats
 // every role group below. Set it to false before testing authorization.
-$authed = config('app.dev_no_auth') ? [DevAuthBypass::class] : ['auth:sanctum'];
+// 'abilities:access' is what stops a refresh token being used as an access
+// token: it carries only the 'refresh' ability, so it is rejected by every
+// group below and is accepted on exactly one route - POST /auth/refresh.
+$authed = config('app.dev_no_auth')
+    ? [DevAuthBypass::class]
+    : ['auth:sanctum', 'abilities:access'];
 
 // -------------------------------------------------------------- any role
 Route::middleware($authed)->group(function () {

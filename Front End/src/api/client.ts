@@ -2,6 +2,7 @@ import axios from 'axios'
 import { DEV_NO_AUTH } from '../devAuth'
 import i18n from '../i18n'
 import { readPrefs } from '../prefs'
+import { clearTokens, readAccess, readRefresh, saveTokens } from '../auth/tokens'
 
 const client = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api',
@@ -18,16 +19,49 @@ client.interceptors.request.use((config) => {
   // header first, ahead of the prefs cookie it falls back to.
   config.headers['X-Locale'] = readPrefs().locale
 
-  const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
+  const token = readAccess()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
   return config
 })
 
+/**
+ * One refresh at a time.
+ *
+ * A page typically has several requests in flight, so an expired access token
+ * produces several 401s at once. Without this they would each call
+ * /auth/refresh - and because refresh tokens ROTATE, the first call would
+ * invalidate the token the others are still holding, logging the user out in
+ * the middle of a renewal that was working. The throttle on that route would
+ * reject the stampede anyway.
+ *
+ * So the first 401 starts the refresh and the rest await the same promise.
+ */
+let refreshing: Promise<string | null> | null = null
+
+async function refreshAccessToken(): Promise<string | null> {
+  const refreshToken = readRefresh()
+  if (!refreshToken) return null
+
+  try {
+    // Imported lazily: api/auth.ts imports this module, and a static import
+    // back would be a cycle.
+    const { refreshTokens } = await import('./auth')
+    const pair = await refreshTokens(refreshToken)
+    // No `remember` argument: the pair stays in whichever store the user's
+    // original login chose.
+    saveTokens(pair)
+    return pair.access_token
+  } catch {
+    clearTokens()
+    return null
+  }
+}
+
 client.interceptors.response.use(
   (res) => res,
-  (err) => {
+  async (err) => {
     // 429 is not an auth failure: do not clear the token, do not redirect.
     // Hand the caller a message it can toast, with the server's own wait time.
     // Axios lowercases response header names - ['Retry-After'] is undefined,
@@ -49,8 +83,25 @@ client.interceptors.response.use(
     }
 
     if (err.response?.status === 401 && !DEV_NO_AUTH) {
-      localStorage.removeItem('auth_token')
-      sessionStorage.removeItem('auth_token')
+      const original = err.config
+
+      // Try once, and only when there is a refresh token to try with. The
+      // `_retried` flag is what stops a loop: if the renewed token is itself
+      // rejected, the second 401 falls through to the redirect below.
+      if (original && !original._retried && readRefresh()) {
+        original._retried = true
+
+        refreshing ??= refreshAccessToken().finally(() => { refreshing = null })
+        const fresh = await refreshing
+
+        if (fresh) {
+          original.headers = original.headers ?? {}
+          original.headers.Authorization = `Bearer ${fresh}`
+          return client(original)
+        }
+      }
+
+      clearTokens()
       window.location.href = '/login'
     }
     return Promise.reject(err)

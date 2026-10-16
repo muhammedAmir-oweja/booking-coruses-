@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { register } from '../api/auth'
+import { saveTokens } from '../auth/tokens'
 import { useAuth } from '../context/AuthContext'
 
 interface FormState {
@@ -59,9 +60,9 @@ export default function Register() {
     setLoading(true)
     setApiError(null)
     try {
-      const { token } = await register(form.name, form.email, form.password, form.password_confirmation, form.role)
-      localStorage.setItem('auth_token', token)
-      sessionStorage.removeItem('auth_token')
+      const tokens = await register(form.name, form.email, form.password, form.password_confirmation, form.role)
+      // Registering signs you in and keeps you in: remembered by default.
+      saveTokens(tokens, true)
       refresh()
       navigate('/')
     } catch (err: unknown) {

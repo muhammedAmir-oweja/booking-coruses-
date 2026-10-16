@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthProvider'
 import { PreferencesProvider } from './context/PreferencesProvider'
 import { useAuth } from './context/AuthContext'
 import { DEV_NO_AUTH } from './devAuth'
+import { readAccess, readRefresh } from './auth/tokens'
 import Layout from './components/layout/Layout'
 import Dashboard from './pages/Dashboard'
 import Courses from './pages/Courses'
@@ -22,8 +23,12 @@ import Forbidden from './pages/Forbidden'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   if (DEV_NO_AUTH) return <>{children}</>
-  const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
-  return token ? <>{children}</> : <Navigate to="/login" replace />
+  // The ACCESS token may well be expired here - the 401 handler in
+  // api/client.ts refreshes it on the first request. What matters at this
+  // gate is only whether a session exists at all.
+  return readAccess() || readRefresh()
+    ? <>{children}</>
+    : <Navigate to="/login" replace />
 }
 
 type Role = 'admin' | 'instructor' | 'student'

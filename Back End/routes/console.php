@@ -45,3 +45,15 @@ Schedule::command('courses:remind-starting --days=3')
     ->withoutOverlapping()
     ->onOneServer()
     ->appendOutputTo(storage_path('logs/schedule.log'));
+
+// Expired tokens are rejected the moment they are used, but the rows stay
+// behind - Sanctum never deletes them on its own. This command clears both
+// kinds: rows whose own expires_at has passed, and rows that the global
+// sanctum.expiration has aged out (it reads that config and prunes by
+// created_at). --hours=24 keeps a day's grace so a token is not swept away
+// the same hour it lapses.
+Schedule::command('sanctum:prune-expired --hours=24')
+    ->weekly()
+    ->timezone(config('app.timezone'))
+    ->onOneServer()
+    ->appendOutputTo(storage_path('logs/schedule.log'));

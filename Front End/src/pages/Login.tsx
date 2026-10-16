@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, Link } from 'react-router-dom'
 import { login } from '../api/auth'
+import { saveTokens } from '../auth/tokens'
 import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
@@ -20,14 +21,9 @@ export default function Login() {
     setLoading(true)
     setError(null)
     try {
-      const { token } = await login(email, password)
-      if (remember) {
-        localStorage.setItem('auth_token', token)
-        sessionStorage.removeItem('auth_token')
-      } else {
-        sessionStorage.setItem('auth_token', token)
-        localStorage.removeItem('auth_token')
-      }
+      const tokens = await login(email, password)
+      // `remember` picks the store once, here; refreshes keep it.
+      saveTokens(tokens, remember)
       refresh()
       navigate('/')
     } catch (err: unknown) {

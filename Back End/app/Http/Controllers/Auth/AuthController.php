@@ -29,34 +29,68 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
-        // Only delete Sanctum personal access tokens when the user model supports them.
+        // One login, one device: every earlier token for this user goes.
         if (method_exists($user, 'tokens')) {
             $user->tokens()->delete();
         }
 
-        // `createToken()` is provided by Laravel Sanctum's HasApiTokens trait.
-        // If that trait is not present on the model, generate a safe fallback token
-        // instead of throwing an undefined method error.
-        $token = null;
-        if (method_exists($user, 'createToken')) {
-            $token = $user->createToken('api-token')->plainTextToken;
-        } else {
-            $token = hash('sha256', Str::random(60));
-            if (property_exists($user, 'remember_token')) {
-                $user->remember_token = $token;
+        return response()->json($this->issueTokens($user));
+    }
 
-                // Some authenticatable implementations expose a remember_token
-                // property but do not support Eloquent save(), so guard it.
-                if (method_exists($user, 'save')) {
-                    $user->save();
-                }
-            }
-        }
+    /**
+     * Exchanges a valid refresh token for a new pair.
+     *
+     * Reached only by a token carrying the 'refresh' ability - see the
+     * abilities:refresh middleware on the route. An access token cannot call
+     * this, which is the whole point of splitting them: the short-lived token
+     * the SPA sends on every request has no power to extend its own life.
+     */
+    public function refresh(Request $request): JsonResponse
+    {
+        $user = $request->user();
 
-        return response()->json([
-            'token' => $token,
+        // Rotation. The refresh token that was just spent is destroyed and a
+        // new one issued, so a leaked refresh token is good for one use at
+        // most - and the real user's next refresh fails loudly instead of the
+        // theft going unnoticed forever.
+        $request->user()->currentAccessToken()?->delete();
+
+        // The old access token goes too: it was minted alongside the refresh
+        // token being replaced, and leaving it alive would mean two valid
+        // access tokens after every renewal.
+        $user->tokens()->where('name', 'access')->delete();
+
+        return response()->json($this->issueTokens($user));
+    }
+
+    /**
+     * The access/refresh pair, with the lifetimes from config/sanctum.php.
+     *
+     * Abilities are what separate them. The access token deliberately does
+     * NOT get ['*']: a wildcard satisfies every ability check, including
+     * abilities:refresh, and the split would be decorative.
+     *
+     * @return array<string, mixed>
+     */
+    private function issueTokens($user): array
+    {
+        $accessTtl = (int) config('sanctum.access_ttl', 60);
+        $refreshTtl = (int) config('sanctum.refresh_ttl', 60 * 24 * 30);
+
+        $access = $user->createToken('access', ['access'], now()->addMinutes($accessTtl));
+        $refresh = $user->createToken('refresh', ['refresh'], now()->addMinutes($refreshTtl));
+
+        return [
+            // `token` is kept as an alias of the access token so nothing that
+            // already reads this field breaks.
+            'token' => $access->plainTextToken,
+            'access_token' => $access->plainTextToken,
+            'refresh_token' => $refresh->plainTextToken,
+            'token_type' => 'Bearer',
+            'expires_in' => $accessTtl * 60,          // seconds, as OAuth clients expect
+            'refresh_expires_in' => $refreshTtl * 60,
             'user' => $user,
-        ]);
+        ];
     }
 
     public function logout(Request $request): JsonResponse
@@ -114,9 +148,11 @@ class AuthController extends Controller
             )->forceFill(['user_id' => $user->id])->save();
         }
 
-        return response()->json([
-            'token' => $user->createToken('api-token')->plainTextToken,
-            'user' => $user,
-        ], 201);
+        // The same pair login issues. It used to mint a single 'api-token'
+        // with Sanctum's default ['*'] ability and no expiry - which never
+        // lapsed, and, because a wildcard satisfies every ability check,
+        // could call /auth/refresh as well. Registering handed out a stronger
+        // credential than logging in.
+        return response()->json($this->issueTokens($user), 201);
     }
 }
