@@ -1,7 +1,9 @@
 /* ===========================================================================
-   Dashboard components. Everything is `lmsd-` prefixed and self-contained -
-   no Bootstrap grid, no AdminLTE small-box/card, so nothing here can be
-   reshaped by a CDN stylesheet changing underneath it.
+   The app's component layer. Everything is `lmsd-` prefixed and self-contained -
+   no Bootstrap grid, no AdminLTE card/form-group/btn, so nothing here can be
+   reshaped by a CDN stylesheet changing underneath it. It started as the
+   dashboard's stylesheet; the CRUD screens are built from the same pieces, so
+   it now loads once from main.tsx for the whole app.
    ===========================================================================
    Colour comes from tokens.css, where each value carries its measured
    contrast ratio. Mark geometry follows one fixed spec: 2px lines, area fills
@@ -710,4 +712,296 @@ html[dir='rtl'] .lmsd-metric:hover .lmsd-metric-foot > i { translate: -3px 0; }
     transition: none !important;
   }
   .lmsd-metric:hover { transform: none; }
+}
+
+
+/* ===========================================================================
+   Page chrome: header, toolbar, controls, buttons, forms.
+   ===========================================================================
+   Everything the CRUD screens need, built from the same tokens, surfaces and
+   hairlines as the panels above - so a list page and the dashboard read as one
+   product rather than two. Logical properties throughout; RTL mirrors itself. */
+
+/* --- page header ---------------------------------------------------------- */
+
+.lmsd-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.lmsd-head-text { flex: 1 1 260px; min-width: 0; }
+.lmsd-head h1 {
+  margin: 0;
+  font-size: var(--fs-h1);
+  font-weight: 700;
+  line-height: var(--lh-tight);
+  letter-spacing: -.01em;
+  color: var(--ink);
+}
+.lmsd-head-sub {
+  margin: 3px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+}
+.lmsd-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  flex-wrap: wrap;
+}
+
+/* --- toolbar: search, filters, primary action ----------------------------- */
+
+/* One row above the table it scopes, never inside a card header competing
+   with the title. Wraps instead of overflowing on a narrow screen. */
+.lmsd-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--hair);
+}
+.lmsd-toolbar-end { margin-inline-start: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+
+.lmsd-search { position: relative; flex: 0 1 270px; min-width: 170px; display: flex; }
+.lmsd-search > i {
+  position: absolute;
+  inset-inline-start: 11px;
+  top: 50%;
+  translate: 0 -50%;
+  font-size: 12px;
+  color: var(--ink-3);
+  pointer-events: none;
+}
+.lmsd-search .lmsd-input { padding-inline-start: 32px; }
+
+/* --- form controls -------------------------------------------------------- */
+
+.lmsd-input,
+.lmsd-select,
+.lmsd-textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 11px;
+  border: 1px solid var(--hair-firm);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.lmsd-textarea { resize: vertical; min-height: 84px; }
+.lmsd-input::placeholder, .lmsd-textarea::placeholder { color: var(--ink-3); }
+
+.lmsd-input:focus,
+.lmsd-select:focus,
+.lmsd-textarea:focus {
+  outline: none;
+  border-color: var(--brand-450);
+  box-shadow: 0 0 0 3px var(--brand-wash-2);
+}
+.lmsd-input:disabled, .lmsd-select:disabled, .lmsd-textarea:disabled {
+  background: var(--surface-2);
+  color: var(--ink-3);
+  cursor: not-allowed;
+}
+
+/* The native arrow is drawn here so the control matches in both directions;
+   `inset-inline-end` puts it on the trailing edge under RTL too. */
+.lmsd-select {
+  appearance: none;
+  padding-inline-end: 30px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-3) 50%),
+                    linear-gradient(135deg, var(--ink-3) 50%, transparent 50%);
+  background-position: calc(100% - 16px) 52%, calc(100% - 11px) 52%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+html[dir='rtl'] .lmsd-select {
+  background-position: 11px 52%, 16px 52%;
+  background-image: linear-gradient(135deg, transparent 50%, var(--ink-3) 50%),
+                    linear-gradient(45deg, var(--ink-3) 50%, transparent 50%);
+}
+
+/* Invalid state. The red ring is doubled by the message under the field, so
+   the error never rests on colour alone. */
+.lmsd-input--bad,
+.lmsd-select--bad,
+.lmsd-textarea--bad { border-color: var(--critical); }
+.lmsd-input--bad:focus,
+.lmsd-select--bad:focus,
+.lmsd-textarea--bad:focus { box-shadow: 0 0 0 3px rgba(208, 59, 59, .16); }
+
+/* --- fields --------------------------------------------------------------- */
+
+.lmsd-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.lmsd-label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--eyebrow-tracking);
+  color: var(--ink-2);
+}
+.lmsd-req { color: var(--critical-ink); margin-inline-start: 2px; }
+.lmsd-hint { font-size: var(--fs-xs); color: var(--ink-3); }
+.lmsd-error {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--critical-ink);
+}
+
+/* A 12-column grid so a field can say how wide it is without a Bootstrap
+   row/col wrapper around every one of them. */
+.lmsd-form-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 15px 16px;
+}
+.lmsd-col-3  { grid-column: span 3; }
+.lmsd-col-4  { grid-column: span 4; }
+.lmsd-col-6  { grid-column: span 6; }
+.lmsd-col-8  { grid-column: span 8; }
+.lmsd-col-12 { grid-column: span 12; }
+@media (max-width: 767px) {
+  .lmsd-col-3, .lmsd-col-4, .lmsd-col-6, .lmsd-col-8 { grid-column: span 12; }
+}
+
+/* --- buttons -------------------------------------------------------------- */
+
+.lmsd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 36px;
+  padding-inline: 14px;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease),
+              color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.lmsd-btn:disabled { opacity: .55; cursor: not-allowed; }
+.lmsd-btn > i { font-size: 12px; }
+
+/* The one filled button on a screen - the primary action, matching the
+   revenue card's treatment so "the important one" looks the same everywhere. */
+.lmsd-btn--primary {
+  background: linear-gradient(135deg, var(--brand-550), var(--brand-700));
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(13, 54, 107, .22);
+}
+html[dir='rtl'] .lmsd-btn--primary { background: linear-gradient(225deg, var(--brand-550), var(--brand-700)); }
+.lmsd-btn--primary:hover:not(:disabled) { color: #fff; text-decoration: none; box-shadow: 0 2px 8px rgba(13, 54, 107, .3); }
+
+.lmsd-btn--ghost { border-color: var(--hair-firm); }
+.lmsd-btn--ghost:hover:not(:disabled) { background: var(--surface-2); border-color: var(--ink-3); color: var(--ink); text-decoration: none; }
+
+.lmsd-btn--danger { border-color: transparent; background: var(--critical-tint); color: var(--critical-ink); }
+.lmsd-btn--danger:hover:not(:disabled) { background: #f7dada; color: var(--critical-ink); text-decoration: none; }
+
+/* Row actions: square, quiet until hovered, so eight of them down a table do
+   not shout over the data they belong to. */
+.lmsd-actions { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
+.lmsd-iconbtn {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.lmsd-iconbtn:hover:not(:disabled) { background: var(--brand-wash-2); border-color: transparent; color: var(--brand-550); }
+.lmsd-iconbtn--danger:hover:not(:disabled) { background: var(--critical-tint); color: var(--critical-ink); }
+.lmsd-iconbtn--good:hover:not(:disabled) { background: var(--good-tint); color: var(--good-ink); }
+.lmsd-iconbtn:disabled { opacity: .5; cursor: not-allowed; }
+
+.lmsd-btn:focus-visible,
+.lmsd-iconbtn:focus-visible,
+.lmsd-tool:focus-visible,
+.lmsd-input:focus-visible,
+.lmsd-select:focus-visible,
+.lmsd-textarea:focus-visible {
+  outline: 2px solid var(--brand-450);
+  outline-offset: 2px;
+}
+
+/* --- form footer ---------------------------------------------------------- */
+
+.lmsd-form-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--hair);
+  background: var(--surface-2);
+}
+.lmsd-form-foot .lmsd-btn--ghost { background: var(--surface); }
+
+/* --- table footer / pagination ------------------------------------------- */
+
+.lmsd-tfoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 11px 16px;
+  border-top: 1px solid var(--hair);
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+}
+.lmsd-pages { display: flex; align-items: center; gap: 6px; }
+.lmsd-pagebtn {
+  display: grid;
+  place-items: center;
+  min-width: 30px;
+  height: 30px;
+  padding-inline: 8px;
+  border: 1px solid var(--hair-firm);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.lmsd-pagebtn:hover:not(:disabled) { background: var(--surface-2); border-color: var(--ink-3); color: var(--ink); }
+.lmsd-pagebtn:disabled { opacity: .45; cursor: not-allowed; }
+.lmsd-pagebtn[aria-current='page'] {
+  background: var(--brand-550);
+  border-color: transparent;
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lmsd-btn, .lmsd-iconbtn, .lmsd-input, .lmsd-select, .lmsd-textarea, .lmsd-pagebtn {
+    transition: none !important;
+  }
 }

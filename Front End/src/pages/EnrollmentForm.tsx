@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import PageHeader from '../components/ui/Page'
+import Field from '../components/ui/Field'
+import { ctl } from '../components/ui/form'
 import { useNavigate, Link } from 'react-router-dom'
 import { createEnrollment } from '../api/enrollments'
 import { getCourses } from '../api/courses'
@@ -103,113 +106,75 @@ export default function EnrollmentForm() {
   }
 
   return (
-    <>
-      <div className="content-header">
-        <div className="container-fluid">
-          <div className="row mb-2">
-            <div className="col-sm-6">
-              <h1 className="m-0">{t('enrollment_form.title')}</h1>
-            </div>
-            <div className="col-sm-6 text-right">
-              <Link to="/enrollments" className="btn btn-default btn-sm">
-                <i className="fas fa-arrow-left mr-1" /> {t('common.back')}
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
+    <section className="content">
+      <div className="container-fluid lmsd">
+        <PageHeader
+          title={t('enrollment_form.title')}
+          subtitle={t('enrollment_form.card')}
+          crumbs={[
+            { label: t('enrollments.title'), to: '/enrollments' },
+            { label: t('enrollment_form.card') },
+          ]}
+        />
 
-      <div className="content">
-        <div className="container-fluid">
-          <div className="row">
-            <div className="col-md-6">
-              <div className="card card-primary">
-                <div className="card-header">
-                  <h3 className="card-title">{t('enrollment_form.card')}</h3>
+        <form onSubmit={handleSubmit}>
+          <section className="lmsd-surface lmsd-panel" style={{ maxWidth: 720 }}>
+            <div className="lmsd-panel-body">
+              {serverError && (
+                <div className="lmsd-note lmsd-note--warn" role="alert" style={{ marginBottom: 16 }}>
+                  <span className="lmsd-chip"><i className="fas fa-exclamation-triangle" aria-hidden="true" /></span>
+                  <span className="lmsd-note-text">{t(serverError)}</span>
                 </div>
-                <form onSubmit={handleSubmit}>
-                  <div className="card-body">
-                    {serverError && (
-                      <div className="alert alert-danger">{t(serverError)}</div>
-                    )}
+              )}
 
-                    <div className="form-group">
-                      <label htmlFor="enrollment-student">{t('enrollment_form.student')} <span className="text-danger">*</span></label>
-                      <select id="enrollment-student"
-                        name="student_id"
-                        className={`form-control${errors.student_id ? ' is-invalid' : ''}`}
-                        value={form.student_id}
-                        onChange={handleChange}
-                      >
-                        <option value="">{t('enrollment_form.select_student')}</option>
-                        {students.map(s => (
-                          <option key={s.id} value={s.id}>{s.name} ({s.email})</option>
-                        ))}
-                      </select>
-                      {errors.student_id && <div className="invalid-feedback">{errors.student_id}</div>}
-                    </div>
+              <div className="lmsd-form-grid">
+                <Field label={t('enrollment_form.student')} htmlFor="enrollment-student" required error={errors.student_id}>
+                  <select id="enrollment-student" name="student_id" className={ctl('select', errors.student_id)}
+                    value={form.student_id} onChange={handleChange}>
+                    <option value="">{t('enrollment_form.select_student')}</option>
+                    {students.map((s) => <option key={s.id} value={s.id}>{s.name} ({s.email})</option>)}
+                  </select>
+                </Field>
 
-                    <div className="form-group">
-                      <label htmlFor="enrollment-course">{t('enrollment_form.course')} <span className="text-danger">*</span></label>
-                      <select id="enrollment-course"
-                        name="course_id"
-                        className={`form-control${errors.course_id ? ' is-invalid' : ''}`}
-                        value={form.course_id}
-                        onChange={handleChange}
-                      >
-                        <option value="">{t('enrollment_form.select_course')}</option>
-                        {courses.map(c => (
-                          <option key={c.id} value={c.id} disabled={!c.is_available}>
-                            {c.is_available
-                              ? t('enrollment_form.course_seats_left', { title: c.title, count: c.remaining_seats })
-                              : t('enrollment_form.course_full', { title: c.title })}
-                          </option>
-                        ))}
-                      </select>
-                      {errors.course_id && <div className="invalid-feedback">{errors.course_id}</div>}
-                    </div>
+                <Field label={t('enrollment_form.course')} htmlFor="enrollment-course" required error={errors.course_id}>
+                  <select id="enrollment-course" name="course_id" className={ctl('select', errors.course_id)}
+                    value={form.course_id} onChange={handleChange}>
+                    <option value="">{t('enrollment_form.select_course')}</option>
+                    {courses.map((c) => (
+                      <option key={c.id} value={c.id} disabled={!c.is_available}>
+                        {c.is_available
+                          ? t('enrollment_form.course_seats_left', { title: c.title, count: c.remaining_seats })
+                          : t('enrollment_form.course_full', { title: c.title })}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
 
-                    <div className="form-group">
-                      <label htmlFor="enrollment-date">{t('enrollment_form.enrollment_date')}</label>
-                      <input id="enrollment-date"
-                        name="enrolled_at"
-                        type="date"
-                        className="form-control"
-                        value={form.enrolled_at}
-                        onChange={handleChange}
-                      />
-                    </div>
+                <Field label={t('enrollment_form.enrollment_date')} htmlFor="enrollment-date" span={6}>
+                  <input id="enrollment-date" name="enrolled_at" type="date" className={ctl('input')}
+                    value={form.enrolled_at} onChange={handleChange} />
+                </Field>
 
-                    <div className="form-group">
-                      <label htmlFor="enrollment-status">{t('enrollment_form.status')}</label>
-                      <select id="enrollment-status"
-                        name="status"
-                        className="form-control"
-                        value={form.status}
-                        onChange={handleChange}
-                      >
-                        <option value="confirmed">{t('status.confirmed')}</option>
-                        <option value="pending">{t('status.pending')}</option>
-                        <option value="cancelled">{t('status.cancelled')}</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="card-footer">
-                    <button type="submit" className="btn btn-primary" disabled={saving}>
-                      {saving
-                        ? <><i className="fas fa-spinner fa-spin mr-1" /> {t('common.saving')}</>
-                        : <><i className="fas fa-user-plus mr-1" /> {t('enrollment_form.title')}</>
-                      }
-                    </button>
-                    <Link to="/enrollments" className="btn btn-default ml-2">{t('common.cancel')}</Link>
-                  </div>
-                </form>
+                <Field label={t('enrollment_form.status')} htmlFor="enrollment-status" span={6}>
+                  <select id="enrollment-status" name="status" className={ctl('select')} value={form.status} onChange={handleChange}>
+                    <option value="confirmed">{t('status.confirmed')}</option>
+                    <option value="pending">{t('status.pending')}</option>
+                    <option value="cancelled">{t('status.cancelled')}</option>
+                  </select>
+                </Field>
               </div>
             </div>
-          </div>
-        </div>
+
+            <div className="lmsd-form-foot">
+              <button type="submit" className="lmsd-btn lmsd-btn--primary" disabled={saving}>
+                {saving && <i className="fas fa-spinner fa-spin" aria-hidden="true" />}
+                {t('enrollment_form.title')}
+              </button>
+              <Link to="/enrollments" className="lmsd-btn lmsd-btn--ghost">{t('common.cancel')}</Link>
+            </div>
+          </section>
+        </form>
       </div>
-    </>
+    </section>
   )
 }

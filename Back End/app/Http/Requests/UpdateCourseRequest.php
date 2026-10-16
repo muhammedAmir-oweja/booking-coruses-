@@ -25,7 +25,7 @@ class UpdateCourseRequest extends FormRequest
             'price' => ['sometimes', 'numeric', 'min:0'],
             'capacity' => ['sometimes', 'integer', 'min:1'],
             'hours' => ['nullable', 'integer', 'min:0'],
-            'status' => ['sometimes', 'in:draft,active,inactive'],
+            'status' => ['sometimes', 'in:draft,active,inactive,completed'],
             'start_date' => ['sometimes', 'date'],
             // `after:start_date` reads the request body, so on a partial update
             // that omits start_date it has nothing to compare and silently

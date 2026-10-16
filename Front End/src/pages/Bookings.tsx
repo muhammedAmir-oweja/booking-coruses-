@@ -2,23 +2,15 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useFormat } from '../format'
 import Pagination from '../components/ui/Pagination'
+import PageHeader from '../components/ui/Page'
+import StatusPill from '../components/ui/StatusPill'
+import { EmptyRow, TableSkeleton } from '../components/ui/Table'
+import { initialsOf } from '../components/ui/identity'
 import { getBookings, updateBookingStatus, cancelBooking } from '../api/bookings'
 import type { Booking } from '../types'
 import { useToast } from '../context/ToastContext'
 import { usePreferences } from '../context/PreferencesContext'
 import { useAuth } from '../context/AuthContext'
-
-const STATUS_BADGES: Record<string, string> = {
-  confirmed: 'badge-success',
-  pending:   'badge-warning',
-  cancelled: 'badge-danger',
-}
-
-const PAYMENT_BADGES: Record<string, string> = {
-  paid:     'badge-success',
-  unpaid:   'badge-warning',
-  refunded: 'badge-info',
-}
 
 export default function Bookings() {
   const { t } = useTranslation()
@@ -111,151 +103,159 @@ export default function Bookings() {
     }
   }
 
+  const cols = isAdmin ? 7 : 6
+
   return (
-    <>
-      <div className="content-header">
-        <div className="container-fluid">
-          <div className="row mb-2">
-            <div className="col-sm-6">
-              <h1 className="m-0">{t('bookings.title')}</h1>
-            </div>
+    <section className="content">
+      <div className="container-fluid lmsd">
+        <PageHeader
+          title={t('bookings.title')}
+          subtitle={t('common.total_count', { count: total })}
+          crumbs={[{ label: t('bookings.title') }]}
+        />
+
+        {error && (
+          <div className="lmsd-note lmsd-note--warn" role="alert">
+            <span className="lmsd-chip"><i className="fas fa-exclamation-triangle" aria-hidden="true" /></span>
+            <span className="lmsd-note-text">{t(error)}</span>
           </div>
-        </div>
-      </div>
+        )}
 
-      <div className="content">
-        <div className="container-fluid">
-          {error && <div className="alert alert-danger">{t(error)}</div>}
-
-          <div className="card">
-            <div className="card-header d-flex flex-wrap align-items-center" style={{ gap: 8 }}>
-              <h3 className="card-title mr-3">{t('bookings.all')}</h3>
-              <select
-                className="form-control form-control-sm"
-                style={{ maxWidth: 160 }}
-                value={statusFilter}
-                onChange={(e) => { setLoading(true); setStatusFilter(e.target.value); setPage(1) }}
+        <section className="lmsd-surface lmsd-panel">
+          {/* Filters in one row above the table they scope, not crammed into a
+              card header beside the title. */}
+          <div className="lmsd-toolbar">
+            <select
+              className="lmsd-select"
+              style={{ width: 'auto' }}
+              aria-label={t('bookings.col.status')}
+              value={statusFilter}
+              onChange={(e) => { setLoading(true); setStatusFilter(e.target.value); setPage(1) }}
+            >
+              <option value="">{t('common.all_statuses')}</option>
+              <option value="pending">{t('status.pending')}</option>
+              <option value="confirmed">{t('status.confirmed')}</option>
+              <option value="cancelled">{t('status.cancelled')}</option>
+            </select>
+            <select
+              className="lmsd-select"
+              style={{ width: 'auto' }}
+              aria-label={t('bookings.col.payment')}
+              value={paymentFilter}
+              onChange={(e) => { setLoading(true); setPaymentFilter(e.target.value); setPage(1) }}
+            >
+              <option value="">{t('bookings.all_payments')}</option>
+              <option value="unpaid">{t('status.unpaid')}</option>
+              <option value="paid">{t('status.paid')}</option>
+              <option value="refunded">{t('status.refunded')}</option>
+            </select>
+            {(statusFilter || paymentFilter) && (
+              <button
+                type="button"
+                className="lmsd-btn lmsd-btn--ghost"
+                onClick={() => { setLoading(true); setStatusFilter(''); setPaymentFilter(''); setPage(1) }}
               >
-                <option value="">{t('common.all_statuses')}</option>
-                <option value="pending">{t('status.pending')}</option>
-                <option value="confirmed">{t('status.confirmed')}</option>
-                <option value="cancelled">{t('status.cancelled')}</option>
-              </select>
-              <select
-                className="form-control form-control-sm"
-                style={{ maxWidth: 160 }}
-                value={paymentFilter}
-                onChange={(e) => { setLoading(true); setPaymentFilter(e.target.value); setPage(1) }}
-              >
-                <option value="">{t('bookings.all_payments')}</option>
-                <option value="unpaid">{t('status.unpaid')}</option>
-                <option value="paid">{t('status.paid')}</option>
-                <option value="refunded">{t('status.refunded')}</option>
-              </select>
-              <div className="ml-auto">
-                <span className="badge badge-info">{t('common.total_count', { count: total })}</span>
-              </div>
-            </div>
-
-            <div className="card-body table-responsive p-0">
-              {loading ? (
-                <div className="text-center p-4">
-                  <i className="fas fa-spinner fa-spin mr-2" /> {t('common.loading')}
-                </div>
-              ) : bookings.length === 0 ? (
-                <div className="text-center p-4 text-muted">{t('bookings.none_found')}</div>
-              ) : (
-                <table className="table table-hover table-striped">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>{t('bookings.col.student')}</th>
-                      <th>{t('bookings.col.course')}</th>
-                      <th>{t('bookings.col.amount')}</th>
-                      <th>{t('bookings.col.status')}</th>
-                      <th>{t('bookings.col.payment')}</th>
-                      <th>{t('bookings.col.booked_at')}</th>
-                      <th>{t('common.actions')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {bookings.map((b) => (
-                      <tr key={b.id}>
-                        <td>{b.id}</td>
-                        <td>
-                          <strong>{b.student?.name ?? `#${b.student_id}`}</strong>
-                          <br />
-                          <small className="text-muted text-ltr">{b.student?.email}</small>
-                        </td>
-                        <td>{b.course?.title ?? `#${b.course_id}`}</td>
-                        <td className="text-ltr">{fmt.money(b.amount)}</td>
-                        <td>
-                          <span className={`badge ${STATUS_BADGES[b.status] ?? 'badge-secondary'}`}>
-                            {t(`status.${b.status}`)}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`badge ${PAYMENT_BADGES[b.payment_status] ?? 'badge-secondary'}`}>
-                            {t(`status.${b.payment_status}`)}
-                          </span>
-                        </td>
-                        <td className="text-ltr" style={{ whiteSpace: 'nowrap' }}>
-                          {fmt.date(b.booked_at)}
-                        </td>
-                        <td style={{ whiteSpace: 'nowrap' }}>
-                          {isAdmin && b.status === 'pending' && (
-                            <button
-                              className="btn btn-xs btn-success mr-1"
-                              title={t('bookings.confirm_title')}
-                              disabled={actionId === b.id}
-                              onClick={() => handleConfirm(b.id)}
-                            >
-                              <i className="fas fa-check" />
-                            </button>
-                          )}
-                          {isAdmin && b.payment_status === 'unpaid' && b.status !== 'cancelled' && (
-                            <button
-                              className="btn btn-xs btn-info mr-1"
-                              title={t('bookings.mark_paid_title')}
-                              disabled={actionId === b.id}
-                              onClick={() => handleMarkPaid(b.id)}
-                            >
-                              <i className="fas fa-dollar-sign" />
-                            </button>
-                          )}
-                          {isAdmin && b.status !== 'cancelled' && (
-                            <button
-                              className="btn btn-xs btn-danger"
-                              title={t('bookings.cancel_title')}
-                              disabled={actionId === b.id}
-                              onClick={() => handleCancel(b.id)}
-                            >
-                              {actionId === b.id
-                                ? <i className="fas fa-spinner fa-spin" />
-                                : <i className="fas fa-times" />
-                              }
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-
-            {(lastPage) > 0 && (
-              <Pagination
-                page={page}
-                lastPage={lastPage}
-                total={total}
-                onPage={goToPage}
-                onPageSizeChange={() => goToPage(1)}
-              />
+                <i className="fas fa-times" aria-hidden="true" /> {t('common.clear')}
+              </button>
             )}
           </div>
-        </div>
+
+          <div className="lmsd-scroll">
+            <table className="lmsd-table">
+              <thead>
+                <tr>
+                  <th>{t('bookings.col.student')}</th>
+                  <th>{t('bookings.col.course')}</th>
+                  <th className="lmsd-th-num">{t('bookings.col.amount')}</th>
+                  <th>{t('bookings.col.status')}</th>
+                  <th>{t('bookings.col.payment')}</th>
+                  <th>{t('bookings.col.booked_at')}</th>
+                  {isAdmin && <th className="lmsd-th-num">{t('common.actions')}</th>}
+                </tr>
+              </thead>
+
+              {loading ? <TableSkeleton rows={6} cols={cols} /> : !bookings.length ? (
+                <EmptyRow cols={cols} icon="far fa-calendar" label={t('bookings.none_found')} />
+              ) : (
+                <tbody>
+                  {bookings.map((b) => (
+                    <tr key={b.id}>
+                      <td data-lead className="lmsd-cell-lead">
+                        <div className="lmsd-who">
+                          <span className="lmsd-avatar" aria-hidden="true">
+                            {initialsOf(b.student?.name ?? '?')}
+                          </span>
+                          <span style={{ minWidth: 0 }}>
+                            <span className="lmsd-strong">{b.student?.name ?? `#${b.student_id}`}</span>
+                            <span className="lmsd-sub">{b.student?.email ?? t('dashboard.booking_ref', { id: b.id })}</span>
+                          </span>
+                        </div>
+                      </td>
+                      <td className="lmsd-cell-wide" data-label={t('bookings.col.course')}>
+                        <span className="lmsd-strong">{b.course?.title ?? `#${b.course_id}`}</span>
+                      </td>
+                      <td className="lmsd-num" data-label={t('bookings.col.amount')}>{fmt.money(b.amount)}</td>
+                      <td data-label={t('bookings.col.status')}><StatusPill status={b.status} /></td>
+                      <td data-label={t('bookings.col.payment')}><StatusPill status={b.payment_status} /></td>
+                      <td data-label={t('bookings.col.booked_at')}>{fmt.date(b.booked_at)}</td>
+                      {isAdmin && (
+                        <td data-label={t('common.actions')}>
+                          <div className="lmsd-actions">
+                            {b.status === 'pending' && (
+                              <button
+                                type="button"
+                                className="lmsd-iconbtn lmsd-iconbtn--good"
+                                title={t('bookings.confirm_title')}
+                                aria-label={t('bookings.confirm_title')}
+                                disabled={actionId === b.id}
+                                onClick={() => handleConfirm(b.id)}
+                              >
+                                <i className="fas fa-check" aria-hidden="true" />
+                              </button>
+                            )}
+                            {b.payment_status === 'unpaid' && b.status !== 'cancelled' && (
+                              <button
+                                type="button"
+                                className="lmsd-iconbtn"
+                                title={t('bookings.mark_paid_title')}
+                                aria-label={t('bookings.mark_paid_title')}
+                                disabled={actionId === b.id}
+                                onClick={() => handleMarkPaid(b.id)}
+                              >
+                                <i className="fas fa-dollar-sign" aria-hidden="true" />
+                              </button>
+                            )}
+                            {b.status !== 'cancelled' && (
+                              <button
+                                type="button"
+                                className="lmsd-iconbtn lmsd-iconbtn--danger"
+                                title={t('bookings.cancel_title')}
+                                aria-label={t('bookings.cancel_title')}
+                                disabled={actionId === b.id}
+                                onClick={() => handleCancel(b.id)}
+                              >
+                                <i className={actionId === b.id ? 'fas fa-spinner fa-spin' : 'fas fa-ban'} aria-hidden="true" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              )}
+            </table>
+          </div>
+
+          <Pagination
+            page={page}
+            lastPage={lastPage}
+            total={total}
+            onPage={goToPage}
+            onPageSizeChange={() => goToPage(1)}
+          />
+        </section>
       </div>
-    </>
+    </section>
   )
 }

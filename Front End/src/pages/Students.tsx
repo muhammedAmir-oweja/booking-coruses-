@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useFormat } from '../format'
 import Pagination from '../components/ui/Pagination'
+import PageHeader from '../components/ui/Page'
+import { EmptyRow, TableSkeleton } from '../components/ui/Table'
+import { initialsOf } from '../components/ui/identity'
 import { Link } from 'react-router-dom'
 import { getStudents, deleteStudent } from '../api/students'
 import type { Student } from '../types'
@@ -10,6 +14,7 @@ import { useAuth } from '../context/AuthContext'
 
 export default function Students() {
   const { t } = useTranslation()
+  const fmt = useFormat()
   const { prefs } = usePreferences()
   const { showToast } = useToast()
   const { isAdmin } = useAuth()
@@ -75,143 +80,128 @@ export default function Students() {
   }
 
   return (
-    <>
-      <div className="content-header">
-        <div className="container-fluid">
-          <div className="row mb-2">
-            <div className="col-sm-6">
-              <h1 className="m-0">{t('students.title')}</h1>
-            </div>
-            <div className="col-sm-6 text-right">
-              {isAdmin && (
-                <Link to="/students/new" className="btn btn-primary btn-sm">
-                  <i className="fas fa-plus mr-1" /> {t('nav.add_student')}
-                </Link>
-              )}
-            </div>
+    <section className="content">
+      <div className="container-fluid lmsd">
+        <PageHeader
+          title={t('students.title')}
+          subtitle={t('common.total_count', { count: total })}
+          crumbs={[{ label: t('students.title') }]}
+          actions={isAdmin && (
+            <Link to="/students/new" className="lmsd-btn lmsd-btn--primary">
+              <i className="fas fa-plus" aria-hidden="true" /> {t('nav.add_student')}
+            </Link>
+          )}
+        />
+
+        {error && (
+          <div className="lmsd-note lmsd-note--warn" role="alert">
+            <span className="lmsd-chip"><i className="fas fa-exclamation-triangle" aria-hidden="true" /></span>
+            <span className="lmsd-note-text">{t(error)}</span>
           </div>
-        </div>
-      </div>
+        )}
 
-      <div className="content">
-        <div className="container-fluid">
-          <div className="card">
-            <div className="card-header">
-              <form onSubmit={handleSearch} className="d-flex" style={{ gap: 8 }}>
-                <input
-                  type="text"
-                  className="form-control form-control-sm"
-                  placeholder={t('students.search_placeholder')}
-                  style={{ maxWidth: 300 }}
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                />
-                <button type="submit" className="btn btn-default btn-sm">
-                  <i className="fas fa-search" />
-                </button>
-                {search && (
-                  <button
-                    type="button"
-                    className="btn btn-default btn-sm"
-                    onClick={() => { setLoading(true); setSearchInput(''); setSearch(''); setPage(1) }}
-                  >
-                    {t('common.clear')}
-                  </button>
-                )}
-              </form>
-              <div className="card-tools">
-                <span className="badge badge-info">{t('common.total_count', { count: total })}</span>
-              </div>
-            </div>
-
-            <div className="card-body table-responsive p-0">
-              {loading ? (
-                <div className="text-center p-4">
-                  <i className="fas fa-spinner fa-spin mr-2" /> {t('common.loading')}
-                </div>
-              ) : error ? (
-                <div className="alert alert-danger m-3">{t(error)}</div>
-              ) : students.length === 0 ? (
-                <div className="text-center p-4 text-muted">{t('students.none_found')}</div>
-              ) : (
-                <table className="table table-hover table-striped">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>{t('students.col.photo')}</th>
-                      <th>{t('students.col.name')}</th>
-                      <th>{t('students.col.email')}</th>
-                      <th>{t('students.col.phone')}</th>
-                      <th>{t('students.col.date_of_birth')}</th>
-                      <th>{t('common.actions')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {students.map((s) => (
-                      <tr key={s.id}>
-                        <td>{s.id}</td>
-                        <td>
-                          {s.photo_url ? (
-                            <img
-                              src={s.photo_url}
-                              alt={s.name}
-                              className="img-circle elevation-2"
-                              style={{ width: 35, height: 35, objectFit: 'cover' }}
-                            />
-                          ) : (
-                            <span className="img-circle bg-secondary d-inline-flex align-items-center justify-content-center"
-                              style={{ width: 35, height: 35 }}>
-                              <i className="fas fa-user text-white" />
-                            </span>
-                          )}
-                        </td>
-                        <td>{s.name}</td>
-                        <td className="text-ltr">{s.email}</td>
-                        <td className="text-ltr">{s.phone || t('common.none')}</td>
-                        <td className="text-ltr">{s.date_of_birth || t('common.none')}</td>
-                        <td>
-                          {isAdmin && (
-                            <>
-                              <Link
-                                to={`/students/${s.id}/edit`}
-                                className="btn btn-xs btn-info mr-1"
-                                title={t('common.edit')}
-                              >
-                                <i className="fas fa-edit" />
-                              </Link>
-                              <button
-                                className="btn btn-xs btn-danger"
-                                title={t('common.delete')}
-                                disabled={deleting === s.id}
-                                onClick={() => handleDelete(s)}
-                              >
-                                {deleting === s.id
-                                  ? <i className="fas fa-spinner fa-spin" />
-                                  : <i className="fas fa-trash" />
-                                }
-                              </button>
-                            </>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-
-            {(lastPage) > 0 && (
-              <Pagination
-                page={page}
-                lastPage={lastPage}
-                total={total}
-                onPage={goToPage}
-                onPageSizeChange={() => goToPage(1)}
+        <section className="lmsd-surface lmsd-panel">
+          <form className="lmsd-toolbar" onSubmit={handleSearch} role="search">
+            <div className="lmsd-search">
+              <i className="fas fa-search" aria-hidden="true" />
+              <input
+                type="search"
+                className="lmsd-input"
+                placeholder={t('students.search_placeholder')}
+                aria-label={t('students.search_placeholder')}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
               />
+            </div>
+            <button type="submit" className="lmsd-btn lmsd-btn--ghost">{t('common.search')}</button>
+            {search && (
+              <button
+                type="button"
+                className="lmsd-btn lmsd-btn--ghost"
+                onClick={() => { setLoading(true); setSearchInput(''); setSearch(''); setPage(1) }}
+              >
+                <i className="fas fa-times" aria-hidden="true" /> {t('common.clear')}
+              </button>
             )}
+          </form>
+
+          <div className="lmsd-scroll">
+            <table className="lmsd-table">
+              <thead>
+                <tr>
+                  <th>{t('students.col.name')}</th>
+                  <th>{t('students.col.email')}</th>
+                  <th>{t('students.col.phone')}</th>
+                  <th>{t('students.col.date_of_birth')}</th>
+                  {isAdmin && <th className="lmsd-th-num">{t('common.actions')}</th>}
+                </tr>
+              </thead>
+
+              {loading ? <TableSkeleton rows={6} cols={isAdmin ? 5 : 4} /> : !students.length ? (
+                <EmptyRow cols={isAdmin ? 5 : 4} icon="far fa-user" label={t('students.none_found')} />
+              ) : (
+                <tbody>
+                  {students.map((s) => (
+                    <tr key={s.id}>
+                      <td data-lead className="lmsd-cell-lead">
+                        <div className="lmsd-who">
+                          {/* The photo when there is one, initials when there
+                              is not - the same tile the rest of the app uses,
+                              instead of a grey silhouette box. */}
+                          {s.photo_url
+                            ? <img src={s.photo_url} alt="" className="lmsd-avatar" style={{ objectFit: 'cover' }} />
+                            : <span className="lmsd-avatar" aria-hidden="true">{initialsOf(s.name)}</span>}
+                          <span style={{ minWidth: 0 }}>
+                            <span className="lmsd-strong" title={s.name}>{s.name}</span>
+                            <span className="lmsd-sub">#{s.id}</span>
+                          </span>
+                        </div>
+                      </td>
+                      <td data-label={t('students.col.email')}>{s.email}</td>
+                      <td data-label={t('students.col.phone')}>{s.phone || t('common.none')}</td>
+                      <td data-label={t('students.col.date_of_birth')}>
+                        {fmt.date(s.date_of_birth, t('common.none'))}
+                      </td>
+                      {isAdmin && (
+                        <td data-label={t('common.actions')}>
+                          <div className="lmsd-actions">
+                            <Link
+                              to={`/students/${s.id}/edit`}
+                              className="lmsd-iconbtn"
+                              title={t('common.edit')}
+                              aria-label={t('common.edit')}
+                            >
+                              <i className="fas fa-pen" aria-hidden="true" />
+                            </Link>
+                            <button
+                              type="button"
+                              className="lmsd-iconbtn lmsd-iconbtn--danger"
+                              title={t('common.delete')}
+                              aria-label={t('common.delete')}
+                              disabled={deleting === s.id}
+                              onClick={() => handleDelete(s)}
+                            >
+                              <i className={deleting === s.id ? 'fas fa-spinner fa-spin' : 'fas fa-trash'} aria-hidden="true" />
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              )}
+            </table>
           </div>
-        </div>
+
+          <Pagination
+            page={page}
+            lastPage={lastPage}
+            total={total}
+            onPage={goToPage}
+            onPageSizeChange={() => goToPage(1)}
+          />
+        </section>
       </div>
-    </>
+    </section>
   )
 }

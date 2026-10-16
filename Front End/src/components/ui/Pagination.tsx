@@ -47,14 +47,14 @@ export default function Pagination({ page, lastPage, total, onPage, onPageSizeCh
   }
 
   return (
-    <div className="card-footer d-flex flex-wrap align-items-center" style={{ gap: 12 }}>
-      <div className="d-flex align-items-center" style={{ gap: 8 }}>
-        <label htmlFor="lms-page-size" className="mb-0 text-muted" style={{ fontSize: 13 }}>
+    <div className="lmsd-tfoot">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <label htmlFor="lms-page-size" className="lmsd-label" style={{ margin: 0 }}>
           {t('common.per_page')}
         </label>
         <select
           id="lms-page-size"
-          className="form-control form-control-sm"
+          className="lmsd-select"
           style={{ width: 'auto' }}
           value={prefs.per_page}
           onChange={(e) => changeSize(Number(e.target.value) as PerPage)}
@@ -62,34 +62,48 @@ export default function Pagination({ page, lastPage, total, onPage, onPageSizeCh
           {PER_PAGE_OPTIONS.map((n) => <option key={n} value={n}>{n}</option>)}
         </select>
         {typeof total === 'number' && (
-          <span className="text-muted" style={{ fontSize: 13 }}>
-            {t('common.total_count', { count: total })}
-          </span>
+          <span>{t('common.total_count', { count: total })}</span>
         )}
       </div>
 
       {lastPage > 1 && (
-        <ul className="pagination pagination-sm m-0 ml-auto">
-          <li className={`page-item${page <= 1 ? ' disabled' : ''}`}>
-            <button type="button" className="page-link" aria-label={t('common.previous_page')}
-              disabled={page <= 1} onClick={() => onPage(page - 1)}>&laquo;</button>
-          </li>
+        <div className="lmsd-pages">
+          <button
+            type="button"
+            className="lmsd-pagebtn"
+            aria-label={t('common.previous_page')}
+            disabled={page <= 1}
+            onClick={() => onPage(page - 1)}
+          >
+            {/* index.css mirrors .fa-chevron-left under RTL, so "previous"
+                keeps pointing at the start of the list in both directions. */}
+            <i className="fas fa-chevron-left" aria-hidden="true" />
+          </button>
+
           {pages.map((p, i) => p === 'gap' ? (
-            <li key={`gap${i}`} className="page-item disabled">
-              <span className="page-link">&hellip;</span>
-            </li>
+            <span key={`gap${i}`} style={{ padding: '0 2px', color: 'var(--ink-3)' }}>&hellip;</span>
           ) : (
-            <li key={p} className={`page-item${p === page ? ' active' : ''}`}>
-              <button type="button" className="page-link"
-                aria-current={p === page ? 'page' : undefined}
-                onClick={() => onPage(p)}>{p}</button>
-            </li>
+            <button
+              key={p}
+              type="button"
+              className="lmsd-pagebtn"
+              aria-current={p === page ? 'page' : undefined}
+              onClick={() => onPage(p)}
+            >
+              {p}
+            </button>
           ))}
-          <li className={`page-item${page >= lastPage ? ' disabled' : ''}`}>
-            <button type="button" className="page-link" aria-label={t('common.next_page')}
-              disabled={page >= lastPage} onClick={() => onPage(page + 1)}>&raquo;</button>
-          </li>
-        </ul>
+
+          <button
+            type="button"
+            className="lmsd-pagebtn"
+            aria-label={t('common.next_page')}
+            disabled={page >= lastPage}
+            onClick={() => onPage(page + 1)}
+          >
+            <i className="fas fa-chevron-right" aria-hidden="true" />
+          </button>
+        </div>
       )}
     </div>
   )

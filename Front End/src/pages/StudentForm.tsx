@@ -1,5 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import PageHeader from '../components/ui/Page'
+import Field from '../components/ui/Field'
+import { ctl } from '../components/ui/form'
+import { initialsOf } from '../components/ui/identity'
 import { useFormat } from '../format'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getStudent, createStudent, updateStudent, getStudentDocuments, uploadStudentDocument, deleteStudentDocument, downloadStudentDocument } from '../api/students'
@@ -201,231 +205,164 @@ export default function StudentForm() {
   }
 
   return (
-    <>
-      <div className="content-header">
-        <div className="container-fluid">
-          <div className="row mb-2">
-            <div className="col-sm-6">
-              <h1 className="m-0">{isEdit ? t('student_form.edit_title') : t('student_form.new_title')}</h1>
-            </div>
-            <div className="col-sm-6 text-right">
-              <Link to="/students" className="btn btn-default btn-sm">
-                <i className="fas fa-arrow-left mr-1" /> {t('common.back')}
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
+    <section className="content">
+      <div className="container-fluid lmsd">
+        <PageHeader
+          title={isEdit ? t('student_form.edit_title') : t('student_form.new_title')}
+          subtitle={isEdit ? t('student_form.card_edit', { name: student?.name ?? '' }) : t('student_form.card_new')}
+          crumbs={[
+            { label: t('students.title'), to: '/students' },
+            { label: isEdit ? t('student_form.crumb_edit') : t('student_form.crumb_new') },
+          ]}
+        />
 
-      <div className="content">
-        <div className="container-fluid">
-          <div className="row">
-            <div className="col-md-8">
-              <div className="card card-primary">
-                <div className="card-header">
-                  <h3 className="card-title">
-                    {isEdit ? t('student_form.card_edit', { name: student?.name ?? '' }) : t('student_form.card_new')}
-                  </h3>
+        <form onSubmit={handleSubmit} encType="multipart/form-data">
+          <section className="lmsd-surface lmsd-panel" style={{ maxWidth: 860 }}>
+            <div className="lmsd-panel-body">
+              {serverError && (
+                <div className="lmsd-note lmsd-note--warn" role="alert" style={{ marginBottom: 16 }}>
+                  <span className="lmsd-chip"><i className="fas fa-exclamation-triangle" aria-hidden="true" /></span>
+                  <span className="lmsd-note-text">{t(serverError)}</span>
                 </div>
-                <form onSubmit={handleSubmit} encType="multipart/form-data">
-                  <div className="card-body">
-                    {serverError && (
-                      <div className="alert alert-danger">{t(serverError)}</div>
-                    )}
+              )}
 
-                    <div className="form-group text-center">
-                      <div className="mb-2">
-                        {photoPreview ? (
-                          <img
-                            src={photoPreview}
-                            alt={t('student_form.photo_preview')}
-                            className="img-circle elevation-2"
-                            style={{ width: 80, height: 80, objectFit: 'cover' }}
-                          />
-                        ) : (
-                          <span className="img-circle bg-secondary d-inline-flex align-items-center justify-content-center"
-                            style={{ width: 80, height: 80 }}>
-                            <i className="fas fa-user fa-2x text-white" />
-                          </span>
-                        )}
-                      </div>
-                      <button
-                        type="button"
-                        className="btn btn-default btn-sm"
-                        onClick={() => fileRef.current?.click()}
-                      >
-                        <i className="fas fa-camera mr-1" />
-                        {photoPreview ? t('student_form.change_photo') : t('student_form.upload_photo')}
-                      </button>
-                      <input
-                        ref={fileRef}
-                        type="file"
-                        accept="image/*"
-                        className="d-none"
-                        onChange={handlePhotoChange}
-                      />
-                      {errors.photo && <div className="text-danger small mt-1">{errors.photo}</div>}
-                    </div>
+              {/* The photo sits beside the name rather than centred above the
+                  form: it is one field among several, not a banner. */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18 }}>
+                {photoPreview
+                  ? <img src={photoPreview} alt={t('student_form.photo_preview')} className="lms-avatar"
+                      style={{ width: 72, height: 72, objectFit: 'cover' }} />
+                  : <span className="lms-avatar" style={{ width: 72, height: 72, fontSize: 24 }} aria-hidden="true">
+                      {initialsOf(form.name || '?')}
+                    </span>}
+                <div>
+                  <button type="button" className="lmsd-btn lmsd-btn--ghost" onClick={() => fileRef.current?.click()}>
+                    <i className="fas fa-camera" aria-hidden="true" />
+                    {photoPreview ? t('student_form.change_photo') : t('student_form.upload_photo')}
+                  </button>
+                  <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoChange} />
+                  {errors.photo && (
+                    <span className="lmsd-error" style={{ marginTop: 6 }}>
+                      <i className="fas fa-exclamation-circle" aria-hidden="true" />{errors.photo}
+                    </span>
+                  )}
+                </div>
+              </div>
 
-                    <div className="form-group">
-                      <label htmlFor="student-name">{t('student_form.name')} <span className="text-danger">*</span></label>
-                      <input id="student-name"
-                        name="name"
-                        type="text"
-                        className={`form-control${errors.name ? ' is-invalid' : ''}`}
-                        placeholder={t('student_form.name_placeholder')}
-                        value={form.name}
-                        onChange={handleChange}
-                      />
-                      {errors.name && <div className="invalid-feedback">{errors.name}</div>}
-                    </div>
+              <div className="lmsd-form-grid">
+                <Field label={t('student_form.name')} htmlFor="student-name" required error={errors.name} span={6}>
+                  <input id="student-name" name="name" type="text" className={ctl('input', errors.name)}
+                    placeholder={t('student_form.name_placeholder')} value={form.name} onChange={handleChange} />
+                </Field>
 
-                    <div className="form-group">
-                      <label htmlFor="student-email">{t('student_form.email')} <span className="text-danger">*</span></label>
-                      <input id="student-email"
-                        name="email"
-                        type="email"
-                        className={`form-control${errors.email ? ' is-invalid' : ''}`}
-                        placeholder={t('student_form.email_placeholder')}
-                        value={form.email}
-                        onChange={handleChange}
-                      />
-                      {errors.email && <div className="invalid-feedback">{errors.email}</div>}
-                    </div>
+                <Field label={t('student_form.email')} htmlFor="student-email" required error={errors.email} span={6}>
+                  <input id="student-email" name="email" type="email" className={ctl('input', errors.email)}
+                    placeholder={t('student_form.email_placeholder')} value={form.email} onChange={handleChange} />
+                </Field>
 
-                    <div className="form-group">
-                      <label htmlFor="student-phone">{t('student_form.phone')}</label>
-                      <input id="student-phone"
-                        name="phone"
-                        type="text"
-                        className={`form-control${errors.phone ? ' is-invalid' : ''}`}
-                        placeholder={t('student_form.phone_placeholder')}
-                        value={form.phone}
-                        onChange={handleChange}
-                      />
-                      {errors.phone && <div className="invalid-feedback">{errors.phone}</div>}
-                    </div>
+                <Field label={t('student_form.phone')} htmlFor="student-phone" error={errors.phone} span={6}>
+                  <input id="student-phone" name="phone" type="text" className={ctl('input', errors.phone)}
+                    placeholder={t('student_form.phone_placeholder')} value={form.phone} onChange={handleChange} />
+                </Field>
 
-                    <div className="form-group">
-                      <label htmlFor="student-dob">{t('student_form.date_of_birth')}</label>
-                      <input id="student-dob"
-                        name="date_of_birth"
-                        type="date"
-                        className={`form-control${errors.date_of_birth ? ' is-invalid' : ''}`}
-                        value={form.date_of_birth}
-                        onChange={handleChange}
-                      />
-                      {errors.date_of_birth && <div className="invalid-feedback">{errors.date_of_birth}</div>}
-                    </div>
+                <Field label={t('student_form.date_of_birth')} htmlFor="student-dob" error={errors.date_of_birth} span={6}>
+                  <input id="student-dob" name="date_of_birth" type="date" className={ctl('input', errors.date_of_birth)}
+                    value={form.date_of_birth} onChange={handleChange} />
+                </Field>
 
-                    <div className="form-group">
-                      <label htmlFor="student-address">{t('student_form.address')}</label>
-                      <textarea id="student-address"
-                        name="address"
-                        rows={3}
-                        className={`form-control${errors.address ? ' is-invalid' : ''}`}
-                        placeholder={t('student_form.address_placeholder')}
-                        value={form.address}
-                        onChange={handleChange}
-                      />
-                      {errors.address && <div className="invalid-feedback">{errors.address}</div>}
-                    </div>
-                  </div>
-
-                  <div className="card-footer">
-                    <button type="submit" className="btn btn-primary" disabled={saving}>
-                      {saving
-                        ? <><i className="fas fa-spinner fa-spin mr-1" /> {t('common.saving')}</>
-                        : <><i className="fas fa-save mr-1" /> {isEdit ? t('student_form.submit_edit') : t('student_form.submit_new')}</>
-                      }
-                    </button>
-                    <Link to="/students" className="btn btn-default ml-2">{t('common.cancel')}</Link>
-                  </div>
-                </form>
+                <Field label={t('student_form.address')} htmlFor="student-address">
+                  <textarea id="student-address" name="address" rows={3} className={ctl('textarea')}
+                    value={form.address} onChange={handleChange} />
+                </Field>
               </div>
             </div>
 
-            {isEdit && (
-              <div className="col-md-8 mt-4">
-                <div className="card card-secondary">
-                  <div className="card-header d-flex align-items-center justify-content-between">
-                    <h3 className="card-title">{t('student_form.documents')}</h3>
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-sm"
-                      onClick={() => docRef.current?.click()}
-                      disabled={uploadingDoc}
-                    >
-                      {uploadingDoc
-                        ? <><i className="fas fa-spinner fa-spin mr-1" /> {t('student_form.uploading')}</>
-                        : <><i className="fas fa-upload mr-1" /> {t('student_form.upload_document')}</>
-                      }
-                    </button>
-                    <input
-                      ref={docRef}
-                      type="file"
-                      className="d-none"
-                      accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip"
-                      onChange={handleDocumentUpload}
-                    />
-                  </div>
-                  <div className="card-body table-responsive p-0">
-                    {documents.length === 0 ? (
-                      <div className="text-center text-muted p-4">
-                        <i className="fas fa-folder-open fa-2x mb-2 d-block" />
-                        {t('student_form.no_documents')}
-                      </div>
-                    ) : (
-                      <table className="table table-hover mb-0">
-                        <thead>
-                          <tr>
-                            <th>{t('student_form.doc_col.file')}</th>
-                            <th>{t('student_form.doc_col.size')}</th>
-                            <th>{t('student_form.doc_col.uploaded')}</th>
-                            <th></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {documents.map(doc => (
-                            <tr key={doc.id}>
-                              <td>
-                                <i className={`${fileIcon(doc.mime_type)} mr-2`} />
-                                <button
-                                  type="button"
-                                  className="btn btn-link p-0 align-baseline"
-                                  onClick={() => handleDocumentDownload(doc)}
-                                >
-                                  {doc.original_name}
-                                </button>
-                              </td>
-                              <td className="text-muted small text-ltr">{formatFileSize(doc.size)}</td>
-                              <td className="text-muted small text-ltr">{fmt.date(doc.created_at)}</td>
-                              <td>
-                                <button
-                                  type="button"
-                                  className="btn btn-xs btn-danger"
-                                  title={t('common.delete')}
-                                  disabled={deletingDocId === doc.id}
-                                  onClick={() => handleDocumentDelete(doc.id)}
-                                >
-                                  {deletingDocId === doc.id
-                                    ? <i className="fas fa-spinner fa-spin" />
-                                    : <i className="fas fa-trash" />
-                                  }
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
-                </div>
+            <div className="lmsd-form-foot">
+              <button type="submit" className="lmsd-btn lmsd-btn--primary" disabled={saving}>
+                <i className={saving ? 'fas fa-spinner fa-spin' : 'fas fa-save'} aria-hidden="true" />
+                {saving ? t('common.saving') : isEdit ? t('student_form.submit_edit') : t('student_form.submit_new')}
+              </button>
+              <Link to="/students" className="lmsd-btn lmsd-btn--ghost">{t('common.cancel')}</Link>
+            </div>
+          </section>
+        </form>
+
+        {isEdit && (
+          <section className="lmsd-surface lmsd-panel" style={{ maxWidth: 860 }}>
+            <header className="lmsd-panel-head">
+              <span className="lmsd-chip"><i className="fas fa-paperclip" aria-hidden="true" /></span>
+              <div className="lmsd-panel-heading">
+                <h2 className="lmsd-panel-title">{t('student_form.documents')}</h2>
+                <p className="lmsd-panel-sub">{t('common.total_count', { count: documents.length })}</p>
               </div>
-            )}
-          </div>
-        </div>
+              <div className="lmsd-panel-tools">
+                <button type="button" className="lmsd-btn lmsd-btn--ghost"
+                  onClick={() => docRef.current?.click()} disabled={uploadingDoc}>
+                  <i className={uploadingDoc ? 'fas fa-spinner fa-spin' : 'fas fa-upload'} aria-hidden="true" />
+                  {uploadingDoc ? t('student_form.uploading') : t('student_form.upload_document')}
+                </button>
+                <input ref={docRef} type="file" style={{ display: 'none' }}
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip"
+                  onChange={handleDocumentUpload} />
+              </div>
+            </header>
+
+            <div className="lmsd-scroll">
+              <table className="lmsd-table">
+                <thead>
+                  <tr>
+                    <th>{t('student_form.doc_col.file')}</th>
+                    <th>{t('student_form.doc_col.size')}</th>
+                    <th>{t('student_form.doc_col.uploaded')}</th>
+                    <th className="lmsd-th-num">{t('common.actions')}</th>
+                  </tr>
+                </thead>
+                {!documents.length ? (
+                  <tbody>
+                    <tr>
+                      <td colSpan={4}>
+                        <div className="lmsd-empty">
+                          <i className="far fa-folder-open" aria-hidden="true" />
+                          {t('student_form.no_documents')}
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                ) : (
+                  <tbody>
+                    {documents.map((doc) => (
+                      <tr key={doc.id}>
+                        <td data-lead className="lmsd-cell-lead">
+                          <div className="lmsd-who">
+                            <i className={fileIcon(doc.mime_type)} aria-hidden="true" style={{ color: 'var(--ink-3)' }} />
+                            <button type="button" className="lmsd-strong"
+                              style={{ background: 'none', border: 0, padding: 0, textAlign: 'start', cursor: 'pointer' }}
+                              onClick={() => handleDocumentDownload(doc)}>
+                              {doc.original_name}
+                            </button>
+                          </div>
+                        </td>
+                        <td data-label={t('student_form.doc_col.size')}>{formatFileSize(doc.size)}</td>
+                        <td data-label={t('student_form.doc_col.uploaded')}>{fmt.date(doc.created_at)}</td>
+                        <td data-label={t('common.actions')}>
+                          <div className="lmsd-actions">
+                            <button type="button" className="lmsd-iconbtn lmsd-iconbtn--danger"
+                              title={t('common.delete')} aria-label={t('common.delete')}
+                              disabled={deletingDocId === doc.id}
+                              onClick={() => handleDocumentDelete(doc.id)}>
+                              <i className={deletingDocId === doc.id ? 'fas fa-spinner fa-spin' : 'fas fa-trash'} aria-hidden="true" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                )}
+              </table>
+            </div>
+          </section>
+        )}
       </div>
-    </>
+    </section>
   )
 }

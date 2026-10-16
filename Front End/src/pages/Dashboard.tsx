@@ -12,7 +12,6 @@ import { initialsOf } from '../components/ui/identity'
 import { ChartPanel } from '../components/ui/Charts'
 import { alignSeries, monthAxis, periodDelta } from '../components/ui/scale'
 import type { DashboardStats, DashboardBooking, TopCourse, Enrollment, Booking } from '../types'
-import '../styles/dashboard.css'
 
 /** Reads the writing direction for the charts, which have to lay their time
  *  axis out by hand - SVG has no `dir`. */

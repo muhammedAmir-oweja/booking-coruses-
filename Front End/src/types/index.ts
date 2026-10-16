@@ -19,7 +19,7 @@ export interface Course {
   taken_seats: number
   remaining_seats: number
   is_available: boolean
-  status: 'active' | 'inactive' | 'draft'
+  status: 'active' | 'inactive' | 'draft' | 'completed'
   start_date: string | null
   end_date: string | null
   created_at: string
@@ -110,7 +110,7 @@ export interface TopCourse {
   price: number
   capacity: number
   hours?: number
-  status: 'active' | 'inactive' | 'draft'
+  status: 'active' | 'inactive' | 'draft' | 'completed'
   enrolled_count: number
   remaining_seats: number
   is_available: boolean

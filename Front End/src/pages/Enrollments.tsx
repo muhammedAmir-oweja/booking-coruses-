@@ -2,18 +2,16 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useFormat } from '../format'
 import Pagination from '../components/ui/Pagination'
+import PageHeader from '../components/ui/Page'
+import StatusPill from '../components/ui/StatusPill'
+import { EmptyRow, TableSkeleton } from '../components/ui/Table'
+import { initialsOf } from '../components/ui/identity'
 import { Link } from 'react-router-dom'
 import { getEnrollments, deleteEnrollment, updateEnrollment } from '../api/enrollments'
 import type { Enrollment } from '../types'
 import { useToast } from '../context/ToastContext'
 import { usePreferences } from '../context/PreferencesContext'
 import { useAuth } from '../context/AuthContext'
-
-const STATUS_BADGES: Record<string, string> = {
-  confirmed: 'badge-success',
-  pending:   'badge-warning',
-  cancelled: 'badge-danger',
-}
 
 export default function Enrollments() {
   const { t } = useTranslation()
@@ -90,137 +88,148 @@ export default function Enrollments() {
     }
   }
 
+  const canManage = isAdmin || isInstructor
+  const cols = isAdmin ? 5 : 4
+
   return (
-    <>
-      <div className="content-header">
-        <div className="container-fluid">
-          <div className="row mb-2">
-            <div className="col-sm-6">
-              <h1 className="m-0">{t('enrollments.title')}</h1>
-            </div>
-            <div className="col-sm-6 text-right">
-              {(isAdmin || isInstructor) && (
-                <Link to="/enrollments/new" className="btn btn-primary btn-sm">
-                  <i className="fas fa-plus mr-1" /> {t('nav.enroll_student')}
-                </Link>
-              )}
-            </div>
+    <section className="content">
+      <div className="container-fluid lmsd">
+        <PageHeader
+          title={t('enrollments.title')}
+          subtitle={t('common.total_count', { count: total })}
+          crumbs={[{ label: t('enrollments.title') }]}
+          actions={canManage && (
+            <Link to="/enrollments/new" className="lmsd-btn lmsd-btn--primary">
+              <i className="fas fa-plus" aria-hidden="true" /> {t('nav.enroll_student')}
+            </Link>
+          )}
+        />
+
+        {error && (
+          <div className="lmsd-note lmsd-note--warn" role="alert">
+            <span className="lmsd-chip"><i className="fas fa-exclamation-triangle" aria-hidden="true" /></span>
+            <span className="lmsd-note-text">{t(error)}</span>
           </div>
-        </div>
-      </div>
+        )}
 
-      <div className="content">
-        <div className="container-fluid">
-          <div className="card">
-            <div className="card-header d-flex align-items-center" style={{ gap: 8 }}>
-              <h3 className="card-title mr-3">{t('enrollments.all')}</h3>
-              <select
-                className="form-control form-control-sm"
-                style={{ maxWidth: 160 }}
-                value={statusFilter}
-                onChange={(e) => { setLoading(true); setStatusFilter(e.target.value); setPage(1) }}
+        <section className="lmsd-surface lmsd-panel">
+          <div className="lmsd-toolbar">
+            <select
+              className="lmsd-select"
+              style={{ width: 'auto' }}
+              aria-label={t('enrollments.col.status')}
+              value={statusFilter}
+              onChange={(e) => { setLoading(true); setStatusFilter(e.target.value); setPage(1) }}
+            >
+              <option value="">{t('common.all_statuses')}</option>
+              <option value="pending">{t('status.pending')}</option>
+              <option value="confirmed">{t('status.confirmed')}</option>
+              <option value="cancelled">{t('status.cancelled')}</option>
+              <option value="completed">{t('status.completed')}</option>
+            </select>
+            {statusFilter && (
+              <button
+                type="button"
+                className="lmsd-btn lmsd-btn--ghost"
+                onClick={() => { setLoading(true); setStatusFilter(''); setPage(1) }}
               >
-                <option value="">{t('common.all_statuses')}</option>
-                <option value="confirmed">{t('status.confirmed')}</option>
-                <option value="pending">{t('status.pending')}</option>
-                <option value="cancelled">{t('status.cancelled')}</option>
-              </select>
-              <div className="ml-auto">
-                <span className="badge badge-info">{t('common.total_count', { count: total })}</span>
-              </div>
-            </div>
+                <i className="fas fa-times" aria-hidden="true" /> {t('common.clear')}
+              </button>
+            )}
+          </div>
 
-            <div className="card-body table-responsive p-0">
-              {loading ? (
-                <div className="text-center p-4">
-                  <i className="fas fa-spinner fa-spin mr-2" /> {t('common.loading')}
-                </div>
-              ) : error ? (
-                <div className="alert alert-danger m-3">{t(error)}</div>
-              ) : enrollments.length === 0 ? (
-                <div className="text-center p-4 text-muted">{t('enrollments.none_found')}</div>
+          <div className="lmsd-scroll">
+            <table className="lmsd-table">
+              <thead>
+                <tr>
+                  <th>{t('enrollments.col.student')}</th>
+                  <th>{t('enrollments.col.course')}</th>
+                  <th>{t('enrollments.col.enrolled_at')}</th>
+                  <th>{t('enrollments.col.status')}</th>
+                  {isAdmin && <th className="lmsd-th-num">{t('common.actions')}</th>}
+                </tr>
+              </thead>
+
+              {loading ? <TableSkeleton rows={6} cols={cols} /> : !enrollments.length ? (
+                <EmptyRow cols={cols} icon="far fa-user" label={t('enrollments.none_found')} />
               ) : (
-                <table className="table table-hover table-striped">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>{t('enrollments.col.student')}</th>
-                      <th>{t('enrollments.col.course')}</th>
-                      <th>{t('enrollments.col.enrolled_at')}</th>
-                      <th>{t('enrollments.col.status')}</th>
-                      <th>{t('common.actions')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {enrollments.map((e) => (
-                      <tr key={e.id}>
-                        <td>{e.id}</td>
-                        <td>
-                          <strong>{e.student?.name ?? `#${e.student_id}`}</strong>
-                          <br />
-                          <small className="text-muted text-ltr">{e.student?.email}</small>
-                        </td>
-                        <td>{e.course?.title ?? `#${e.course_id}`}</td>
-                        <td className="text-ltr">{fmt.date(e.enrolled_at, t('common.none'))}</td>
-                        <td>
-                          <span className={`badge ${STATUS_BADGES[e.status] ?? 'badge-secondary'}`}>
-                            {t(`status.${e.status}`)}
+                <tbody>
+                  {enrollments.map((e) => (
+                    <tr key={e.id}>
+                      <td data-lead className="lmsd-cell-lead">
+                        <div className="lmsd-who">
+                          <span className="lmsd-avatar" aria-hidden="true">
+                            {initialsOf(e.student?.name ?? '?')}
                           </span>
-                        </td>
-                        <td>
-                          {isAdmin && e.status !== 'confirmed' && (
+                          <span style={{ minWidth: 0 }}>
+                            <span className="lmsd-strong">{e.student?.name ?? `#${e.student_id}`}</span>
+                            {e.student?.email && <span className="lmsd-sub">{e.student.email}</span>}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="lmsd-cell-wide" data-label={t('enrollments.col.course')}>
+                        <span className="lmsd-strong">{e.course?.title ?? `#${e.course_id}`}</span>
+                      </td>
+                      <td data-label={t('enrollments.col.enrolled_at')}>
+                        {fmt.date(e.enrolled_at, t('common.none'))}
+                      </td>
+                      <td data-label={t('enrollments.col.status')}><StatusPill status={e.status} /></td>
+                      {isAdmin && (
+                        <td data-label={t('common.actions')}>
+                          <div className="lmsd-actions">
+                            {e.status !== 'confirmed' && (
+                              <button
+                                type="button"
+                                className="lmsd-iconbtn lmsd-iconbtn--good"
+                                title={t('common.confirm')}
+                                aria-label={t('common.confirm')}
+                                disabled={actionId === e.id}
+                                onClick={() => handleStatusChange(e, 'confirmed')}
+                              >
+                                <i className="fas fa-check" aria-hidden="true" />
+                              </button>
+                            )}
+                            {e.status !== 'cancelled' && (
+                              <button
+                                type="button"
+                                className="lmsd-iconbtn"
+                                title={t('common.cancel')}
+                                aria-label={t('common.cancel')}
+                                disabled={actionId === e.id}
+                                onClick={() => handleStatusChange(e, 'cancelled')}
+                              >
+                                <i className="fas fa-ban" aria-hidden="true" />
+                              </button>
+                            )}
                             <button
-                              className="btn btn-xs btn-success mr-1"
-                              title={t('common.confirm')}
-                              disabled={actionId === e.id}
-                              onClick={() => handleStatusChange(e, 'confirmed')}
-                            >
-                              <i className="fas fa-check" />
-                            </button>
-                          )}
-                          {isAdmin && e.status !== 'cancelled' && (
-                            <button
-                              className="btn btn-xs btn-warning mr-1"
-                              title={t('common.cancel')}
-                              disabled={actionId === e.id}
-                              onClick={() => handleStatusChange(e, 'cancelled')}
-                            >
-                              <i className="fas fa-ban" />
-                            </button>
-                          )}
-                          {isAdmin && (
-                            <button
-                              className="btn btn-xs btn-danger"
+                              type="button"
+                              className="lmsd-iconbtn lmsd-iconbtn--danger"
                               title={t('common.delete')}
+                              aria-label={t('common.delete')}
                               disabled={actionId === e.id}
                               onClick={() => handleDelete(e)}
                             >
-                              {actionId === e.id
-                                ? <i className="fas fa-spinner fa-spin" />
-                                : <i className="fas fa-trash" />
-                              }
+                              <i className={actionId === e.id ? 'fas fa-spinner fa-spin' : 'fas fa-trash'} aria-hidden="true" />
                             </button>
-                          )}
+                          </div>
                         </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
               )}
-            </div>
-
-            {(lastPage) > 0 && (
-              <Pagination
-                page={page}
-                lastPage={lastPage}
-                total={total}
-                onPage={goToPage}
-                onPageSizeChange={() => goToPage(1)}
-              />
-            )}
+            </table>
           </div>
-        </div>
+
+          <Pagination
+            page={page}
+            lastPage={lastPage}
+            total={total}
+            onPage={goToPage}
+            onPageSizeChange={() => goToPage(1)}
+          />
+        </section>
       </div>
-    </>
+    </section>
   )
 }

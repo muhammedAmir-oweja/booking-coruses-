@@ -20,4 +20,16 @@ return [
     'status_pending' => 'قيد الانتظار',
     'status_confirmed' => 'مؤكد',
     'status_cancelled' => 'ملغى',
+
+    // Task 29: the confirmation mail, sent by SendBookingConfirmedMail when
+    // a booking moves into 'confirmed'.
+    'confirm_subject' => 'تم تأكيد حجزك في :course',
+    'confirm_heading' => 'تم تأكيد الحجز',
+    'confirm_line' => 'خبر سار - تم تأكيد مقعدك في :course.',
+    'confirm_footer' => 'بانتظارك. راسلنا على هذا البريد إذا احتجت أي تعديل.',
+    'payment' => 'الدفع',
+    'payment_paid' => 'مدفوع',
+    'payment_unpaid' => 'غير مدفوع',
+    'payment_refunded' => 'مُسترد',
+    'starts_on' => 'تبدأ في',
 ];

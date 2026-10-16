@@ -2,21 +2,15 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useFormat } from '../format'
 import Pagination from '../components/ui/Pagination'
+import PageHeader from '../components/ui/Page'
+import StatusPill from '../components/ui/StatusPill'
+import { EmptyRow, TableSkeleton } from '../components/ui/Table'
 import { Link } from 'react-router-dom'
 import { getTrainingSessions, deleteTrainingSession } from '../api/trainingSessions'
 import type { TrainingSession } from '../types'
 import { useToast } from '../context/ToastContext'
 import { usePreferences } from '../context/PreferencesContext'
 import { useAuth } from '../context/AuthContext'
-
-const STATUS_BADGES: Record<string, string> = {
-  scheduled:  'badge-info',
-  ongoing:    'badge-warning',
-  completed:  'badge-success',
-  cancelled:  'badge-danger',
-}
-
-
 
 export default function TrainingSessions() {
   const { t } = useTranslation()
@@ -91,147 +85,134 @@ export default function TrainingSessions() {
     }
   }
 
+  const canManage = isAdmin || isInstructor
+  const cols = canManage ? 6 : 5
+
   return (
-    <>
-      <div className="content-header">
-        <div className="container-fluid">
-          <div className="row mb-2">
-            <div className="col-sm-6">
-              <h1 className="m-0">{t('sessions.title')}</h1>
-            </div>
-            <div className="col-sm-6 text-right">
-              {(isAdmin || isInstructor) && (
-                <Link to="/training-sessions/new" className="btn btn-primary btn-sm">
-                  <i className="fas fa-plus mr-1" /> {t('nav.add_session')}
-                </Link>
-              )}
-            </div>
+    <section className="content">
+      <div className="container-fluid lmsd">
+        <PageHeader
+          title={t('sessions.title')}
+          subtitle={t('common.total_count', { count: total })}
+          crumbs={[{ label: t('sessions.title') }]}
+          actions={canManage && (
+            <Link to="/training-sessions/new" className="lmsd-btn lmsd-btn--primary">
+              <i className="fas fa-plus" aria-hidden="true" /> {t('nav.add_session')}
+            </Link>
+          )}
+        />
+
+        {error && (
+          <div className="lmsd-note lmsd-note--warn" role="alert">
+            <span className="lmsd-chip"><i className="fas fa-exclamation-triangle" aria-hidden="true" /></span>
+            <span className="lmsd-note-text">{t(error)}</span>
           </div>
-        </div>
-      </div>
+        )}
 
-      <div className="content">
-        <div className="container-fluid">
-          <div className="card">
-            <div className="card-header d-flex flex-wrap align-items-center" style={{ gap: 8 }}>
-              <form onSubmit={handleSearch} className="d-flex" style={{ gap: 8 }}>
-                <input
-                  type="text"
-                  className="form-control form-control-sm"
-                  placeholder={t('sessions.search_placeholder')}
-                  style={{ maxWidth: 260 }}
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                />
-                <button type="submit" className="btn btn-default btn-sm">
-                  <i className="fas fa-search" />
-                </button>
-                {search && (
-                  <button type="button" className="btn btn-default btn-sm"
-                    onClick={() => { setLoading(true); setSearchInput(''); setSearch(''); setPage(1) }}>
-                    {t('common.clear')}
-                  </button>
-                )}
-              </form>
-
-              <select
-                className="form-control form-control-sm"
-                style={{ maxWidth: 150 }}
-                value={statusFilter}
-                onChange={(e) => { setLoading(true); setStatusFilter(e.target.value); setPage(1) }}
-              >
-                <option value="">{t('common.all_statuses')}</option>
-                <option value="scheduled">{t('status.scheduled')}</option>
-                <option value="ongoing">{t('status.ongoing')}</option>
-                <option value="completed">{t('status.completed')}</option>
-                <option value="cancelled">{t('status.cancelled')}</option>
-              </select>
-
-              <div className="card-tools ml-auto">
-                <span className="badge badge-info">{t('common.total_count', { count: total })}</span>
-              </div>
+        <section className="lmsd-surface lmsd-panel">
+          <form className="lmsd-toolbar" onSubmit={handleSearch} role="search">
+            <div className="lmsd-search">
+              <i className="fas fa-search" aria-hidden="true" />
+              <input
+                type="search"
+                className="lmsd-input"
+                placeholder={t('sessions.search_placeholder')}
+                aria-label={t('sessions.search_placeholder')}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+              />
             </div>
+            <button type="submit" className="lmsd-btn lmsd-btn--ghost">{t('common.search')}</button>
+            <select
+              className="lmsd-select"
+              style={{ width: 'auto' }}
+              aria-label={t('sessions.col.status')}
+              value={statusFilter}
+              onChange={(e) => { setLoading(true); setStatusFilter(e.target.value); setPage(1) }}
+            >
+              <option value="">{t('common.all_statuses')}</option>
+              <option value="scheduled">{t('status.scheduled')}</option>
+              <option value="ongoing">{t('status.ongoing')}</option>
+              <option value="completed">{t('status.completed')}</option>
+              <option value="cancelled">{t('status.cancelled')}</option>
+            </select>
+          </form>
 
-            <div className="card-body table-responsive p-0">
-              {loading ? (
-                <div className="text-center p-4">
-                  <i className="fas fa-spinner fa-spin mr-2" /> {t('common.loading')}
-                </div>
-              ) : error ? (
-                <div className="alert alert-danger m-3">{t(error)}</div>
-              ) : sessions.length === 0 ? (
-                <div className="text-center p-4 text-muted">{t('sessions.none_found')}</div>
+          <div className="lmsd-scroll">
+            <table className="lmsd-table">
+              <thead>
+                <tr>
+                  <th>{t('sessions.col.title')}</th>
+                  <th>{t('sessions.col.course')}</th>
+                  <th>{t('sessions.col.starts_at')}</th>
+                  <th>{t('sessions.col.location')}</th>
+                  <th>{t('sessions.col.status')}</th>
+                  {canManage && <th className="lmsd-th-num">{t('common.actions')}</th>}
+                </tr>
+              </thead>
+
+              {loading ? <TableSkeleton rows={6} cols={cols} /> : !sessions.length ? (
+                <EmptyRow cols={cols} icon="far fa-calendar" label={t('sessions.none_found')} />
               ) : (
-                <table className="table table-hover table-striped">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>{t('sessions.col.title')}</th>
-                      <th>{t('sessions.col.course')}</th>
-                      <th>{t('sessions.col.starts_at')}</th>
-                      <th>{t('sessions.col.duration')}</th>
-                      <th>{t('sessions.col.location')}</th>
-                      <th>{t('sessions.col.status')}</th>
-                      <th>{t('common.actions')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sessions.map((s) => (
-                      <tr key={s.id}>
-                        <td>{s.id}</td>
-                        <td>{s.title}</td>
-                        <td>{s.course?.title ?? t('common.none')}</td>
-                        <td className="text-ltr" style={{ whiteSpace: 'nowrap' }}>{fmt.dateTime(s.starts_at)}</td>
-                        <td>{s.duration_minutes != null ? t('sessions.minutes', { count: s.duration_minutes }) : t('common.none')}</td>
-                        <td>{s.location || t('common.none')}</td>
-                        <td>
-                          <span className={`badge ${STATUS_BADGES[s.status] ?? 'badge-secondary'}`}>
-                            {t(`status.${s.status}`)}
-                          </span>
-                        </td>
-                        <td>
-                          {(isAdmin || isInstructor) && (
+                <tbody>
+                  {sessions.map((s) => (
+                    <tr key={s.id}>
+                      <td data-lead className="lmsd-cell-lead">
+                        <span className="lmsd-strong" title={s.title}>{s.title}</span>
+                        <span className="lmsd-sub">
+                          {s.duration_minutes != null
+                            ? t('sessions.minutes', { count: s.duration_minutes })
+                            : t('common.none')}
+                        </span>
+                      </td>
+                      <td className="lmsd-cell-wide" data-label={t('sessions.col.course')}>
+                        {s.course?.title ?? t('common.none')}
+                      </td>
+                      <td data-label={t('sessions.col.starts_at')}>{fmt.dateTime(s.starts_at)}</td>
+                      <td data-label={t('sessions.col.location')}>{s.location || t('common.none')}</td>
+                      <td data-label={t('sessions.col.status')}><StatusPill status={s.status} /></td>
+                      {canManage && (
+                        <td data-label={t('common.actions')}>
+                          <div className="lmsd-actions">
                             <Link
                               to={`/training-sessions/${s.id}/edit`}
-                              className="btn btn-xs btn-info mr-1"
+                              className="lmsd-iconbtn"
                               title={t('common.edit')}
+                              aria-label={t('common.edit')}
                             >
-                              <i className="fas fa-edit" />
+                              <i className="fas fa-pen" aria-hidden="true" />
                             </Link>
-                          )}
-                          {isAdmin && (
-                            <button
-                              className="btn btn-xs btn-danger"
-                              title={t('common.delete')}
-                              disabled={deleting === s.id}
-                              onClick={() => handleDelete(s)}
-                            >
-                              {deleting === s.id
-                                ? <i className="fas fa-spinner fa-spin" />
-                                : <i className="fas fa-trash" />
-                              }
-                            </button>
-                          )}
+                            {isAdmin && (
+                              <button
+                                type="button"
+                                className="lmsd-iconbtn lmsd-iconbtn--danger"
+                                title={t('common.delete')}
+                                aria-label={t('common.delete')}
+                                disabled={deleting === s.id}
+                                onClick={() => handleDelete(s)}
+                              >
+                                <i className={deleting === s.id ? 'fas fa-spinner fa-spin' : 'fas fa-trash'} aria-hidden="true" />
+                              </button>
+                            )}
+                          </div>
                         </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
               )}
-            </div>
-
-            {(lastPage) > 0 && (
-              <Pagination
-                page={page}
-                lastPage={lastPage}
-                total={total}
-                onPage={goToPage}
-                onPageSizeChange={() => goToPage(1)}
-              />
-            )}
+            </table>
           </div>
-        </div>
+
+          <Pagination
+            page={page}
+            lastPage={lastPage}
+            total={total}
+            onPage={goToPage}
+            onPageSizeChange={() => goToPage(1)}
+          />
+        </section>
       </div>
-    </>
+    </section>
   )
 }

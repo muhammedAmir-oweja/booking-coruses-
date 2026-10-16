@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useFormat } from '../format'
 import Pagination from '../components/ui/Pagination'
-import { Link, useNavigate } from 'react-router-dom'
+import PageHeader from '../components/ui/Page'
+import StatusPill from '../components/ui/StatusPill'
+import { EmptyRow, TableSkeleton } from '../components/ui/Table'
+import { Link } from 'react-router-dom'
 import { getCourses, deleteCourse } from '../api/courses'
 import type { Course, PaginatedResponse } from '../types'
 import { useToast } from '../context/ToastContext'
@@ -10,7 +13,6 @@ import { usePreferences } from '../context/PreferencesContext'
 import { useAuth } from '../context/AuthContext'
 
 export default function Courses() {
-  const navigate = useNavigate()
   const { t } = useTranslation()
   const fmt = useFormat()
   const { prefs } = usePreferences()
@@ -75,162 +77,183 @@ export default function Courses() {
     }
   }
 
-  const statusBadge = (status: Course['status']) => {
-    const map = { active: 'success', inactive: 'secondary', draft: 'warning' }
-    return <span className={`badge badge-${map[status]}`}>{t(`status.${status}`)}</span>
-  }
+  const canManage = isAdmin || isInstructor
 
   return (
-    <>
-      <div className="content-header">
-        <div className="container-fluid">
-          <div className="row mb-2">
-            <div className="col-sm-6">
-              <h1 className="m-0">{t('courses.title')}</h1>
-            </div>
-            <div className="col-sm-6">
-              <ol className="breadcrumb float-sm-right">
-                <li className="breadcrumb-item"><Link to="/">{t('common.home')}</Link></li>
-                <li className="breadcrumb-item active">{t('courses.title')}</li>
-              </ol>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <section className="content">
-        <div className="container-fluid">
-          {error && (
-            <div className="alert alert-danger">
-              <i className="fas fa-exclamation-triangle mr-2" />{t(error)}
-            </div>
+    <section className="content">
+      <div className="container-fluid lmsd">
+        <PageHeader
+          title={t('courses.title')}
+          subtitle={typeof data?.total === 'number' ? t('common.total_count', { count: data.total }) : undefined}
+          crumbs={[{ label: t('courses.title') }]}
+          actions={canManage && (
+            <Link to="/courses/new" className="lmsd-btn lmsd-btn--primary">
+              <i className="fas fa-plus" aria-hidden="true" /> {t('nav.add_course')}
+            </Link>
           )}
+        />
 
-          <div className="card">
-            <div className="card-header">
-              <h3 className="card-title">{t('courses.all')}</h3>
-              <div className="card-tools d-flex align-items-center gap-2">
-                <form onSubmit={handleSearch} className="input-group input-group-sm" style={{ width: 250 }}>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder={t('courses.search_placeholder')}
-                    value={searchInput}
-                    onChange={(e) => setSearchInput(e.target.value)}
-                  />
-                  <div className="input-group-append">
-                    <button type="submit" className="btn btn-default">
-                      <i className="fas fa-search" />
-                    </button>
-                  </div>
-                </form>
-                {(isAdmin || isInstructor) && (
-                  <button
-                    className="btn btn-primary btn-sm"
-                    onClick={() => navigate('/courses/new')}
-                  >
-                    <i className="fas fa-plus mr-1" /> {t('nav.add_course')}
-                  </button>
-                )}
-              </div>
+        {error && (
+          <div className="lmsd-note lmsd-note--warn" role="alert">
+            <span className="lmsd-chip"><i className="fas fa-exclamation-triangle" aria-hidden="true" /></span>
+            <span className="lmsd-note-text">{t(error)}</span>
+            <button type="button" className="lmsd-btn lmsd-btn--ghost" onClick={reload}>
+              {t('common.retry')}
+            </button>
+          </div>
+        )}
+
+        <section className="lmsd-surface lmsd-panel">
+          <form className="lmsd-toolbar" onSubmit={handleSearch} role="search">
+            <div className="lmsd-search">
+              <i className="fas fa-search" aria-hidden="true" />
+              <input
+                type="search"
+                className="lmsd-input"
+                placeholder={t('courses.search_placeholder')}
+                aria-label={t('courses.search_placeholder')}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+              />
             </div>
+            <button type="submit" className="lmsd-btn lmsd-btn--ghost">{t('common.search')}</button>
+            {search && (
+              <button
+                type="button"
+                className="lmsd-btn lmsd-btn--ghost"
+                onClick={() => { setSearchInput(''); setSearch(''); goToPage(1) }}
+              >
+                <i className="fas fa-times" aria-hidden="true" /> {t('common.clear')}
+              </button>
+            )}
+          </form>
 
-            <div className="card-body table-responsive p-0">
-              <table className="table table-striped table-hover">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>{t('courses.col.title')}</th>
-                    <th>{t('courses.col.instructor')}</th>
-                    <th>{t('courses.col.price')}</th>
-                    <th>{t('courses.col.hours')}</th>
-                    <th>{t('courses.col.enrolled')}</th>
-                    <th>{t('courses.col.status')}</th>
-                    <th>{t('courses.col.start_date')}</th>
-                    <th>{t('common.actions')}</th>
-                  </tr>
-                </thead>
+          <div className="lmsd-scroll">
+            <table className="lmsd-table">
+              <thead>
+                <tr>
+                  <th>{t('courses.col.title')}</th>
+                  <th>{t('courses.col.instructor')}</th>
+                  <th className="lmsd-th-num">{t('courses.col.price')}</th>
+                  <th>{t('courses.col.enrolled')}</th>
+                  <th>{t('courses.col.status')}</th>
+                  <th>{t('courses.col.start_date')}</th>
+                  {canManage && <th className="lmsd-th-num">{t('common.actions')}</th>}
+                </tr>
+              </thead>
+
+              {loading ? <TableSkeleton rows={6} cols={canManage ? 7 : 6} /> : !data?.data?.length ? (
+                <EmptyRow
+                  cols={canManage ? 7 : 6}
+                  icon="far fa-folder-open"
+                  label={t('courses.none_found')}
+                />
+              ) : (
                 <tbody>
-                  {loading && (
-                    <tr>
-                      <td colSpan={9} className="text-center py-4">
-                        <i className="fas fa-spinner fa-spin mr-2" />{t('common.loading')}
-                      </td>
-                    </tr>
-                  )}
-                  {!loading && !data?.data?.length && (
-                    <tr>
-                      <td colSpan={9} className="text-center py-4 text-muted">
-                        {t('courses.none_found')}
-                      </td>
-                    </tr>
-                  )}
-                  {data?.data?.map((course) => (
+                  {data.data.map((course) => (
                     <tr key={course.id}>
-                      <td>{course.id}</td>
-                      <td>
-                        <Link to={`/courses/${course.id}/edit`}>{course.title}</Link>
+                      <td data-lead className="lmsd-cell-lead">
+                        <Link to={`/courses/${course.id}/edit`} className="lmsd-strong" title={course.title}>
+                          {course.title}
+                        </Link>
+                        <span className="lmsd-sub">
+                          {t('courses.col.hours')}: {course.hours ?? 0}
+                        </span>
                       </td>
-                      <td>{course.instructor?.name ?? `#${course.instructor_id}`}</td>
-                      <td className="text-ltr">{fmt.money(course.price)}</td>
-                      <td className="text-ltr">{course.hours ?? 0}</td>
-                      <td>
-                        <span className="text-ltr">{course.taken_seats} / {course.capacity}</span>
-                      {/* is_available folds three different refusals together -
-                          not active, already ended, and no seats left - so it
-                          cannot be the whole story on its own. Only an actually
-                          full course gets "Full"; a draft or finished one with
-                          seats to spare is "Unavailable", not a lie about
-                          capacity. */}
-                      {course.is_available
-                        ? <span className="badge badge-success ml-1">{t('courses.seats_left', { count: course.remaining_seats })}</span>
-                        : course.remaining_seats === 0
-                          ? <span className="badge badge-danger ml-1">{t('courses.full')}</span>
-                          : <span className="badge badge-secondary ml-1">{t('courses.unavailable')}</span>}
+                      <td data-label={t('courses.col.instructor')}>
+                        {course.instructor?.name ?? `#${course.instructor_id}`}
                       </td>
-                      <td>{statusBadge(course.status)}</td>
-                      <td className="text-ltr">{fmt.date(course.start_date, t('common.none'))}</td>
-                      <td>
-                        {(isAdmin || isInstructor) && (
-                          <Link
-                            to={`/courses/${course.id}/edit`}
-                            className="btn btn-sm btn-info mr-1"
-                            title={t('common.edit')}
-                          >
-                            <i className="fas fa-edit" />
-                          </Link>
-                        )}
-                        {isAdmin && (
-                          <button
-                            className="btn btn-sm btn-danger"
-                            title={t('common.delete')}
-                            disabled={deletingId === course.id}
-                            onClick={() => handleDelete(course.id)}
-                          >
-                            {deletingId === course.id
-                              ? <i className="fas fa-spinner fa-spin" />
-                              : <i className="fas fa-trash" />}
-                          </button>
-                        )}
+                      <td className="lmsd-num" data-label={t('courses.col.price')}>{fmt.money(course.price)}</td>
+                      <td data-label={t('courses.col.enrolled')}>
+                        <SeatCell
+                          taken={course.taken_seats}
+                          capacity={course.capacity}
+                          remaining={course.remaining_seats}
+                          available={course.is_available}
+                        />
                       </td>
+                      <td data-label={t('courses.col.status')}><StatusPill status={course.status} /></td>
+                      <td data-label={t('courses.col.start_date')}>
+                        {fmt.date(course.start_date, t('common.none'))}
+                      </td>
+                      {canManage && (
+                        <td data-label={t('common.actions')}>
+                          <div className="lmsd-actions">
+                            <Link
+                              to={`/courses/${course.id}/edit`}
+                              className="lmsd-iconbtn"
+                              title={t('common.edit')}
+                              aria-label={t('common.edit')}
+                            >
+                              <i className="fas fa-pen" aria-hidden="true" />
+                            </Link>
+                            {isAdmin && (
+                              <button
+                                type="button"
+                                className="lmsd-iconbtn lmsd-iconbtn--danger"
+                                title={t('common.delete')}
+                                aria-label={t('common.delete')}
+                                disabled={deletingId === course.id}
+                                onClick={() => handleDelete(course.id)}
+                              >
+                                <i className={deletingId === course.id ? 'fas fa-spinner fa-spin' : 'fas fa-trash'} aria-hidden="true" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
-              </table>
-            </div>
-
-            {(data?.last_page ?? 1) > 0 && (
-              <Pagination
-                page={page}
-                lastPage={data?.last_page ?? 1}
-                total={data?.total}
-                onPage={goToPage}
-                onPageSizeChange={() => goToPage(1)}
-              />
-            )}
+              )}
+            </table>
           </div>
-        </div>
-      </section>
-    </>
+
+          <Pagination
+            page={page}
+            lastPage={data?.last_page ?? 1}
+            total={data?.total}
+            onPage={goToPage}
+            onPageSizeChange={() => goToPage(1)}
+          />
+        </section>
+      </div>
+    </section>
+  )
+}
+
+/**
+ * Seats taken, as a meter plus the words.
+ *
+ * `is_available` folds three different refusals together - not active, already
+ * ended, and no seats left - so it cannot be the whole story on its own. Only
+ * an actually full course reads "Full"; a draft or finished one with seats to
+ * spare is "Unavailable", not a lie about capacity.
+ */
+function SeatCell({ taken, capacity, remaining, available }: {
+  taken: number
+  capacity: number
+  remaining: number
+  available: boolean
+}) {
+  const { t } = useTranslation()
+  const ratio = capacity > 0 ? taken / capacity : 0
+  const pct = Math.min(100, Math.max(0, ratio * 100))
+  const tone = ratio >= 1 ? ' lmsd-meter--full' : ratio >= 0.8 ? ' lmsd-meter--warn' : ''
+
+  return (
+    <div className="lmsd-meter-wrap">
+      <div className="lmsd-meter-label">
+        <b>{`\u2068${taken} / ${capacity}\u2069`}</b>
+        <span>
+          {available
+            ? t('courses.seats_left', { count: remaining })
+            : remaining === 0 ? t('courses.full') : t('courses.unavailable')}
+        </span>
+      </div>
+      <div className={`lmsd-meter${tone}`}>
+        <div className="lmsd-meter-fill" style={{ width: `${pct}%` }} />
+      </div>
+    </div>
   )
 }

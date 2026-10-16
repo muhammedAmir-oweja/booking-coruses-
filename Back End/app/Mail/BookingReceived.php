@@ -9,7 +9,11 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class BookingConfirmed extends Mailable
+/**
+ * Sent the moment a booking is created, while it is still pending.
+ * The confirmation that follows an admin approving it is BookingConfirmed.
+ */
+class BookingReceived extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -27,7 +31,7 @@ class BookingConfirmed extends Mailable
         // Everything the template needs, passed explicitly - a Blade that walks
         // relations lazily is how one mail send turns into eight queries.
         return new Content(
-            markdown: 'emails.bookings.confirmed',
+            markdown: 'emails.bookings.received',
             with: [
                 'studentName' => $this->booking->student?->name,
                 'courseTitle' => $this->booking->course?->title,

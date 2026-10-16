@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import PageHeader from '../components/ui/Page'
+import Field from '../components/ui/Field'
+import { ctl } from '../components/ui/form'
 import { getCourse, createCourse, updateCourse } from '../api/courses'
 import { getUsers } from '../api/users'
 import type { Course, User } from '../types'
@@ -145,185 +148,111 @@ export default function CourseForm() {
   }
 
   return (
-    <>
-      <div className="content-header">
-        <div className="container-fluid">
-          <div className="row mb-2">
-            <div className="col-sm-6">
-              <h1 className="m-0">{isEdit ? t('course_form.edit_title') : t('course_form.new_title')}</h1>
-            </div>
-            <div className="col-sm-6">
-              <ol className="breadcrumb float-sm-right">
-                <li className="breadcrumb-item"><Link to="/">{t('common.home')}</Link></li>
-                <li className="breadcrumb-item"><Link to="/courses">{t('courses.title')}</Link></li>
-                <li className="breadcrumb-item active">{isEdit ? t('course_form.crumb_edit') : t('course_form.crumb_new')}</li>
-              </ol>
-            </div>
-          </div>
-        </div>
-      </div>
+    <section className="content">
+      <div className="container-fluid lmsd">
+        <PageHeader
+          title={isEdit ? t('course_form.edit_title') : t('course_form.new_title')}
+          subtitle={isEdit ? t('course_form.card_edit') : t('course_form.card_new')}
+          crumbs={[
+            { label: t('courses.title'), to: '/courses' },
+            { label: isEdit ? t('course_form.crumb_edit') : t('course_form.crumb_new') },
+          ]}
+        />
 
-      <section className="content">
-        <div className="container-fluid">
-          <div className="row">
-            <div className="col-md-8">
-              <div className="card card-primary">
-                <div className="card-header">
-                  <h3 className="card-title">{isEdit ? t('course_form.card_edit') : t('course_form.card_new')}</h3>
+        <form onSubmit={handleSubmit}>
+          <section className="lmsd-surface lmsd-panel" style={{ maxWidth: 860 }}>
+            <div className="lmsd-panel-body">
+              {apiError && (
+                <div className="lmsd-note lmsd-note--warn" role="alert" style={{ marginBottom: 16 }}>
+                  <span className="lmsd-chip"><i className="fas fa-exclamation-triangle" aria-hidden="true" /></span>
+                  <span className="lmsd-note-text">{t(apiError)}</span>
                 </div>
-                <form onSubmit={handleSubmit}>
-                  <div className="card-body">
-                    {apiError && (
-                      <div className="alert alert-danger">
-                        <i className="fas fa-exclamation-triangle mr-2" />{t(apiError)}
-                      </div>
-                    )}
+              )}
 
-                    <div className="form-group">
-                      <label htmlFor="course-instructor">{t('course_form.instructor')} <span className="text-danger">*</span></label>
-                      <select id="course-instructor"
-                        name="instructor_id"
-                        className={`form-control${errors.instructor_id ? ' is-invalid' : ''}`}
-                        value={form.instructor_id}
-                        onChange={handleChange}
-                      >
-                        <option value="">{t('course_form.select_instructor')}</option>
-                        {instructors.map(u => (
-                          <option key={u.id} value={u.id}>{u.name}</option>
-                        ))}
-                      </select>
-                      {errors.instructor_id && (
-                        <div className="invalid-feedback">{errors.instructor_id}</div>
-                      )}
-                    </div>
+              <div className="lmsd-form-grid">
+                <Field label={t('course_form.instructor')} htmlFor="course-instructor" required error={errors.instructor_id} span={6}>
+                  <select
+                    id="course-instructor"
+                    name="instructor_id"
+                    className={ctl('select', errors.instructor_id)}
+                    value={form.instructor_id}
+                    onChange={handleChange}
+                  >
+                    <option value="">{t('course_form.select_instructor')}</option>
+                    {instructors.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                  </select>
+                </Field>
 
-                    <div className="form-group">
-                      <label htmlFor="course-title">{t('course_form.course_title')} <span className="text-danger">*</span></label>
-                      <input id="course-title"
-                        name="title"
-                        type="text"
-                        className={`form-control${errors.title ? ' is-invalid' : ''}`}
-                        placeholder={t('course_form.title_placeholder')}
-                        value={form.title}
-                        onChange={handleChange}
-                      />
-                      {errors.title && <div className="invalid-feedback">{errors.title}</div>}
-                    </div>
+                <Field label={t('course_form.status')} htmlFor="course-status" span={6}>
+                  <select id="course-status" name="status" className={ctl('select')} value={form.status} onChange={handleChange}>
+                    <option value="draft">{t('status.draft')}</option>
+                    <option value="active">{t('status.active')}</option>
+                    <option value="inactive">{t('status.inactive')}</option>
+                    <option value="completed">{t('status.completed')}</option>
+                  </select>
+                </Field>
 
-                    <div className="form-group">
-                      <label htmlFor="course-description">{t('course_form.description')}</label>
-                      <textarea id="course-description"
-                        name="description"
-                        className="form-control"
-                        rows={4}
-                        placeholder={t('course_form.description_placeholder')}
-                        value={form.description}
-                        onChange={handleChange}
-                      />
-                    </div>
+                <Field label={t('course_form.course_title')} htmlFor="course-title" required error={errors.title}>
+                  <input
+                    id="course-title"
+                    name="title"
+                    type="text"
+                    className={ctl('input', errors.title)}
+                    placeholder={t('course_form.title_placeholder')}
+                    value={form.title}
+                    onChange={handleChange}
+                  />
+                </Field>
 
-                    <div className="row">
-                      <div className="col-md-3">
-                        <div className="form-group">
-                          <label htmlFor="course-price">{t('course_form.price')}</label>
-                          <input id="course-price"
-                            name="price"
-                            type="number"
-                            min={0}
-                            step={0.01}
-                            className={`form-control${errors.price ? ' is-invalid' : ''}`}
-                            value={form.price}
-                            onChange={handleChange}
-                          />
-                          {errors.price && <div className="invalid-feedback">{errors.price}</div>}
-                        </div>
-                      </div>
-                      <div className="col-md-3">
-                        <div className="form-group">
-                          <label htmlFor="course-capacity">{t('course_form.capacity')}</label>
-                          <input id="course-capacity"
-                            name="capacity"
-                            type="number"
-                            min={1}
-                            className={`form-control${errors.capacity ? ' is-invalid' : ''}`}
-                            value={form.capacity}
-                            onChange={handleChange}
-                          />
-                          {errors.capacity && <div className="invalid-feedback">{errors.capacity}</div>}
-                        </div>
-                      </div>
-                      <div className="col-md-3">
-                        <div className="form-group">
-                          <label htmlFor="course-hours">{t('course_form.hours')}</label>
-                          <input id="course-hours"
-                            name="hours"
-                            type="number"
-                            min={0}
-                            className="form-control"
-                            value={form.hours}
-                            onChange={handleChange}
-                          />
-                        </div>
-                      </div>
-                      <div className="col-md-3">
-                        <div className="form-group">
-                          <label htmlFor="course-status">{t('course_form.status')}</label>
-                          <select id="course-status"
-                            name="status"
-                            className="form-control"
-                            value={form.status}
-                            onChange={handleChange}
-                          >
-                            <option value="draft">{t('status.draft')}</option>
-                            <option value="active">{t('status.active')}</option>
-                            <option value="inactive">{t('status.inactive')}</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
+                <Field label={t('course_form.description')} htmlFor="course-description">
+                  <textarea
+                    id="course-description"
+                    name="description"
+                    className={ctl('textarea')}
+                    rows={4}
+                    placeholder={t('course_form.description_placeholder')}
+                    value={form.description}
+                    onChange={handleChange}
+                  />
+                </Field>
 
-                    <div className="row">
-                      <div className="col-md-6">
-                        <div className="form-group">
-                          <label htmlFor="course-start-date">{t('course_form.start_date')} <span className="text-danger">*</span></label>
-                          <input id="course-start-date"
-                            name="start_date"
-                            type="date"
-                            className={`form-control${errors.start_date ? ' is-invalid' : ''}`}
-                            value={form.start_date}
-                            onChange={handleChange}
-                          />
-                          {errors.start_date && <div className="invalid-feedback">{errors.start_date}</div>}
-                        </div>
-                      </div>
-                      <div className="col-md-6">
-                        <div className="form-group">
-                          <label htmlFor="course-end-date">{t('course_form.end_date')}</label>
-                          <input id="course-end-date"
-                            name="end_date"
-                            type="date"
-                            className="form-control"
-                            value={form.end_date}
-                            onChange={handleChange}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                <Field label={t('course_form.price')} htmlFor="course-price" error={errors.price} span={4}>
+                  <input id="course-price" name="price" type="number" min={0} step={0.01}
+                    className={ctl('input', errors.price)} value={form.price} onChange={handleChange} />
+                </Field>
 
-                  <div className="card-footer">
-                    <button type="submit" className="btn btn-primary" disabled={saving}>
-                      {saving && <i className="fas fa-spinner fa-spin mr-2" />}
-                      {isEdit ? t('course_form.submit_edit') : t('course_form.submit_new')}
-                    </button>
-                    <Link to="/courses" className="btn btn-default ml-2">{t('common.cancel')}</Link>
-                  </div>
-                </form>
+                <Field label={t('course_form.capacity')} htmlFor="course-capacity" error={errors.capacity} span={4}>
+                  <input id="course-capacity" name="capacity" type="number" min={1}
+                    className={ctl('input', errors.capacity)} value={form.capacity} onChange={handleChange} />
+                </Field>
+
+                <Field label={t('course_form.hours')} htmlFor="course-hours" span={4}>
+                  <input id="course-hours" name="hours" type="number" min={0}
+                    className={ctl('input')} value={form.hours} onChange={handleChange} />
+                </Field>
+
+                <Field label={t('course_form.start_date')} htmlFor="course-start-date" required error={errors.start_date} span={6}>
+                  <input id="course-start-date" name="start_date" type="date"
+                    className={ctl('input', errors.start_date)} value={form.start_date} onChange={handleChange} />
+                </Field>
+
+                <Field label={t('course_form.end_date')} htmlFor="course-end-date" span={6}>
+                  <input id="course-end-date" name="end_date" type="date"
+                    className={ctl('input')} value={form.end_date} onChange={handleChange} />
+                </Field>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-    </>
+
+            <div className="lmsd-form-foot">
+              <button type="submit" className="lmsd-btn lmsd-btn--primary" disabled={saving}>
+                {saving && <i className="fas fa-spinner fa-spin" aria-hidden="true" />}
+                {isEdit ? t('course_form.submit_edit') : t('course_form.submit_new')}
+              </button>
+              <Link to="/courses" className="lmsd-btn lmsd-btn--ghost">{t('common.cancel')}</Link>
+            </div>
+          </section>
+        </form>
+      </div>
+    </section>
   )
 }

@@ -24,7 +24,7 @@ class StoreCourseRequest extends FormRequest
             'price' => ['required', 'numeric', 'min:0'],
             'capacity' => ['required', 'integer', 'min:1'],
             'hours' => ['nullable', 'integer', 'min:0'],
-            'status' => ['required', 'in:draft,active,inactive'],
+            'status' => ['required', 'in:draft,active,inactive,completed'],
             'start_date' => ['required', 'date'],
             'end_date' => ['nullable', 'date', 'after:start_date'],
         ];

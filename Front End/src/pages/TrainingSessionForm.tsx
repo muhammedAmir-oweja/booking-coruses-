@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import PageHeader from '../components/ui/Page'
+import Field from '../components/ui/Field'
+import { ctl } from '../components/ui/form'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getTrainingSession, createTrainingSession, updateTrainingSession } from '../api/trainingSessions'
 import { getCourses } from '../api/courses'
@@ -157,170 +160,88 @@ export default function TrainingSessionForm() {
   }
 
   return (
-    <>
-      <div className="content-header">
-        <div className="container-fluid">
-          <div className="row mb-2">
-            <div className="col-sm-6">
-              <h1 className="m-0">{isEdit ? t('session_form.edit_title') : t('session_form.new_title')}</h1>
-            </div>
-            <div className="col-sm-6 text-right">
-              <Link to="/training-sessions" className="btn btn-default btn-sm">
-                <i className="fas fa-arrow-left mr-1" /> {t('common.back')}
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
+    <section className="content">
+      <div className="container-fluid lmsd">
+        <PageHeader
+          title={isEdit ? t('session_form.edit_title') : t('session_form.new_title')}
+          crumbs={[
+            { label: t('sessions.title'), to: '/training-sessions' },
+            { label: isEdit ? t('session_form.crumb_edit') : t('session_form.crumb_new') },
+          ]}
+        />
 
-      <div className="content">
-        <div className="container-fluid">
-          <div className="row">
-            <div className="col-md-8">
-              <div className="card card-primary">
-                <div className="card-header">
-                  <h3 className="card-title">
-                    {isEdit ? t('session_form.card_edit') : t('session_form.card_new')}
-                  </h3>
+        <form onSubmit={handleSubmit}>
+          <section className="lmsd-surface lmsd-panel" style={{ maxWidth: 860 }}>
+            <div className="lmsd-panel-body">
+              {serverError && (
+                <div className="lmsd-note lmsd-note--warn" role="alert" style={{ marginBottom: 16 }}>
+                  <span className="lmsd-chip"><i className="fas fa-exclamation-triangle" aria-hidden="true" /></span>
+                  <span className="lmsd-note-text">{t(serverError)}</span>
                 </div>
-                <form onSubmit={handleSubmit}>
-                  <div className="card-body">
-                    {serverError && (
-                      <div className="alert alert-danger">{t(serverError)}</div>
-                    )}
+              )}
 
-                    <div className="form-group">
-                      <label htmlFor="session-course">{t('session_form.course')} <span className="text-danger">*</span></label>
-                      <select id="session-course"
-                        name="course_id"
-                        className={`form-control${errors.course_id ? ' is-invalid' : ''}`}
-                        value={form.course_id}
-                        onChange={handleChange}
-                      >
-                        <option value="">{t('session_form.select_course')}</option>
-                        {courses.map(c => (
-                          <option key={c.id} value={c.id}>{c.title}</option>
-                        ))}
-                      </select>
-                      {errors.course_id && <div className="invalid-feedback">{errors.course_id}</div>}
-                    </div>
+              <div className="lmsd-form-grid">
+                <Field label={t('session_form.course')} htmlFor="session-course" required error={errors.course_id} span={6}>
+                  <select id="session-course" name="course_id" className={ctl('select', errors.course_id)}
+                    value={form.course_id} onChange={handleChange}>
+                    <option value="">{t('session_form.select_course')}</option>
+                    {courses.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
+                  </select>
+                </Field>
 
-                    <div className="form-group">
-                      <label htmlFor="session-title">{t('session_form.title')} <span className="text-danger">*</span></label>
-                      <input id="session-title"
-                        name="title"
-                        type="text"
-                        className={`form-control${errors.title ? ' is-invalid' : ''}`}
-                        placeholder={t('session_form.title_placeholder')}
-                        value={form.title}
-                        onChange={handleChange}
-                      />
-                      {errors.title && <div className="invalid-feedback">{errors.title}</div>}
-                    </div>
+                <Field label={t('session_form.status')} htmlFor="session-status" required span={6}>
+                  <select id="session-status" name="status" className={ctl('select')} value={form.status} onChange={handleChange}>
+                    <option value="scheduled">{t('status.scheduled')}</option>
+                    <option value="ongoing">{t('status.ongoing')}</option>
+                    <option value="completed">{t('status.completed')}</option>
+                    <option value="cancelled">{t('status.cancelled')}</option>
+                  </select>
+                </Field>
 
-                    <div className="form-group">
-                      <label htmlFor="session-description">{t('session_form.description')}</label>
-                      <textarea id="session-description"
-                        name="description"
-                        rows={3}
-                        className="form-control"
-                        placeholder={t('session_form.description_placeholder')}
-                        value={form.description}
-                        onChange={handleChange}
-                      />
-                    </div>
+                <Field label={t('session_form.title')} htmlFor="session-title" required error={errors.title}>
+                  <input id="session-title" name="title" type="text" className={ctl('input', errors.title)}
+                    placeholder={t('session_form.title_placeholder')} value={form.title} onChange={handleChange} />
+                </Field>
 
-                    <div className="row">
-                      <div className="col-md-6">
-                        <div className="form-group">
-                          <label htmlFor="session-starts-at">{t('session_form.starts_at')} <span className="text-danger">*</span></label>
-                          <input id="session-starts-at"
-                            name="starts_at"
-                            type="datetime-local"
-                            className={`form-control${errors.starts_at ? ' is-invalid' : ''}`}
-                            value={form.starts_at}
-                            onChange={handleChange}
-                          />
-                          {errors.starts_at && <div className="invalid-feedback">{errors.starts_at}</div>}
-                        </div>
-                      </div>
-                      <div className="col-md-6">
-                        <div className="form-group">
-                          <label htmlFor="session-ends-at">{t('session_form.ends_at')} <span className="text-danger">*</span></label>
-                          <input id="session-ends-at"
-                            name="ends_at"
-                            type="datetime-local"
-                            className={`form-control${errors.ends_at ? ' is-invalid' : ''}`}
-                            value={form.ends_at}
-                            onChange={handleChange}
-                          />
-                          {errors.ends_at && <div className="invalid-feedback">{errors.ends_at}</div>}
-                        </div>
-                      </div>
-                    </div>
+                <Field label={t('session_form.description')} htmlFor="session-description">
+                  <textarea id="session-description" name="description" rows={3} className={ctl('textarea')}
+                    placeholder={t('session_form.description_placeholder')} value={form.description} onChange={handleChange} />
+                </Field>
 
-                    <div className="form-group">
-                      <label htmlFor="session-location">{t('session_form.location')}</label>
-                      <input id="session-location"
-                        name="location"
-                        type="text"
-                        className="form-control"
-                        placeholder={t('session_form.location_placeholder')}
-                        value={form.location}
-                        onChange={handleChange}
-                      />
-                    </div>
+                <Field label={t('session_form.starts_at')} htmlFor="session-starts-at" required error={errors.starts_at} span={6}>
+                  <input id="session-starts-at" name="starts_at" type="datetime-local"
+                    className={ctl('input', errors.starts_at)} value={form.starts_at} onChange={handleChange} />
+                </Field>
 
-                    <div className="row">
-                      <div className="col-md-6">
-                        <div className="form-group">
-                          <label htmlFor="session-max-attendees">{t('session_form.max_attendees')}</label>
-                          <input id="session-max-attendees"
-                            name="max_attendees"
-                            type="number"
-                            min={1}
-                            className={`form-control${errors.max_attendees ? ' is-invalid' : ''}`}
-                            placeholder={t('session_form.max_attendees_placeholder')}
-                            value={form.max_attendees}
-                            onChange={handleChange}
-                          />
-                          {errors.max_attendees && <div className="invalid-feedback">{errors.max_attendees}</div>}
-                        </div>
-                      </div>
-                      <div className="col-md-6">
-                        <div className="form-group">
-                          <label htmlFor="session-status">{t('session_form.status')} <span className="text-danger">*</span></label>
-                          <select id="session-status"
-                            name="status"
-                            className="form-control"
-                            value={form.status}
-                            onChange={handleChange}
-                          >
-                            <option value="scheduled">{t('status.scheduled')}</option>
-                            <option value="ongoing">{t('status.ongoing')}</option>
-                            <option value="completed">{t('status.completed')}</option>
-                            <option value="cancelled">{t('status.cancelled')}</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                <Field label={t('session_form.ends_at')} htmlFor="session-ends-at" required error={errors.ends_at} span={6}>
+                  <input id="session-ends-at" name="ends_at" type="datetime-local"
+                    className={ctl('input', errors.ends_at)} value={form.ends_at} onChange={handleChange} />
+                </Field>
 
-                  <div className="card-footer">
-                    <button type="submit" className="btn btn-primary" disabled={saving}>
-                      {saving
-                        ? <><i className="fas fa-spinner fa-spin mr-1" /> {t('common.saving')}</>
-                        : <><i className="fas fa-save mr-1" /> {isEdit ? t('session_form.submit_edit') : t('session_form.submit_new')}</>
-                      }
-                    </button>
-                    <Link to="/training-sessions" className="btn btn-default ml-2">{t('common.cancel')}</Link>
-                  </div>
-                </form>
+                <Field label={t('session_form.location')} htmlFor="session-location" span={6}>
+                  <input id="session-location" name="location" type="text" className={ctl('input')}
+                    placeholder={t('session_form.location_placeholder')} value={form.location} onChange={handleChange} />
+                </Field>
+
+                <Field label={t('session_form.max_attendees')} htmlFor="session-max-attendees" error={errors.max_attendees} span={6}>
+                  <input id="session-max-attendees" name="max_attendees" type="number" min={1}
+                    className={ctl('input', errors.max_attendees)}
+                    placeholder={t('session_form.max_attendees_placeholder')}
+                    value={form.max_attendees} onChange={handleChange} />
+                </Field>
               </div>
             </div>
-          </div>
-        </div>
+
+            <div className="lmsd-form-foot">
+              <button type="submit" className="lmsd-btn lmsd-btn--primary" disabled={saving}>
+                {saving && <i className="fas fa-spinner fa-spin" aria-hidden="true" />}
+                {isEdit ? t('session_form.submit_edit') : t('session_form.submit_new')}
+              </button>
+              <Link to="/training-sessions" className="lmsd-btn lmsd-btn--ghost">{t('common.cancel')}</Link>
+            </div>
+          </section>
+        </form>
       </div>
-    </>
+    </section>
   )
 }

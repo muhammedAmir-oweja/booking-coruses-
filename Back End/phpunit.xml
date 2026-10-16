@@ -24,10 +24,27 @@
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="DEV_NO_AUTH" value="false"/>
         <env name="CACHE_STORE" value="array"/>
+        <!-- A database of its own, NOT the one in .env.
+
+             These lines used to name course_booking - the development
+             database, on the same MySQL server - and every feature test uses
+             RefreshDatabase, so `php artisan test` silently truncated every
+             table the app had. A suite must never be able to reach the data
+             you are working with.
+
+             One-time setup, as a MySQL user that may create databases:
+
+               CREATE DATABASE course_booking_test
+                 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+               GRANT ALL ON course_booking_test.* TO 'booking'@'127.0.0.1';
+
+             Until that exists the suite fails to connect, which is the point:
+             failing is safe, wiping your data is not. (In-memory SQLite would
+             need pdo_sqlite, which this PHP build does not have.) -->
         <env name="DB_CONNECTION" value="mysql"/>
         <env name="DB_HOST" value="127.0.0.1"/>
         <env name="DB_PORT" value="3306"/>
-        <env name="DB_DATABASE" value="course_booking"/>
+        <env name="DB_DATABASE" value="course_booking_test"/>
         <env name="DB_USERNAME" value="booking"/>
         <env name="DB_PASSWORD" value="booking_dev_pass"/>
         <env name="DB_URL" value=""/>

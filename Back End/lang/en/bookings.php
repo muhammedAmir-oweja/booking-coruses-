@@ -27,4 +27,16 @@ return [
     'status_pending' => 'Pending',
     'status_confirmed' => 'Confirmed',
     'status_cancelled' => 'Cancelled',
+
+    // Task 29: the confirmation mail, sent by SendBookingConfirmedMail when
+    // a booking moves into 'confirmed'.
+    'confirm_subject' => 'Your booking for :course is confirmed',
+    'confirm_heading' => 'Booking confirmed',
+    'confirm_line' => 'Good news - your place on :course is confirmed.',
+    'confirm_footer' => 'See you there. Reply to this email if you need to change anything.',
+    'payment' => 'Payment',
+    'payment_paid' => 'Paid',
+    'payment_unpaid' => 'Unpaid',
+    'payment_refunded' => 'Refunded',
+    'starts_on' => 'Starts on',
 ];
