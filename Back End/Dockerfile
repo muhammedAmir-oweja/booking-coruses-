@@ -1,9 +1,9 @@
 FROM php:8.3-apache AS php-base
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libonig5 libonig-dev \
-    && docker-php-ext-install bcmath mbstring opcache pdo_mysql \
-    && apt-get purge -y --auto-remove libonig-dev \
+    && apt-get install -y --no-install-recommends libonig5 libonig-dev libzip-dev zip unzip \
+    && docker-php-ext-install bcmath mbstring opcache pdo_mysql zip \
+    && apt-get purge -y --auto-remove libonig-dev libzip-dev \
     && rm -rf /var/lib/apt/lists/* \
     && a2enmod rewrite
 
