@@ -21,6 +21,20 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
+## Running the backend with Docker
+
+Build the backend image from the repository root:
+
+```bash
+docker build -t booking-backend -f "Back End/Dockerfile" "Back End"
+```
+
+Run it with the backend environment variables configured for your database and application:
+
+```bash
+docker run --rm -p 10000:10000 --env-file "Back End/.env" booking-backend
+```
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
