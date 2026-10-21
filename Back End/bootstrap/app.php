@@ -20,6 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
+        $middleware->redirectGuestsTo(
+            fn (Request $request) => $request->is('api/*') ? null : '/',
+        );
 
         // Without this line the 'api' limiter in AppServiceProvider is never
         // consulted - the api group has no throttle entry at all by default.

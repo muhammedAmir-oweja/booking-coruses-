@@ -104,6 +104,13 @@ class AuthTest extends TestCase
 
     // ---------------------------------------------------------------- logout / me
 
+    public function test_unauthenticated_api_request_without_accept_header_returns_json_401(): void
+    {
+        $this->get('/api/auth/me')
+            ->assertUnauthorized()
+            ->assertJson(['message' => 'Unauthenticated.']);
+    }
+
     public function test_me_returns_authenticated_user(): void
     {
         $user  = User::factory()->create();
