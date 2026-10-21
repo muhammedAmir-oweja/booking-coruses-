@@ -115,16 +115,20 @@ class AuthTest extends TestCase
             ->assertJsonFragment(['email' => $user->email]);
     }
 
-    public function test_logout_deletes_token(): void
+    public function test_logout_revokes_access_and_refresh_tokens(): void
     {
-        $user  = User::factory()->create();
-        $token = $user->createToken('test')->plainTextToken;
+        $user = User::factory()->create();
+        $accessToken = $user->createToken('access', ['access'])->plainTextToken;
+        $refreshToken = $user->createToken('refresh', ['refresh'])->plainTextToken;
 
-        $this->withToken($token)
+        $this->withToken($accessToken)
             ->postJson('/api/auth/logout')
             ->assertStatus(200);
 
-        // After logout the personal_access_tokens row must be gone.
         $this->assertDatabaseEmpty('personal_access_tokens');
+
+        $this->withToken($refreshToken)
+            ->postJson('/api/auth/refresh')
+            ->assertUnauthorized();
     }
 }

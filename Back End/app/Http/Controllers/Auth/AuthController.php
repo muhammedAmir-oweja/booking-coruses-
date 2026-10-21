@@ -95,8 +95,8 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
-        // Null-safe: under DEV_NO_AUTH the user is signed in without a token.
-        $request->user()->currentAccessToken()?->delete();
+        // Revoke the refresh token too, so a logged-out session cannot be renewed.
+        $request->user()->tokens()->delete();
 
         return response()->json(['message' => __('messages.logged_out')]);
     }
