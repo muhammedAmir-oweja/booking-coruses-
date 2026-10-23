@@ -44,8 +44,7 @@ COPY --from=frontend-build /frontend/dist/ ./public/
 COPY ["Back End/.php-ini/99-uploads.ini", "/usr/local/etc/php/conf.d/99-uploads.ini"]
 
 RUN sed -ri 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf \
-    && printf '\n<Directory /var/www/html/public>\n    AllowOverride All\n    Require all granted\n</Directory>\n' >> /etc/apache2/apache2.conf \
-    && printf '\nDirectoryIndex index.html index.php\n' >> /etc/apache2/apache2.conf \
+    && printf '\n<Directory /var/www/html/public>\n    AllowOverride All\n    Require all granted\n    DirectoryIndex index.html\n</Directory>\n' >> /etc/apache2/apache2.conf \
     && printf '%s\n' \
         '<IfModule mod_rewrite.c>' \
         '    Options -MultiViews -Indexes' \
