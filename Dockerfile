@@ -68,4 +68,4 @@ RUN sed -ri 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-availabl
 ENV PORT=10000
 EXPOSE 10000
 
-CMD ["sh", "-c", "port=${PORT:-10000}; sed -i \"s/Listen 80/Listen ${port}/\" /etc/apache2/ports.conf; sed -i \"s/<VirtualHost \\*:80>/<VirtualHost *:${port}>/\" /etc/apache2/sites-available/000-default.conf; exec apache2-foreground"]
+CMD ["sh", "-c", "port=${PORT:-10000}; sed -i \"s/Listen 80/Listen ${port}/\" /etc/apache2/ports.conf; sed -i \"s/<VirtualHost \\*:80>/<VirtualHost *:${port}>/\" /etc/apache2/sites-available/000-default.conf; php artisan migrate --force || echo 'php artisan migrate failed - see the error above' >&2; chown -R www-data:www-data storage bootstrap/cache; exec apache2-foreground"]
