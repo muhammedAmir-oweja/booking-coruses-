@@ -13,9 +13,9 @@ RUN npm run build
 FROM php:8.3-apache AS php-base
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libonig5 libonig-dev libzip5 libzip-dev zip unzip \
-    && docker-php-ext-install bcmath mbstring opcache pdo_mysql zip \
-    && apt-get purge -y --auto-remove libonig-dev libzip-dev \
+    && apt-get install -y --no-install-recommends libonig5 libonig-dev libzip5 libzip-dev libpq5 libpq-dev zip unzip \
+    && docker-php-ext-install bcmath mbstring opcache pdo_mysql pdo_pgsql zip \
+    && apt-get purge -y --auto-remove libonig-dev libzip-dev libpq-dev \
     && rm -rf /var/lib/apt/lists/* \
     && a2enmod rewrite
 
@@ -68,4 +68,4 @@ RUN sed -ri 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-availabl
 ENV PORT=10000
 EXPOSE 10000
 
-CMD ["sh", "-c", "port=${PORT:-10000}; sed -i \"s/Listen 80/Listen ${port}/\" /etc/apache2/ports.conf; sed -i \"s/<VirtualHost \\*:80>/<VirtualHost *:${port}>/\" /etc/apache2/sites-available/000-default.conf; php artisan migrate --force || echo 'php artisan migrate failed - see the error above' >&2; chown -R www-data:www-data storage bootstrap/cache; exec apache2-foreground"]
+CMD ["sh", "-c", "port=${PORT:-10000}; sed -i \"s/Listen 80/Listen ${port}/\" /etc/apache2/ports.conf; sed -i \"s/<VirtualHost \\*:80>/<VirtualHost *:${port}>/\" /etc/apache2/sites-available/000-default.conf; tries=0; until php artisan migrate --force; do tries=$((tries+1)); if [ $tries -ge 5 ]; then echo 'php artisan migrate failed 5 times - check the DB_* environment variables' >&2; exit 1; fi; sleep 5; done; chown -R www-data:www-data storage bootstrap/cache; exec apache2-foreground"]
