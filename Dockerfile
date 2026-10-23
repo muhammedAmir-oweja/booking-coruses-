@@ -66,6 +66,9 @@ RUN sed -ri 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-availabl
     && chown -R www-data:www-data storage bootstrap/cache
 
 ENV PORT=10000
+# .env files are not copied into the image, so without this Laravel falls back
+# to a log file inside the container and errors never reach the host's logs.
+ENV LOG_CHANNEL=stderr
 EXPOSE 10000
 
-CMD ["sh", "-c", "port=${PORT:-10000}; sed -i \"s/Listen 80/Listen ${port}/\" /etc/apache2/ports.conf; sed -i \"s/<VirtualHost \\*:80>/<VirtualHost *:${port}>/\" /etc/apache2/sites-available/000-default.conf; tries=0; until php artisan migrate --force; do tries=$((tries+1)); if [ $tries -ge 5 ]; then echo 'php artisan migrate failed 5 times - check the DB_* environment variables' >&2; exit 1; fi; sleep 5; done; chown -R www-data:www-data storage bootstrap/cache; exec apache2-foreground"]
+CMD ["sh", "-c", "if [ -z \"$APP_KEY\" ]; then echo 'APP_KEY is not set - add it to the service environment' >&2; exit 1; fi; port=${PORT:-10000}; sed -i \"s/Listen 80/Listen ${port}/\" /etc/apache2/ports.conf; sed -i \"s/<VirtualHost \\*:80>/<VirtualHost *:${port}>/\" /etc/apache2/sites-available/000-default.conf; tries=0; until php artisan migrate --force; do tries=$((tries+1)); if [ $tries -ge 5 ]; then echo 'php artisan migrate failed 5 times - check the DB_* environment variables' >&2; exit 1; fi; sleep 5; done; chown -R www-data:www-data storage bootstrap/cache; exec apache2-foreground"]
