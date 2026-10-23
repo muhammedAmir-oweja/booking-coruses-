@@ -19,7 +19,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->statefulApi();
+        // No statefulApi(): the SPA authenticates with bearer tokens only and
+        // never fetches /sanctum/csrf-cookie. With it on, a same-origin
+        // deployment (SPA and API on one host, matching APP_URL) turned every
+        // request into a cookie session - needing APP_KEY and a CSRF token -
+        // and register/login failed with 500s and 419s. In dev the Vite proxy's
+        // localhost:5173 referer never matched, which is why only prod broke.
         $middleware->redirectGuestsTo(
             fn (Request $request) => $request->is('api/*') ? null : '/',
         );
@@ -42,10 +47,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'ability' => CheckForAnyAbility::class,
         ]);
 
-        // Appended, not prepended: it has to run after Sanctum's stateful
-        // middleware or $request->cookie('prefs') is not readable yet, and the
-        // cookie source would silently return nothing while the header source
-        // kept working. Task 26 relies on this same line.
+        // Appended, not prepended, so it runs after anything else in the group
+        // that touches cookies. 'prefs' is exempt from encryption above, so
+        // $request->cookie('prefs') reads it as-is. Task 26 relies on this line.
         $middleware->appendToGroup('api', [SetLocale::class]);
 
         // ...but group order alone is not enough. ThrottleRequests sits in the
